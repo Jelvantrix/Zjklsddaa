@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Product, Language } from '../types';
 import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
 import { FashionImage } from './FashionImage';
+import { ProductCardSkeleton } from './ProductCardSkeleton';
 import {
   SlidersHorizontal,
   Heart,
@@ -10,6 +11,7 @@ import {
   Columns,
   X,
   ChevronDown,
+  Radio,
 } from 'lucide-react';
 
 interface ProductListingProps {
@@ -22,6 +24,9 @@ interface ProductListingProps {
   onQuickAdd: (product: Product, size: string) => void;
   onToggleWishlist: (productId: string) => void;
   wishlistIds: string[];
+  products?: Product[];
+  loading?: boolean;
+  isLiveFromFirestore?: boolean;
 }
 
 export const ProductListing: React.FC<ProductListingProps> = ({
@@ -34,8 +39,16 @@ export const ProductListing: React.FC<ProductListingProps> = ({
   onQuickAdd,
   onToggleWishlist,
   wishlistIds,
+  products,
+  loading = false,
+  isLiveFromFirestore = false,
 }) => {
   const t = translations[language];
+
+  // Resolve source products: real-time Firestore list or fallback
+  const sourceProducts = useMemo(() => {
+    return products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
+  }, [products]);
 
   // Density switch: 1, 2, or 4 columns
   const [columnsDensity, setColumnsDensity] = useState<1 | 2 | 4>(4);
@@ -60,7 +73,17 @@ export const ProductListing: React.FC<ProductListingProps> = ({
 
   // Filtering Logic
   const filteredProducts = useMemo(() => {
-    return ARCHIVE_PRODUCTS.filter((product) => {
+    return sourceProducts.filter((product) => {
+      // Status check: only show live or scheduled products past publishAt
+      if (product.status && product.status !== 'live') {
+        if (product.status === 'scheduled' && product.publishAt) {
+          const pubTime = typeof product.publishAt === 'number' ? product.publishAt : new Date(product.publishAt).getTime();
+          if (pubTime > Date.now()) return false;
+        } else {
+          return false;
+        }
+      }
+
       // Category filter
       if (selectedCategory !== 'all' && product.category !== selectedCategory) {
         return false;
@@ -75,20 +98,25 @@ export const ProductListing: React.FC<ProductListingProps> = ({
         return false;
       }
       // Size filter
-      if (selectedSizeFilter && !product.sizes.includes(selectedSizeFilter)) {
-        return false;
+      if (selectedSizeFilter) {
+        const productSizes = product.variants?.map((v) => v.size) || product.sizes || [];
+        if (!productSizes.includes(selectedSizeFilter)) {
+          return false;
+        }
       }
       // Color filter
       if (selectedColorFilter && product.colorHex !== selectedColorFilter) {
         return false;
       }
       // Material filter
-      if (selectedMaterialFilter && !product.material[language].toLowerCase().includes(selectedMaterialFilter.toLowerCase())) {
+      const materialText = typeof product.material === 'object' && product.material ? (product.material as any)[language] : '';
+      if (selectedMaterialFilter && materialText && !materialText.toLowerCase().includes(selectedMaterialFilter.toLowerCase())) {
         return false;
       }
       // In stock filter
-      if (onlyInStockFilter && product.stock <= 0) {
-        return false;
+      if (onlyInStockFilter) {
+        const inStock = product.variants ? product.variants.some((v) => v.stock > 0) : (product.stock || 0) > 0;
+        if (!inStock) return false;
       }
       return true;
     }).sort((a, b) => {
@@ -97,6 +125,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
       return 0; // default newest
     });
   }, [
+    sourceProducts,
     selectedCategory,
     selectedSubcategory,
     selectedSizeFilter,
@@ -229,6 +258,14 @@ export const ProductListing: React.FC<ProductListingProps> = ({
               </button>
             </div>
 
+            {/* Live Firestore Sync Status Indicator */}
+            {isLiveFromFirestore && (
+              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-black/15 bg-white text-black/80">
+                <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+                <span>Live Firestore</span>
+              </div>
+            )}
+
             {/* Density Switch: 1 / 2 / 4 columns (Desktop & Tablet) */}
             <div className="hidden md:flex items-center gap-1 border border-black/20 p-1">
               <button
@@ -268,7 +305,24 @@ export const ProductListing: React.FC<ProductListingProps> = ({
 
       {/* PRODUCT GRID WITH RESPONSIVE BREAKPOINTS (Mobile 2-col, Tablet 2-3 col, Desktop 4-col) */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-8 sm:py-12">
-        {filteredProducts.length === 0 ? (
+        {loading ? (
+          <div
+            className={`grid gap-x-3.5 sm:gap-x-6 md:gap-x-8 lg:gap-x-10 gap-y-8 sm:gap-y-12 md:gap-y-16 transition-all duration-300 ${
+              columnsDensity === 1
+                ? 'grid-cols-1 max-w-xl mx-auto'
+                : columnsDensity === 2
+                ? 'grid-cols-1 sm:grid-cols-2'
+                : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+            }`}
+          >
+            {Array.from({ length: 8 }).map((_, sIdx) => (
+              <ProductCardSkeleton
+                key={`skel-${sIdx}`}
+                density={columnsDensity === 4 ? 'comfortable' : 'dense'}
+              />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="py-20 sm:py-28 text-center border border-black/10 p-6">
             <p className="font-editorial text-xl sm:text-2xl mb-3 text-black/80">
               {t.archive.empty}

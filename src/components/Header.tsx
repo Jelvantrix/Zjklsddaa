@@ -20,6 +20,7 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
+  onNavigateAdmin?: () => void;
   isHeroVisible: boolean;
 }
 
@@ -37,6 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
+  onNavigateAdmin,
   isHeroVisible,
 }) => {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
@@ -178,6 +180,16 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <User className="w-4 h-4 stroke-[1.5]" />
             </button>
+
+            {onNavigateAdmin && (
+              <button
+                onClick={onNavigateAdmin}
+                className="hidden lg:flex px-2 py-0.5 border border-current hover:opacity-70 text-[10px] font-mono uppercase tracking-wider items-center gap-1 cursor-pointer transition-opacity shrink-0"
+                title="Studio Ylläpito (Admin)"
+              >
+                <span>Admin</span>
+              </button>
+            )}
 
             <button
               onClick={onOpenCart}

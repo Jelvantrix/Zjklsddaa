@@ -9,6 +9,7 @@ import {
 } from '../data/mockData';
 import { FashionImage } from './FashionImage';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { joinWaitlist } from '../firebase/dbService';
 
 interface HomeSectionsProps {
   language: Language;
@@ -19,6 +20,7 @@ interface HomeSectionsProps {
   onToggleWishlist: (productId: string) => void;
   wishlistIds: string[];
   onOpenJournalArticle: (articleId: string) => void;
+  products?: Product[];
 }
 
 export const HomeSections: React.FC<HomeSectionsProps> = ({
@@ -30,9 +32,12 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
   onToggleWishlist,
   wishlistIds,
   onOpenJournalArticle,
+  products,
 }) => {
   const t = translations[language];
   const featuredRailRef = useRef<HTMLDivElement | null>(null);
+
+  const liveProducts = products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
 
   // Waitlist form state
   const [email, setEmail] = useState('');
@@ -41,6 +46,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
   const handleWaitlistSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim() && email.includes('@')) {
+      joinWaitlist(email, 'drop-02-monoliitti', 'homepage_waitlist').catch(() => {});
       setWaitlistSubmitted(true);
     }
   };
@@ -66,7 +72,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         <div className="max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[60vh] lg:min-h-[75vh]">
           {/* Huge Image Split */}
           <div
-            onClick={() => onSelectProduct(ARCHIVE_PRODUCTS[0])}
+            onClick={() => onSelectProduct(liveProducts[0])}
             className="lg:col-span-7 relative group cursor-pointer overflow-hidden border-b lg:border-b-0 lg:border-r border-black/10 aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto"
           >
             <FashionImage
@@ -277,7 +283,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           ref={featuredRailRef}
           className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar px-4 sm:px-6 md:px-10 snap-x snap-mandatory"
         >
-          {ARCHIVE_PRODUCTS.slice(0, 8).map((product) => (
+          {liveProducts.slice(0, 8).map((product) => (
             <div
               key={product.id}
               className="w-[240px] sm:w-[300px] md:w-[340px] flex-shrink-0 snap-start group relative flex flex-col justify-between"

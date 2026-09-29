@@ -19,15 +19,24 @@ import { StaticPages } from './components/StaticPages';
 import { Footer } from './components/Footer';
 import { CustomCursor } from './components/CustomCursor';
 import { Preloader } from './components/Preloader';
+import { AuthProvider } from './firebase/AuthContext';
+import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
+import { AdminLayout } from './admin/AdminLayout';
 
-export default function App() {
+function StorefrontApp() {
+  const { products, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
   const [preloaderDone, setPreloaderDone] = useState(false);
 
   // Internationalization: default Finnish ('fi'), switchable in 1 click
   const [language, setLanguage] = useState<Language>('fi');
 
-  // Multi-Page Route State (Supporting 50+ distinct page routes)
-  const [route, setRoute] = useState<PageRoute>({ type: 'home' });
+  // Multi-Page Route State (Supporting 50+ distinct page routes & /admin)
+  const [route, setRoute] = useState<PageRoute>(() => {
+    if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.hash === '#admin')) {
+      return { type: 'admin' };
+    }
+    return { type: 'home' };
+  });
 
   // Overlays and Modals State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -40,9 +49,9 @@ export default function App() {
   const [journalArticleId, setJournalArticleId] = useState<string | null>(null);
 
   // Cart & Wishlist State
-  const [cartItems, setCartItems] = useState<CartItem[]>([
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => [
     {
-      product: ARCHIVE_PRODUCTS[0],
+      product: products[0] || ARCHIVE_PRODUCTS[0],
       size: 'M',
       quantity: 1,
     },
@@ -165,11 +174,24 @@ export default function App() {
 
   const totalCartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
-  // Resolve current active product if route is 'product'
+  // Resolve current active product if route is 'product' from live products
   const activeProduct =
     route.type === 'product'
-      ? ARCHIVE_PRODUCTS.find((p) => p.id === route.productId) || ARCHIVE_PRODUCTS[0]
+      ? products.find((p) => p.id === route.productId) ||
+        ARCHIVE_PRODUCTS.find((p) => p.id === route.productId) ||
+        products[0] ||
+        ARCHIVE_PRODUCTS[0]
       : null;
+
+  // Render Admin Layout if route is admin
+  if (route.type === 'admin') {
+    return (
+      <AdminLayout
+        onBackToStorefront={() => navigateTo({ type: 'home' })}
+        onViewProductInStore={(p) => navigateTo({ type: 'product', productId: p.id })}
+      />
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#FFFFFF] text-[#000000] selection:bg-[#000000] selection:text-[#FFFFFF]">
@@ -194,6 +216,7 @@ export default function App() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
       />
 
@@ -218,6 +241,7 @@ export default function App() {
                 onQuickAdd={handleQuickAdd}
                 onToggleWishlist={handleToggleWishlist}
                 wishlistIds={wishlistIds}
+                products={products}
                 onOpenJournalArticle={(id) => {
                   const art = JOURNAL_ARTICLES.find((a) => a.id === id);
                   if (art) {
@@ -243,6 +267,9 @@ export default function App() {
             onQuickAdd={handleQuickAdd}
             onToggleWishlist={handleToggleWishlist}
             wishlistIds={wishlistIds}
+            products={products}
+            loading={productsLoading}
+            isLiveFromFirestore={isLiveFromFirestore}
           />
         )}
 
@@ -412,3 +439,14 @@ export default function App() {
     </div>
   );
 }
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <StorefrontDataProvider>
+        <StorefrontApp />
+      </StorefrontDataProvider>
+    </AuthProvider>
+  );
+}
+
