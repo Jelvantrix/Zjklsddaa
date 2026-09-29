@@ -135,36 +135,37 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
       <div className="relative w-full max-w-4xl bg-white border-l border-black h-full flex flex-col z-10 animate-slideLeft shadow-2xl overflow-hidden">
         {/* Top Header */}
-        <div className="p-4 sm:p-5 border-b border-black/10 flex items-center justify-between bg-white">
+        <div className="p-4 sm:p-5 border-b border-black/[0.08] flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-sm font-semibold tracking-wider bg-black text-white px-2 py-0.5">
+            <span className="font-mono text-sm font-semibold tracking-wider text-black">
               {formData.nr || formData.plateNumber}
             </span>
+            <span className="text-black/30">/</span>
             <h2 className="font-editorial text-xl sm:text-2xl font-normal">
               {formData.name.fi || 'Nimetön teos'}
             </h2>
-            <span className="text-[10px] font-mono uppercase px-2 py-0.5 border border-black/20">
-              {formData.status}
+            <span className="text-[10px] font-mono uppercase text-black/50 tracking-wider">
+              [{formData.status}]
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="px-4 py-2 bg-black text-white text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 hover:bg-black/80 transition-colors cursor-pointer disabled:opacity-50"
+              className="py-1 text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 text-black hover:opacity-60 underline underline-offset-4 font-semibold cursor-pointer disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isSaving ? 'Tallennetaan...' : 'Tallenna muutokset'}</span>
             </button>
-            <button onClick={onClose} className="p-2 text-black/50 hover:text-black cursor-pointer">
+            <button onClick={onClose} className="p-1 text-black/50 hover:text-black cursor-pointer">
               <X className="w-5 h-5 stroke-[1.5]" />
             </button>
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-black/15 bg-black/[0.02] overflow-x-auto no-scrollbar text-xs font-mono uppercase tracking-wider">
+        <div className="flex border-b border-black/[0.08] bg-white overflow-x-auto no-scrollbar text-xs font-mono uppercase tracking-wider">
           {[
             { id: 'basic', label: '1. Perustiedot', icon: Tag },
             { id: 'media', label: '2. Kuvat & Kohdistus', icon: ImageIcon },
@@ -178,9 +179,9 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-3 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer ${
+                className={`px-4 py-3 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer relative ${
                   activeTab === tab.id
-                    ? 'bg-white border-b-2 border-black font-semibold text-black'
+                    ? 'font-semibold text-black border-b-2 border-black'
                     : 'text-black/50 hover:text-black'
                 }`}
               >

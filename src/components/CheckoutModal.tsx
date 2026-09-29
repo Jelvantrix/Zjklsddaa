@@ -307,16 +307,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   {paymentMethod === 'verkkopankki' && (
                     <div className="mt-3.5 pt-3 border-t border-black/10">
                       <p className="text-[10.5px] sm:text-[11px] font-mono text-black/60 mb-2">{t.selectBank}</p>
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 sm:gap-2">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 pt-1">
                         {['OP', 'Nordea', 'Danske Bank', 'S-Pankki', 'Säästöpankki', 'Aktia', 'POP Pankki', 'Ålandsbanken'].map((bank) => (
                           <button
                             type="button"
                             key={bank}
                             onClick={() => setSelectedBank(bank)}
-                            className={`py-2 text-[10.5px] sm:text-[11px] font-mono border cursor-pointer ${
+                            className={`py-1 text-[11.5px] font-mono transition-colors cursor-pointer text-left ${
                               selectedBank === bank
-                                ? 'border-black bg-black text-white font-medium'
-                                : 'border-black/20 hover:border-black'
+                                ? 'text-black font-semibold border-b border-black'
+                                : 'text-black/50 hover:text-black'
                             }`}
                           >
                             {bank}

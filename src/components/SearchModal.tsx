@@ -73,13 +73,13 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-3 sm:mb-4 font-mono">
               {language === 'fi' ? 'SUOSITELTAVAT HAUT' : 'SUGGESTED SEARCHES'}
             </p>
-            <div className="flex flex-wrap gap-2 mb-8 sm:mb-12">
+            <div className="flex flex-wrap gap-4 sm:gap-6 mb-8 sm:mb-12">
               {suggestedQueries.map((item) => (
                 <button
                   type="button"
                   key={item}
                   onClick={() => setQuery(item)}
-                  className="px-3 py-1.5 text-xs font-sans border border-black/15 hover:border-black transition-colors cursor-pointer"
+                  className="text-xs font-mono uppercase tracking-wider text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer"
                 >
                   {item}
                 </button>

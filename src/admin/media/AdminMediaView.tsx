@@ -112,19 +112,19 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
     <div className="space-y-6">
       <div className="pb-4 border-b border-black/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-editorial text-3xl font-normal">Mediakirjasto & Kuva-arkisto</h1>
+          <h1 className="font-editorial text-3xl font-normal">Media Library</h1>
           <p className="text-xs font-mono text-black/50 mt-0.5">
-            Automaattinen WebP-pakkaus (max 2400px), resoluutioseuranta ja teossidokset.
+            Client-side Canvas WebP compression (max 2400px), asset resolution, and product usage tracking.
           </p>
         </div>
 
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isCompressing}
-          className="px-4 py-2 bg-black text-white hover:bg-black/80 text-xs font-mono uppercase tracking-wider flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          className="text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 text-black hover:opacity-60 underline underline-offset-4 cursor-pointer font-semibold"
         >
-          <UploadCloud className="w-4 h-4" />
-          <span>{isCompressing ? 'Pakataan WebP:ksi...' : 'Lataa uusi kuva'}</span>
+          <UploadCloud className="w-3.5 h-3.5" />
+          <span>{isCompressing ? 'Compressing WebP...' : 'Upload Images'}</span>
         </button>
         <input
           ref={fileInputRef}
@@ -138,16 +138,16 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
       {/* Dropzone Banner */}
       <div
         onClick={() => fileInputRef.current?.click()}
-        className="p-8 border-2 border-dashed border-black/20 hover:border-black bg-black/[0.015] hover:bg-black/[0.03] transition-all text-center cursor-pointer space-y-2 select-none"
+        className="p-8 border border-dashed border-black/30 hover:border-black bg-black/[0.015] hover:bg-black/[0.03] transition-all text-center cursor-pointer space-y-2 select-none"
       >
-        <div className="w-12 h-12 border border-black/20 mx-auto flex items-center justify-center bg-white">
+        <div className="w-10 h-10 border border-black/20 mx-auto flex items-center justify-center bg-white">
           <UploadCloud className="w-5 h-5 text-black/60" />
         </div>
         <div className="font-mono text-xs uppercase tracking-wider font-semibold">
-          Pudota kuvat tähän tai selaa tiedostoja
+          Drop studio images here or click to browse
         </div>
         <p className="text-[11px] font-mono text-black/40">
-          Kuvat skaalataan ja pakataan automaattisesti laitteistokiihdytetyllä Canvas WebP -muunnoksella.
+          Images are automatically resized and compressed client-side using hardware Canvas WebP export.
         </p>
       </div>
 
@@ -157,11 +157,11 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
           <div
             key={item.id}
             onClick={() => setSelectedMedia(item)}
-            className="border border-black/15 bg-white p-2.5 flex flex-col justify-between group hover:border-black transition-colors cursor-pointer"
+            className="border border-black/[0.08] bg-white p-2.5 flex flex-col justify-between group hover:border-black transition-colors cursor-pointer"
           >
             <div className="aspect-[3/4] border border-black/10 bg-black/5 overflow-hidden relative mb-2">
-              <img src={item.url} alt="" className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" />
-              <div className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-mono px-1 py-0.5">
+              <img src={item.url} alt="" className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 grayscale" />
+              <div className="absolute bottom-1 right-1 bg-black text-white text-[9px] font-mono px-1 py-0.5">
                 {item.dimensions}
               </div>
             </div>
@@ -170,7 +170,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
               <div className="font-mono text-[11px] font-semibold truncate text-black">{item.filename}</div>
               <div className="flex items-center justify-between text-[10px] font-mono text-black/50">
                 <span>{item.size}</span>
-                <span className="text-black font-medium">{item.usageCount} teoksessa</span>
+                <span className="text-black font-medium">{item.usageCount} products</span>
               </div>
             </div>
           </div>
@@ -181,43 +181,43 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
       {selectedMedia && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div onClick={() => setSelectedMedia(null)} className="fixed inset-0 bg-black/60" />
-          <div className="relative w-full max-w-lg bg-white border border-black p-6 shadow-2xl z-10 font-mono text-xs space-y-4">
+          <div className="relative w-full max-w-lg bg-white border border-black p-6 z-10 font-mono text-xs space-y-4">
             <div className="flex items-center justify-between border-b border-black/10 pb-3">
-              <span className="font-semibold uppercase tracking-wider">Kuvan tiedot</span>
+              <span className="font-semibold uppercase tracking-wider">Asset Details</span>
               <button onClick={() => setSelectedMedia(null)} className="cursor-pointer text-black/50 hover:text-black">
                 ✕
               </button>
             </div>
 
             <div className="aspect-[3/4] max-h-60 border border-black/20 overflow-hidden mx-auto bg-black/5">
-              <img src={selectedMedia.url} alt="" className="w-full h-full object-cover" />
+              <img src={selectedMedia.url} alt="" className="w-full h-full object-cover grayscale" />
             </div>
 
             <div className="space-y-2 text-[11px] divide-y divide-black/10">
               <div className="flex justify-between py-1">
-                <span className="text-black/50">Tiedostonimi:</span>
+                <span className="text-black/50">Filename:</span>
                 <span className="font-semibold truncate max-w-[250px]">{selectedMedia.filename}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-black/50">Resoluutio:</span>
+                <span className="text-black/50">Dimensions:</span>
                 <span>{selectedMedia.dimensions}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-black/50">Tiedostokoko:</span>
+                <span className="text-black/50">Filesize:</span>
                 <span>{selectedMedia.size}</span>
               </div>
               <div className="flex justify-between py-1">
-                <span className="text-black/50">Käytössä teoksissa:</span>
-                <span>{selectedMedia.productsUsedIn.join(', ') || 'Ei sidottu'}</span>
+                <span className="text-black/50">Linked in products:</span>
+                <span>{selectedMedia.productsUsedIn.join(', ') || 'Not linked'}</span>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedMedia(null)}
-                className="px-4 py-1.5 bg-black text-white hover:bg-black/80 uppercase text-[10px] tracking-wider font-semibold cursor-pointer"
+                className="text-xs font-mono uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer font-semibold"
               >
-                Sulje
+                Close
               </button>
             </div>
           </div>

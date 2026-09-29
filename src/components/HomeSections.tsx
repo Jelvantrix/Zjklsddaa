@@ -194,7 +194,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           {/* Miehet */}
           <div
             onClick={() => onSelectCategory('miehet')}
-            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift lg:mt-10"
+            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift"
           >
             <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] gradient-overlay relative">
               <FashionImage
@@ -251,7 +251,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           {/* Kokoelmat */}
           <div
             onClick={() => onSelectCategory('kokoelmat')}
-            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift lg:-mt-10"
+            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift"
           >
             <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[16/11] gradient-overlay relative">
               <FashionImage
@@ -290,22 +290,22 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             </h2>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               type="button"
               onClick={() => scrollRail('left')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
+              className="p-1.5 text-black/50 hover:text-black transition-colors cursor-pointer active:scale-90 flex items-center gap-1 text-xs font-mono"
               aria-label="Vieritä vasemmalle"
             >
-              <ChevronLeft className="w-4 h-4 stroke-[1.5]" />
+              <ChevronLeft className="w-5 h-5 stroke-[1.2]" />
             </button>
             <button
               type="button"
               onClick={() => scrollRail('right')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
+              className="p-1.5 text-black/50 hover:text-black transition-colors cursor-pointer active:scale-90 flex items-center gap-1 text-xs font-mono"
               aria-label="Vieritä oikealle"
             >
-              <ChevronRight className="w-4 h-4 stroke-[1.5]" />
+              <ChevronRight className="w-5 h-5 stroke-[1.2]" />
             </button>
           </div>
         </div>
@@ -344,9 +344,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                     imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   />
 
-                  {/* Quick-add size strip */}
-                  <div className="hidden sm:flex absolute bottom-0 left-0 right-0 glass border-t border-black/[0.08] translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2 items-center justify-center gap-1.5 z-10">
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-black/50 mr-1">
+                  {/* Quick-add size strip: Pure text links, zero boxes */}
+                  <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10">
+                    <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 mr-1">
                       {language === 'fi' ? 'Koko:' : 'Size:'}
                     </span>
                     {product.sizes.map((sz) => (
@@ -357,7 +357,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                           e.stopPropagation();
                           onQuickAdd(product, sz);
                         }}
-                        className="px-2 py-1 text-[10px] font-mono border border-black/20 hover:border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                        className="text-[11px] font-mono text-black/70 hover:text-black hover:underline underline-offset-4 cursor-pointer px-1 py-0.5"
                       >
                         {sz}
                       </button>
@@ -396,13 +396,15 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         />
         {/* Cinematic gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15 pointer-events-none" />
-        <div className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 z-10">
+        {/* Lookbook link: pure text with refined underline */}
+        <div className="absolute bottom-6 sm:bottom-10 right-4 sm:right-10 z-10">
           <button
             type="button"
             onClick={() => onSelectCategory('kokoelmat')}
-            className="px-3.5 sm:px-4 py-2 bg-white/90 backdrop-blur-md border border-white/20 text-xs font-mono uppercase tracking-[0.16em] hover:bg-white hover:shadow-lg transition-all duration-300 cursor-pointer"
+            className="text-white text-xs font-mono uppercase tracking-[0.22em] hover:opacity-75 transition-opacity underline underline-offset-8 decoration-1 cursor-pointer flex items-center gap-2"
           >
-            {t.lookbook.link}
+            <span>{t.lookbook.link}</span>
+            <span>→</span>
           </button>
         </div>
         {/* Floating caption */}
@@ -578,24 +580,25 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           </p>
 
           {!waitlistSubmitted ? (
-            <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 max-w-md mx-auto">
+            <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row items-center gap-4 max-w-md mx-auto">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.waitlist.placeholder}
-                className="flex-1 px-4 py-3 border border-black/[0.15] text-xs font-sans placeholder:text-black/35 focus:outline-none focus:border-black focus:shadow-sm transition-all"
+                className="w-full sm:flex-1 py-2.5 px-1 border-b border-black text-xs font-sans placeholder:text-black/35 focus:outline-none focus:border-black bg-transparent transition-all"
               />
               <button
                 type="submit"
-                className="px-8 py-3 text-xs uppercase tracking-[0.18em] btn-primary font-medium cursor-pointer"
+                className="py-2.5 px-2 text-xs uppercase tracking-[0.22em] font-medium text-black hover:opacity-60 transition-opacity border-b border-black whitespace-nowrap cursor-pointer flex items-center gap-1.5 shrink-0"
               >
-                {t.waitlist.button}
+                <span>{t.waitlist.button}</span>
+                <span>→</span>
               </button>
             </form>
           ) : (
-            <div className="p-4 border border-black flex items-center justify-center gap-2 max-w-md mx-auto animate-fadeIn">
+            <div className="py-4 border-b border-black flex items-center justify-center gap-2 max-w-md mx-auto animate-fadeIn text-black">
               <Check className="w-4 h-4" />
               <span className="text-xs font-sans tracking-wide">
                 {t.waitlist.success}

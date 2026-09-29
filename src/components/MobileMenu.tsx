@@ -106,13 +106,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             ))}
 
-            <div className="pt-4">
+            <div className="pt-4 flex items-center justify-between">
               <button
+                type="button"
                 onClick={() => {
                   onNavigateSitemap();
                   onClose();
                 }}
-                className="text-xs font-mono uppercase tracking-[0.2em] text-black underline underline-offset-4"
+                className="text-xs font-mono uppercase tracking-[0.2em] text-black underline underline-offset-4 cursor-pointer"
               >
                 {t.sitemap}
               </button>

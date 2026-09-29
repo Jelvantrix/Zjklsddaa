@@ -120,12 +120,13 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                     {formatPrice(product.price)}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap gap-1">
+                  <div className="mt-2.5 flex flex-wrap gap-2">
                     {product.sizes.map((sz) => (
                       <button
+                        type="button"
                         key={sz}
                         onClick={() => onQuickAdd(product, sz)}
-                        className="px-2 py-0.5 text-[10px] font-mono border border-black/20 hover:border-black hover:bg-black hover:text-white transition-colors"
+                        className="text-[10.5px] font-mono text-black/60 hover:text-black hover:underline underline-offset-2 transition-colors cursor-pointer"
                       >
                         +{sz}
                       </button>

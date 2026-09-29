@@ -62,17 +62,40 @@ function StorefrontApp() {
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const homeSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // Browser History & Popstate integration
+  // Browser History, Hash & Popstate integration
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       if (e.state && e.state.route) {
         setRoute(e.state.route);
+      } else if (window.location.hash === '#admin' || window.location.pathname.startsWith('/admin')) {
+        setRoute({ type: 'admin' });
       } else {
         setRoute({ type: 'home' });
       }
     };
+
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setRoute({ type: 'admin' });
+      }
+    };
+
+    // Keyboard shortcut for studio admin: Cmd/Ctrl + Shift + A
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        setRoute((prev) => (prev.type === 'admin' ? { type: 'home' } : { type: 'admin' }));
+      }
+    };
+
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const navigateTo = (newRoute: PageRoute, addToHistory = true) => {
@@ -216,8 +239,9 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
+        currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
+        currentRouteType={route.type}
       />
 
       {/* 4. MULTI-PAGE VIEW ROUTER (50+ Pages) */}

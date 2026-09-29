@@ -20,8 +20,9 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
-  onNavigateAdmin?: () => void;
   isHeroVisible: boolean;
+  currentCategory?: string;
+  currentRouteType?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -38,8 +39,9 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
-  onNavigateAdmin,
   isHeroVisible,
+  currentCategory,
+  currentRouteType,
 }) => {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -53,13 +55,13 @@ export const Header: React.FC<HeaderProps> = ({
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
 
-      if (currentScrollY > 60) {
+      if (currentScrollY > 50) {
         setIsScrolled(true);
       } else {
         setIsScrolled(false);
       }
 
-      if (currentScrollY > 150 && currentScrollY > lastScrollY && !hoveredNav) {
+      if (currentScrollY > 140 && currentScrollY > lastScrollY && !hoveredNav) {
         setIsHidden(true); // scrolling down
       } else {
         setIsHidden(false); // scrolling up
@@ -81,7 +83,6 @@ export const Header: React.FC<HeaderProps> = ({
     { key: 'lookbook', label: t.nav.lookbook, subKey: null },
   ];
 
-  // When hero is visible and page is at top, header is transparent with difference mode
   const isOverHeroAtTop = isHeroVisible && !isScrolled;
 
   return (
@@ -92,78 +93,66 @@ export const Header: React.FC<HeaderProps> = ({
           isHidden ? '-translate-y-full' : 'translate-y-0'
         } ${
           isOverHeroAtTop
-            ? 'bg-transparent text-black'
-            : 'glass text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.04)]'
+            ? 'bg-transparent text-black border-transparent shadow-none'
+            : 'bg-white/95 backdrop-blur-md text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.03)]'
         }`}
       >
-        {/* ROW 1: BRAND LOGO (CENTER), MENU (LEFT), TRANSLATION (RIGHT) */}
-        <div className="relative max-w-[1720px] mx-auto px-3 sm:px-6 md:px-10 h-14 sm:h-16 md:h-20 flex items-center justify-between">
-          {/* LEFT: Category Navigation (Desktop) & Hamburger (Mobile / Tablet) */}
-          <div className="flex items-center gap-2 sm:gap-4 md:gap-6 z-20">
+        {/* ROW 1: BRAND LOGO (ABSOLUTELY CENTERED) & UTILITY ACTIONS (BALANCED) */}
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 h-16 sm:h-20 flex items-center justify-between relative">
+          {/* LEFT: Menu & Search */}
+          <div className="flex items-center justify-start gap-3 sm:gap-4 md:gap-6 z-20">
+            {/* Mobile / Tablet Menu */}
             <button
+              type="button"
               onClick={onOpenMobileMenu}
-              className="lg:hidden p-2 -ml-2 text-inherit hover:opacity-70 transition-opacity cursor-pointer shrink-0 flex items-center gap-1.5"
+              className="lg:hidden py-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label="Valikko"
             >
-              <Menu className="w-5 h-5 stroke-[1.5]" />
-              <span className="hidden sm:inline text-[11px] uppercase tracking-[0.16em] font-sans font-medium">
+              <Menu className="w-4 h-4 stroke-[1.5]" />
+              <span className="text-[11px] uppercase tracking-[0.20em] font-sans font-medium hidden xs:inline">
                 {language === 'fi' ? 'Valikko' : language === 'sv' ? 'Meny' : 'Menu'}
               </span>
             </button>
 
-            <nav className="hidden lg:flex items-center gap-5 xl:gap-7 text-[11.5px] xl:text-[12px] uppercase tracking-[0.14em] font-sans font-medium">
-              {navItems.map((item) => (
-                <button
-                  key={item.key}
-                  onMouseEnter={() => setHoveredNav(item.subKey)}
-                  onClick={() => {
-                    setHoveredNav(null);
-                    if (item.key === 'lookbook') {
-                      onNavigateLookbook();
-                    } else {
-                      onSelectCategory(item.key === 'uutuudet' ? 'all' : item.key);
-                    }
-                  }}
-                  className="relative py-2 hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer group/link"
-                >
-                  <span>{item.label}</span>
-                  <span className="absolute bottom-0 left-0 w-full h-[1px] bg-current scale-x-0 group-hover/link:scale-x-100 transition-transform duration-400 origin-left" />
-                </button>
-              ))}
-            </nav>
+            {/* Search: Available on Phone, Tablet and Desktop */}
+            <button
+              type="button"
+              onClick={onOpenSearch}
+              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0 group/search"
+              aria-label={t.nav.search}
+            >
+              <Search className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span className="hidden sm:inline text-[11px] md:text-[11.5px] uppercase tracking-[0.20em] font-sans font-medium">
+                {t.nav.search}
+              </span>
+            </button>
           </div>
 
-          {/* CENTER: Exact Brand Logo (ABSOLUTELY CENTERED - ZERO OVERLAPPING) */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-auto flex items-center justify-center">
+          {/* CENTER: Exact Brand Logo (ABSOLUTELY GEOMETRICALLY CENTERED ON PHONE, TABLET & DESKTOP) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto z-10 flex items-center justify-center">
             <button
+              type="button"
               onClick={onNavigateHome}
-              className="cursor-pointer group focus-visible:outline-none inline-flex items-center justify-center"
+              className="cursor-pointer group focus-visible:outline-none inline-flex items-center justify-center py-1"
               aria-label="Palaa etusivulle"
             >
               <BrandLogo size="md" invert={false} />
             </button>
           </div>
 
-          {/* RIGHT: Desktop Actions & 1-Click Translation */}
-          <div className="flex items-center justify-end gap-1.5 sm:gap-3 md:gap-4 z-20">
-            {/* Desktop-only Action items (Search, Wishlist, Account, Cart) */}
+          {/* RIGHT: Pure Typographic Actions & Translation */}
+          <div className="flex items-center justify-end gap-3 sm:gap-4 md:gap-6 z-20">
+            {/* Wishlist Trigger */}
             <button
-              onClick={onOpenSearch}
-              className="hidden lg:flex p-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer items-center gap-1.5 shrink-0"
-              aria-label={t.nav.search}
-            >
-              <Search className="w-4 h-4 stroke-[1.5]" />
-              <span className="hidden 2xl:inline text-[11px] uppercase tracking-[0.14em]">
-                {t.nav.search}
-              </span>
-            </button>
-
-            <button
+              type="button"
               onClick={onOpenWishlist}
-              className="relative p-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden lg:flex items-center gap-1.5 shrink-0"
+              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.wishlist}
             >
-              <Heart className="w-4 h-4 stroke-[1.5]" />
+              <Heart className={`w-3.5 h-3.5 stroke-[1.5] ${wishlistCount > 0 ? 'fill-current' : ''}`} />
+              <span className="hidden md:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
+                {t.nav.wishlist}
+              </span>
               {wishlistCount > 0 && (
                 <span className="text-[10px] font-mono leading-none">
                   ({wishlistCount})
@@ -171,37 +160,37 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
 
+            {/* Account (Tablet & Desktop) */}
             <button
+              type="button"
               onClick={onOpenAccount}
-              className="p-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden lg:flex items-center gap-1.5 shrink-0"
+              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden sm:flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.account}
             >
-              <User className="w-4 h-4 stroke-[1.5]" />
+              <User className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span className="hidden xl:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
+                {t.nav.account}
+              </span>
             </button>
 
-            {onNavigateAdmin && (
-              <button
-                onClick={onNavigateAdmin}
-                className="hidden lg:flex px-2 py-0.5 border border-current hover:opacity-70 text-[10px] font-mono uppercase tracking-wider items-center gap-1 cursor-pointer transition-opacity shrink-0"
-                title="Studio Ylläpito (Admin)"
-              >
-                <span>Admin</span>
-              </button>
-            )}
-
+            {/* Shopping Bag */}
             <button
+              type="button"
               onClick={onOpenCart}
-              className="relative p-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden lg:flex items-center gap-1 shrink-0"
+              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.bag}
             >
-              <ShoppingBag className="w-4 h-4 stroke-[1.5]" />
+              <ShoppingBag className="w-3.5 h-3.5 stroke-[1.5]" />
+              <span className="hidden md:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
+                {t.nav.bag}
+              </span>
               <span className="text-[11px] font-mono leading-none font-medium">
                 ({cartCount})
               </span>
             </button>
 
-            {/* 1-CLICK INSTANT GLOBAL TRANSLATION SWITCHER (fi / eng / sv) */}
-            <div className="pl-1 shrink-0">
+            {/* 1-Click Translation Switcher (Tablet & Desktop; available in menu on small phones) */}
+            <div className="pl-1 shrink-0 hidden sm:block">
               <TranslationBar
                 language={language}
                 onSetLanguage={onSetLanguage}
@@ -211,65 +200,56 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* ROW 2: LOWER OF NAVBAR (Mobile & Tablet dedicated utility strip) */}
-        {/* Gives Search, Liked/Favorites, and Shopping Bag their own perfect, spacious row */}
+        {/* ROW 2: DESKTOP CATEGORY NAVIGATION STRIP (PERFECT SPACING, SIZING, ALIGNMENT) */}
         <div
-          className={`lg:hidden transition-colors duration-300 border-t ${
+          className={`hidden lg:block transition-colors duration-300 ${
             isOverHeroAtTop
-              ? 'border-black/10 bg-transparent'
-              : 'border-black/[0.06] bg-black/[0.01]'
-          } px-3 sm:px-6 md:px-10 py-1.5 sm:py-2 flex items-center justify-between gap-2 sm:gap-4`}
+              ? 'border-t border-black/[0.08] bg-transparent'
+              : 'border-t border-black/[0.05] bg-white/95 backdrop-blur-md'
+          }`}
         >
-          {/* 1. SEARCH TRIGGER BUTTON */}
-          <button
-            type="button"
-            onClick={onOpenSearch}
-            className="flex-1 max-w-[190px] sm:max-w-xs flex items-center gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 bg-black/[0.04] hover:bg-black/[0.08] active:bg-black/[0.12] border border-black/10 transition-colors text-left group cursor-pointer"
-            aria-label={t.nav.search}
-          >
-            <Search className="w-3.5 h-3.5 stroke-[1.5] text-black/60 group-hover:text-black shrink-0" />
-            <span className="text-[10.5px] sm:text-[11.5px] uppercase tracking-wider font-sans text-black/70 group-hover:text-black truncate">
-              {t.nav.search}...
-            </span>
-          </button>
+          <div className="max-w-[1720px] mx-auto px-6 md:px-10 h-11 flex items-center justify-center">
+            <nav
+              className="flex items-center justify-center gap-8 xl:gap-12 2xl:gap-16"
+              aria-label="Päävalikko"
+            >
+              {navItems.map((item) => {
+                const isActive =
+                  (item.key === 'lookbook' && currentRouteType === 'lookbook') ||
+                  (currentRouteType === 'archive' &&
+                    (currentCategory === item.key || (item.key === 'uutuudet' && currentCategory === 'all')));
 
-          {/* 2. FAV / LIKED BUTTON WITH COUNTER */}
-          <button
-            type="button"
-            onClick={onOpenWishlist}
-            className="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 sm:py-1.5 hover:bg-black/[0.05] active:bg-black/[0.1] border border-transparent hover:border-black/10 transition-colors cursor-pointer shrink-0 text-black"
-            aria-label={t.nav.wishlist}
-          >
-            <Heart
-              className={`w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[1.5] ${
-                wishlistCount > 0 ? 'fill-black' : ''
-              }`}
-            />
-            <span className="text-[10.5px] sm:text-[11.5px] uppercase tracking-wider font-sans font-medium">
-              {language === 'fi' ? 'Suosikit' : language === 'sv' ? 'Favoriter' : 'Liked'}
-            </span>
-            {wishlistCount > 0 && (
-              <span className="font-mono text-[9.5px] sm:text-[10.5px] font-semibold text-black/75">
-                ({wishlistCount})
-              </span>
-            )}
-          </button>
-
-          {/* 3. SHOPPING BAG BUTTON */}
-          <button
-            type="button"
-            onClick={onOpenCart}
-            className="flex items-center gap-1.5 px-3 sm:px-4 py-1 sm:py-1.5 bg-black text-white hover:bg-neutral-800 active:bg-neutral-900 transition-colors cursor-pointer shrink-0"
-            aria-label={t.nav.bag}
-          >
-            <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[1.5]" />
-            <span className="text-[10.5px] sm:text-[11.5px] uppercase tracking-wider font-sans font-medium">
-              {language === 'fi' ? 'Kori' : language === 'sv' ? 'Korg' : 'Bag'}
-            </span>
-            <span className="font-mono text-[9.5px] sm:text-[10.5px] font-bold">
-              ({cartCount})
-            </span>
-          </button>
+                return (
+                  <button
+                    type="button"
+                    key={item.key}
+                    onMouseEnter={() => setHoveredNav(item.subKey)}
+                    onClick={() => {
+                      setHoveredNav(null);
+                      if (item.key === 'lookbook') {
+                        onNavigateLookbook();
+                      } else {
+                        onSelectCategory(item.key === 'uutuudet' ? 'all' : item.key);
+                      }
+                    }}
+                    className={`relative py-2.5 px-3 text-[12px] xl:text-[12.5px] uppercase tracking-[0.22em] xl:tracking-[0.24em] font-sans font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap group/link ${
+                      isActive ? 'text-black' : 'text-black/75 hover:text-black'
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {/* Animated Hairline Underline on Hover & Active State */}
+                    <span
+                      className={`absolute bottom-0.5 left-3 right-3 h-[1px] bg-black transition-all duration-300 origin-center ${
+                        isActive
+                          ? 'scale-x-100 opacity-100'
+                          : 'scale-x-0 opacity-0 group-hover/link:scale-x-100 group-hover/link:opacity-100'
+                      }`}
+                    />
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
         </div>
 
         {/* MEGA MENU: Desktop Hover Drawer */}

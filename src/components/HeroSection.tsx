@@ -321,19 +321,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
         ))}
       </div>
 
-      {/* Manual Slide Navigation Arrows (Desktop, Tablet, Mobile) */}
-      <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-2 sm:px-6 md:px-10 pointer-events-none">
+      {/* Manual Slide Navigation Arrows: Pure text/icon affordances, zero boxes or borders */}
+      <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 sm:px-6 md:px-10 pointer-events-none">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             prevSlide();
           }}
-          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/50 hover:bg-white text-black backdrop-blur-md border border-black/[0.06] shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-center active:scale-90"
+          className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
           aria-label="Edellinen kuva tai video (Vieritä oikealle)"
           title="Edellinen (←)"
         >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.5]" />
+          <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
         </button>
         <button
           type="button"
@@ -341,22 +341,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             e.stopPropagation();
             nextSlide();
           }}
-          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/50 hover:bg-white text-black backdrop-blur-md border border-black/[0.06] shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-center active:scale-90"
+          className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
           aria-label="Seuraava kuva tai video (Vieritä vasemmalle)"
           title="Seuraava (→)"
         >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.5]" />
+          <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
         </button>
       </div>
 
-      {/* Bottom Controls Bar: Slide Counter, Media Type indicator & Add Media Tool */}
-      <div className="absolute bottom-6 sm:bottom-8 left-3 sm:left-8 md:left-10 z-20 flex items-center gap-2 sm:gap-3 text-black text-[11px] sm:text-xs font-mono">
-        <div className="px-2.5 sm:px-3 py-1 sm:py-1.5 glass border border-black/[0.08] flex items-center gap-1.5 sm:gap-2 shadow-sm">
-          <span className="font-medium">0{currentIndex + 1}</span>
-          <span className="opacity-30">/</span>
-          <span className="opacity-60">0{slides.length}</span>
-          <span className="hidden sm:inline opacity-30">·</span>
-          <span className="hidden sm:inline uppercase text-[10px] tracking-widest text-black/75">
+      {/* Bottom Controls: Slide Counter & Add Media (Pure typography, no boxes or borders) */}
+      <div className="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 md:left-10 z-20 flex items-center gap-3 sm:gap-4 text-black text-[11px] sm:text-xs font-mono">
+        <div className="flex items-center gap-2 py-1">
+          <span className="font-semibold text-black">0{currentIndex + 1}</span>
+          <span className="text-black/30">/</span>
+          <span className="text-black/50">0{slides.length}</span>
+          <span className="hidden sm:inline text-black/30">·</span>
+          <span className="hidden sm:inline uppercase text-[10px] tracking-[0.2em] text-black/60">
             {currentSlide.type === 'video' ? 'VIDEO' : 'STUDIO FOTO'}
           </span>
         </div>
@@ -367,17 +367,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             e.stopPropagation();
             setIsAddModalOpen(true);
           }}
-          className="p-1.5 sm:p-2 glass text-black hover:text-white hover:bg-black border border-black/[0.08] shadow-sm transition-all duration-300 cursor-pointer"
+          className="flex items-center gap-1.5 py-1 text-black/50 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer text-[10.5px] uppercase tracking-wider"
           title="Lisää uusi kuva tai video hero-karuselliin"
           aria-label="Lisää uusi kuva tai video"
         >
-          <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[1.5]" />
+          <Plus className="w-3.5 h-3.5 stroke-[1.5]" />
+          <span className="hidden sm:inline">Lisää</span>
         </button>
       </div>
 
       {/* Subtle swipe gesture hint on mobile/tablet */}
-      <div className="md:hidden absolute bottom-6 right-3 z-20 font-mono text-[9px] uppercase tracking-wider text-black/40 bg-white/60 backdrop-blur-sm px-2 py-1 border border-black/10 pointer-events-none">
-        Pyyhkäise ← →
+      <div className="md:hidden absolute bottom-6 right-4 z-20 font-mono text-[9.5px] uppercase tracking-widest text-black/40 pointer-events-none">
+        ← Pyyhkäise →
       </div>
 
       {/* Tiny 1px animated vertical scroll cue at bottom centre - NO WORDS */}

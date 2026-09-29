@@ -134,8 +134,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               <div className="absolute top-4 left-4 font-mono text-[10px] text-black/40 tracking-wider">
                 {crop.label}
               </div>
-              <div className="absolute bottom-4 right-4 p-2 bg-white/80 backdrop-blur-sm border border-black/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Maximize2 className="w-3.5 h-3.5 stroke-[1.5]" />
+              <div className="absolute bottom-4 right-4 p-1 text-black/60 hover:text-black opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                <Maximize2 className="w-4 h-4 stroke-[1.5]" />
               </div>
             </div>
           ))}
@@ -156,21 +156,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               aspectRatio="auto"
               className="w-full h-full"
             />
-            {/* Mobile swipe affordance indicator */}
-            <div className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm px-2 py-0.5 text-[9px] font-mono text-black/60 border border-black/10">
+            {/* Mobile swipe indicator */}
+            <div className="absolute top-3 left-3 text-[10px] font-mono text-black/60 tracking-wider">
               0{activeMobileImageIdx + 1} / 0{galleryCrops.length} · {galleryCrops[activeMobileImageIdx].label}
             </div>
           </div>
 
           {/* Dots Indicator */}
-          <div className="flex items-center justify-center gap-1.5 sm:gap-2 mt-3 sm:mt-4">
+          <div className="flex items-center justify-center gap-2 mt-3 sm:mt-4">
             {galleryCrops.map((_, i) => (
               <button
                 type="button"
                 key={i}
                 onClick={() => setActiveMobileImageIdx(i)}
-                className={`h-1.5 transition-all cursor-pointer ${
-                  activeMobileImageIdx === i ? 'bg-black w-6' : 'bg-black/20 w-2 hover:bg-black/40'
+                className={`h-0.5 transition-all cursor-pointer ${
+                  activeMobileImageIdx === i ? 'bg-black w-6' : 'bg-black/20 w-3 hover:bg-black/40'
                 }`}
                 aria-label={`Siirry kuvaan ${i + 1}`}
               />
@@ -221,13 +221,13 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
             {/* Limited Stock Note */}
             {product.isLimited && (
-              <div className="py-2 px-3 bg-black/5 border-l-2 border-black flex items-center justify-between text-xs font-mono">
-                <span>{t.archive.limited}</span>
-                <span>{t.archive.stockLeft.replace('{count}', product.stock.toString())}</span>
+              <div className="py-2 border-b border-black/10 flex items-center justify-between text-xs font-mono">
+                <span className="uppercase tracking-wider text-black/60">{t.archive.limited}</span>
+                <span className="text-black/80">{t.archive.stockLeft.replace('{count}', product.stock.toString())}</span>
               </div>
             )}
 
-            {/* Size Selector (Square boxes) */}
+            {/* Size Selector: Pure typography without box enclosures */}
             <div>
               <div className="flex items-center justify-between mb-2 sm:mb-3">
                 <span className="font-mono text-xs uppercase tracking-wider text-black/60">
@@ -242,16 +242,16 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                 </button>
               </div>
 
-              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-2.5">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-1">
                 {product.sizes.map((sz) => (
                   <button
                     type="button"
                     key={sz}
                     onClick={() => setSelectedSize(sz)}
-                    className={`h-11 sm:h-12 border text-xs font-mono flex items-center justify-center transition-colors cursor-pointer ${
+                    className={`py-1 text-sm font-mono tracking-wider transition-colors cursor-pointer ${
                       selectedSize === sz
-                        ? 'border-black bg-black text-white font-medium'
-                        : 'border-black/20 hover:border-black text-black'
+                        ? 'text-black font-semibold border-b-2 border-black'
+                        : 'text-black/40 hover:text-black'
                     }`}
                   >
                     {sz}
@@ -353,7 +353,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
       </div>
 
       {/* MOBILE STICKY ADD-TO-BAG BAR (< 1024px) */}
-      <div className="lg:hidden fixed bottom-[49px] md:bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-black/10 p-2.5 sm:p-3 flex items-center justify-between gap-3 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-md border-t border-black/10 py-3 px-4 sm:px-6 flex items-center justify-between gap-4">
         <div>
           <span className="font-mono text-xs block font-medium">{formatPrice(product.price)}</span>
           <span className="font-mono text-[9.5px] text-black/50">Koko: {selectedSize}</span>
@@ -361,7 +361,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
         <button
           type="button"
           onClick={handleAdd}
-          className="flex-1 py-2.5 sm:py-3 text-xs font-mono uppercase tracking-wider btn-primary cursor-pointer active:scale-98 transition-transform"
+          className="py-1.5 px-3 text-xs font-mono uppercase tracking-[0.2em] font-medium text-black border-b border-black cursor-pointer active:opacity-60 transition-opacity"
         >
           {isAddedFeedback ? t.pdp.addedToCart : t.pdp.addToCart}
         </button>
