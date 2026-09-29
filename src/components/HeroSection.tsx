@@ -329,7 +329,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             e.stopPropagation();
             prevSlide();
           }}
-          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/60 hover:bg-white text-black backdrop-blur-md border border-black/10 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center active:scale-90"
+          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/50 hover:bg-white text-black backdrop-blur-md border border-black/[0.06] shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-center active:scale-90"
           aria-label="Edellinen kuva tai video (Vieritä oikealle)"
           title="Edellinen (←)"
         >
@@ -341,7 +341,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             e.stopPropagation();
             nextSlide();
           }}
-          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/60 hover:bg-white text-black backdrop-blur-md border border-black/10 shadow-sm transition-all duration-200 cursor-pointer flex items-center justify-center active:scale-90"
+          className="pointer-events-auto w-8 h-8 sm:w-10 sm:h-10 bg-white/50 hover:bg-white text-black backdrop-blur-md border border-black/[0.06] shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer flex items-center justify-center active:scale-90"
           aria-label="Seuraava kuva tai video (Vieritä vasemmalle)"
           title="Seuraava (→)"
         >
@@ -351,7 +351,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
 
       {/* Bottom Controls Bar: Slide Counter, Media Type indicator & Add Media Tool */}
       <div className="absolute bottom-6 sm:bottom-8 left-3 sm:left-8 md:left-10 z-20 flex items-center gap-2 sm:gap-3 text-black text-[11px] sm:text-xs font-mono">
-        <div className="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-white/80 backdrop-blur-md border border-black/15 flex items-center gap-1.5 sm:gap-2 shadow-sm">
+        <div className="px-2.5 sm:px-3 py-1 sm:py-1.5 glass border border-black/[0.08] flex items-center gap-1.5 sm:gap-2 shadow-sm">
           <span className="font-medium">0{currentIndex + 1}</span>
           <span className="opacity-30">/</span>
           <span className="opacity-60">0{slides.length}</span>
@@ -367,7 +367,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             e.stopPropagation();
             setIsAddModalOpen(true);
           }}
-          className="p-1.5 sm:p-2 bg-white/80 hover:bg-black text-black hover:text-white backdrop-blur-md border border-black/15 shadow-sm transition-colors cursor-pointer"
+          className="p-1.5 sm:p-2 glass text-black hover:text-white hover:bg-black border border-black/[0.08] shadow-sm transition-all duration-300 cursor-pointer"
           title="Lisää uusi kuva tai video hero-karuselliin"
           aria-label="Lisää uusi kuva tai video"
         >

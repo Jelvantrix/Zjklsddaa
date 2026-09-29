@@ -31,11 +31,13 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   return (
-    <footer className="w-full bg-[#FFFFFF] text-[#000000] border-t border-black/10 select-none pb-8 lg:pb-0">
+    <footer className="w-full bg-[#FFFFFF] text-[#000000] border-t border-black/[0.06] select-none pb-8 lg:pb-0 relative">
       {/* Top Section: Large Exact Brand Logo */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-16 md:py-20 border-b border-black/10 flex flex-col items-center justify-center text-center">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-16 md:py-20 border-b border-black/[0.06] flex flex-col items-center justify-center text-center relative">
+        {/* Subtle radial glow behind logo for depth */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03] bg-[radial-gradient(circle_at_50%_50%,black,transparent_50%)]" />
         <BrandLogo size="lg" />
-        <span className="mt-3 sm:mt-4 font-mono text-[9.5px] sm:text-[10.5px] tracking-[0.25em] sm:tracking-[0.3em] uppercase text-black/40">
+        <span className="mt-3 sm:mt-4 font-mono text-[9.5px] sm:text-[10.5px] tracking-[0.25em] sm:tracking-[0.3em] uppercase text-black/40 relative">
           HELSINKI · PORTO · EST. 2026
         </span>
       </div>
@@ -286,7 +288,7 @@ export const Footer: React.FC<FooterProps> = ({
       </div>
 
       {/* Bottom Bar: Payment Icons, 1-Click Translation & Country, Copyright */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 sm:py-8 border-t border-black/10 flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 sm:py-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
         {/* Payment Icons */}
         <div className="flex items-center w-full md:w-auto justify-center md:justify-start">
           <PaymentIcons />

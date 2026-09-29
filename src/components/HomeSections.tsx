@@ -10,6 +10,7 @@ import {
 import { FashionImage } from './FashionImage';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { joinWaitlist } from '../firebase/dbService';
+import { useReveal } from '../hooks/useReveal';
 
 interface HomeSectionsProps {
   language: Language;
@@ -39,7 +40,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
 
   const liveProducts = products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
 
-  // Waitlist form state
   const [email, setEmail] = useState('');
   const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
 
@@ -58,22 +58,48 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
     }
   };
 
+  // Scroll reveal refs
+  const dropReveal = useReveal();
+  const mosaicReveal = useReveal({ stagger: true });
+  const featuredReveal = useReveal();
+  const lookbookReveal = useReveal();
+  const craftReveal = useReveal({ stagger: true });
+  const journalReveal = useReveal({ stagger: true });
+  const sustainReveal = useReveal({ stagger: true });
+  const waitlistReveal = useReveal();
+
+  const marqueeItems = [
+    t.announcement,
+    'COMPLIMENTARY SHIPPING OVER €200',
+    'SUSTAINABLE NORDIC ATELIER',
+    'HAND-FINISHED IN HELSINKI',
+    'ARCHIVE EDITION · LIMITED RUNS',
+  ];
+
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000]">
-      {/* 2. SLIM ANNOUNCEMENT LINE UNDER HERO */}
-      <div className="w-full border-y border-black/10 py-2.5 sm:py-3 px-4 sm:px-6 text-center select-none bg-white">
-        <p className="text-[9.5px] sm:text-[11px] md:text-[11.5px] font-mono tracking-[0.16em] sm:tracking-[0.22em] uppercase text-black/80">
-          {t.announcement}
-        </p>
+      {/* 2. SLIM ANNOUNCEMENT MARQUEE */}
+      <div className="w-full border-y border-black/[0.08] py-2.5 sm:py-3 overflow-hidden bg-white select-none">
+        <div className="flex animate-marquee whitespace-nowrap">
+          {[...marqueeItems, ...marqueeItems].map((item, i) => (
+            <span
+              key={i}
+              className="text-[9.5px] sm:text-[11px] md:text-[11.5px] font-mono tracking-[0.22em] uppercase text-black/70 px-6 sm:px-10 flex items-center gap-6 sm:gap-10 shrink-0"
+            >
+              {item}
+              <span className="text-black/20">✦</span>
+            </span>
+          ))}
+        </div>
       </div>
 
       {/* 3. "UUSIN PUDOTUS" (LATEST DROP) */}
-      <section className="w-full border-b border-black/10">
+      <section ref={dropReveal} className="w-full border-b border-black/[0.08]">
         <div className="max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[60vh] lg:min-h-[75vh]">
           {/* Huge Image Split */}
           <div
             onClick={() => onSelectProduct(liveProducts[0])}
-            className="lg:col-span-7 relative group cursor-pointer overflow-hidden border-b lg:border-b-0 lg:border-r border-black/10 aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto"
+            className="lg:col-span-7 relative group cursor-pointer overflow-hidden border-b lg:border-b-0 lg:border-r border-black/[0.08] aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto gradient-overlay"
           >
             <FashionImage
               alt={t.latestDrop.title}
@@ -81,15 +107,21 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               scale={1.05}
               aspectRatio="auto"
               className="w-full h-full min-h-[40vh] sm:min-h-[50vh] lg:min-h-[75vh]"
-              imageClassName="group-hover:scale-[1.03] transition-transform duration-700"
+              imageClassName="group-hover:scale-[1.03] transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
             />
-            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-2 py-1 bg-white/90 backdrop-blur-sm border border-black/15">
+            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-3 py-1.5 bg-white/80 backdrop-blur-md border border-black/[0.08] shadow-sm">
               {t.latestDrop.edition}
+            </div>
+            {/* Bottom gradient + title overlay on hover */}
+            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+              <span className="text-white text-xs font-mono tracking-[0.18em] uppercase">
+                {language === 'fi' ? 'Tutustu →' : 'Explore →'}
+              </span>
             </div>
           </div>
 
           {/* Editorial Content Split */}
-          <div className="lg:col-span-5 p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col justify-between bg-white">
+          <div className="lg:col-span-5 p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col justify-between bg-white relative">
             <div className="space-y-4 sm:space-y-6">
               <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block">
                 {t.latestDrop.tag}
@@ -97,14 +129,14 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.08] tracking-tight text-balance">
                 {t.latestDrop.title}
               </h2>
-              <p className="text-xs sm:text-sm md:text-base font-sans text-black/70 leading-relaxed max-w-md">
+              <p className="text-xs sm:text-sm md:text-base font-sans text-black/60 leading-relaxed max-w-md">
                 {t.latestDrop.description}
               </p>
             </div>
 
             <div className="pt-8 sm:pt-10">
-              <div className="flex items-baseline justify-between border-t border-black/10 pt-4 mb-5 sm:mb-6">
-                <span className="font-mono text-xs text-black/50">Nº 001 · 680g/m² Villa</span>
+              <div className="flex items-baseline justify-between border-t border-black/[0.08] pt-4 mb-5 sm:mb-6">
+                <span className="font-mono text-xs text-black/45">Nº 001 · 680g/m² Villa</span>
                 <span className="font-mono text-sm sm:text-base font-medium">{formatPrice(490)}</span>
               </div>
               <button
@@ -119,8 +151,8 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
       </section>
 
-      {/* 4. CATEGORY MOSAIC (Asymmetric grid with slow zoom on hover) */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-14 sm:py-20 md:py-28 border-b border-black/10">
+      {/* 4. CATEGORY MOSAIC */}
+      <section ref={mosaicReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-14 sm:py-20 md:py-28 border-b border-black/[0.08]">
         <div className="mb-8 sm:mb-12 flex items-baseline justify-between">
           <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40">
             {language === 'fi' ? 'KOKONAISUUDET' : 'CHAPTERS'}
@@ -131,40 +163,40 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8">
-          {/* Naiset - 7 cols on desktop, 1 col on tablet, full width on mobile */}
+          {/* Naiset */}
           <div
             onClick={() => onSelectCategory('naiset')}
-            className="sm:col-span-1 lg:col-span-7 group cursor-pointer"
+            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift"
           >
-            <div className="overflow-hidden border border-black/5 bg-white aspect-[4/3] sm:aspect-[16/11]">
+            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[16/11] gradient-overlay relative">
               <FashionImage
                 alt={t.categoriesMosaic.women}
                 position="center 20%"
                 scale={1.08}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-700"
+                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
             </div>
             <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal group-hover:underline underline-offset-4">
+                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
                   {t.categoriesMosaic.women}
                 </h3>
                 <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
                   {t.categoriesMosaic.subWomen}
                 </p>
               </div>
-              <span className="text-xs font-mono text-black/40">01 →</span>
+              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">01 →</span>
             </div>
           </div>
 
-          {/* Miehet - 5 cols on desktop, 1 col on tablet */}
+          {/* Miehet */}
           <div
             onClick={() => onSelectCategory('miehet')}
-            className="sm:col-span-1 lg:col-span-5 group cursor-pointer lg:mt-10"
+            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift lg:mt-10"
           >
-            <div className="overflow-hidden border border-black/5 bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5]">
+            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] gradient-overlay relative">
               <FashionImage
                 alt={t.categoriesMosaic.men}
                 position="center 22%"
@@ -172,82 +204,82 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 flipped={true}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-700"
+                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
             </div>
             <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal group-hover:underline underline-offset-4">
+                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
                   {t.categoriesMosaic.men}
                 </h3>
                 <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
                   {t.categoriesMosaic.subMen}
                 </p>
               </div>
-              <span className="text-xs font-mono text-black/40">02 →</span>
+              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">02 →</span>
             </div>
           </div>
 
-          {/* Asusteet - 5 cols on desktop, 1 col on tablet */}
+          {/* Asusteet */}
           <div
             onClick={() => onSelectCategory('asusteet')}
-            className="sm:col-span-1 lg:col-span-5 group cursor-pointer"
+            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift"
           >
-            <div className="overflow-hidden border border-black/5 bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5]">
+            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] gradient-overlay relative">
               <FashionImage
                 alt={t.categoriesMosaic.accessories}
                 position="center 60%"
                 scale={1.3}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-700"
+                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
             </div>
             <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal group-hover:underline underline-offset-4">
+                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
                   {t.categoriesMosaic.accessories}
                 </h3>
                 <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
                   {t.categoriesMosaic.subAcc}
                 </p>
               </div>
-              <span className="text-xs font-mono text-black/40">03 →</span>
+              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">03 →</span>
             </div>
           </div>
 
-          {/* Kokoelmat - 7 cols on desktop, 1 col on tablet */}
+          {/* Kokoelmat */}
           <div
             onClick={() => onSelectCategory('kokoelmat')}
-            className="sm:col-span-1 lg:col-span-7 group cursor-pointer lg:-mt-10"
+            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift lg:-mt-10"
           >
-            <div className="overflow-hidden border border-black/5 bg-white aspect-[4/3] sm:aspect-[16/11]">
+            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[16/11] gradient-overlay relative">
               <FashionImage
                 alt={t.categoriesMosaic.collections}
                 position="center 30%"
                 scale={1.12}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-700"
+                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
             </div>
             <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal group-hover:underline underline-offset-4">
+                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
                   {t.categoriesMosaic.collections}
                 </h3>
                 <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
                   {t.categoriesMosaic.subCol}
                 </p>
               </div>
-              <span className="text-xs font-mono text-black/40">04 →</span>
+              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">04 →</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* 5. "VALITUT" (FEATURED HORIZONTAL SCROLL RAIL) */}
-      <section className="w-full py-14 sm:py-20 md:py-28 border-b border-black/10">
+      <section ref={featuredReveal} className="w-full py-14 sm:py-20 md:py-28 border-b border-black/[0.08]">
         <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-6 sm:mb-8 flex items-end justify-between">
           <div>
             <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-1 sm:mb-2">
@@ -262,7 +294,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <button
               type="button"
               onClick={() => scrollRail('left')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/20 flex items-center justify-center hover:border-black transition-colors cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
               aria-label="Vieritä vasemmalle"
             >
               <ChevronLeft className="w-4 h-4 stroke-[1.5]" />
@@ -270,7 +302,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <button
               type="button"
               onClick={() => scrollRail('right')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/20 flex items-center justify-center hover:border-black transition-colors cursor-pointer"
+              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
               aria-label="Vieritä oikealle"
             >
               <ChevronRight className="w-4 h-4 stroke-[1.5]" />
@@ -278,7 +310,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           </div>
         </div>
 
-        {/* Scrollable container with snap */}
         <div
           ref={featuredRailRef}
           className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar px-4 sm:px-6 md:px-10 snap-x snap-mandatory"
@@ -289,7 +320,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               className="w-[240px] sm:w-[300px] md:w-[340px] flex-shrink-0 snap-start group relative flex flex-col justify-between"
             >
               <div className="relative">
-                {/* Plate number */}
                 <div className="flex items-center justify-between pb-1.5 sm:pb-2">
                   <span className="font-mono text-[10px] tracking-wider text-black/40">
                     {product.plateNumber}
@@ -301,10 +331,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                   )}
                 </div>
 
-                {/* Image container */}
                 <div
                   onClick={() => onSelectProduct(product)}
-                  className="cursor-pointer overflow-hidden border border-black/5 bg-white relative aspect-[3/4]"
+                  className="cursor-pointer overflow-hidden border border-black/[0.05] bg-white relative aspect-[3/4] shadow-sm transition-shadow duration-500 group-hover:shadow-lg"
                 >
                   <FashionImage
                     alt={product.name[language]}
@@ -312,11 +341,11 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                     scale={product.cropVariation.packshot.scale}
                     aspectRatio="auto"
                     className="w-full h-full"
-                    imageClassName="group-hover:scale-105 transition-transform duration-700"
+                    imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   />
 
-                  {/* Quick-add size strip sliding up on desktop hover */}
-                  <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-black/15 translate-y-full group-hover:translate-y-0 transition-transform duration-300 p-2 items-center justify-center gap-1.5 z-10">
+                  {/* Quick-add size strip */}
+                  <div className="hidden sm:flex absolute bottom-0 left-0 right-0 glass border-t border-black/[0.08] translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2 items-center justify-center gap-1.5 z-10">
                     <span className="text-[9px] font-mono uppercase tracking-wider text-black/50 mr-1">
                       {language === 'fi' ? 'Koko:' : 'Size:'}
                     </span>
@@ -337,7 +366,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 </div>
               </div>
 
-              {/* Product Info Beneath */}
               <div className="pt-2 sm:pt-3">
                 <div className="flex items-baseline justify-between gap-2">
                   <h4
@@ -360,105 +388,78 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
       </section>
 
       {/* 6. FULL-BLEED LOOKBOOK BAND */}
-      <section className="relative w-full h-[60vh] sm:h-[75vh] md:h-[90vh] overflow-hidden select-none bg-black">
+      <section ref={lookbookReveal} className="relative w-full h-[60vh] sm:h-[75vh] md:h-[90vh] overflow-hidden select-none bg-black group">
         <img
           src={PLACEHOLDER_IMG}
           alt="Campaign Lookbook"
-          className="w-full h-full object-cover object-[center_18%]"
+          className="w-full h-full object-cover object-[center_18%] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
         />
+        {/* Cinematic gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15 pointer-events-none" />
         <div className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 z-10">
           <button
             type="button"
             onClick={() => onSelectCategory('kokoelmat')}
-            className="px-3.5 sm:px-4 py-2 bg-white/90 backdrop-blur-sm border border-black/20 text-xs font-mono uppercase tracking-[0.16em] hover:bg-black hover:text-white transition-colors cursor-pointer"
+            className="px-3.5 sm:px-4 py-2 bg-white/90 backdrop-blur-md border border-white/20 text-xs font-mono uppercase tracking-[0.16em] hover:bg-white hover:shadow-lg transition-all duration-300 cursor-pointer"
           >
             {t.lookbook.link}
           </button>
         </div>
+        {/* Floating caption */}
+        <div className="absolute top-6 sm:top-10 left-4 sm:left-8 z-10 text-white/80">
+          <span className="font-mono text-[10px] tracking-[0.22em] uppercase block">
+            {language === 'fi' ? 'KAMPANJA' : 'CAMPAIGN'}
+          </span>
+          <span className="font-editorial text-2xl sm:text-3xl font-normal block mt-1">
+            {language === 'fi' ? 'Talvi 2026' : 'Winter 2026'}
+          </span>
+        </div>
       </section>
 
-      {/* 7. "MATERIAALI JA TYÖ" (3 tall images with one short sentence each) */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/10">
+      {/* 7. "MATERIAALI JA TYÖ" */}
+      <section ref={craftReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/[0.08]">
         <div className="mb-10 sm:mb-14 text-center max-w-xl mx-auto">
           <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-2 sm:mb-3">
             {t.craft.tag}
           </span>
-          <h2 className="font-editorial text-2xl sm:text-4xl md:text-5xl font-normal leading-tight">
+          <h2 className="font-editorial text-2xl sm:text-4xl md:text-5xl font-normal leading-tight text-balance">
             {t.craft.title}
           </h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
-          {/* Villa */}
-          <div className="flex flex-col">
-            <div className="aspect-[3/4] sm:aspect-[3/5] overflow-hidden border border-black/5 bg-white mb-4 sm:mb-6">
-              <FashionImage
-                alt={t.craft.woolTitle}
-                position="center 18%"
-                scale={1.3}
-                aspectRatio="auto"
-                className="w-full h-full"
-              />
+          {[
+            { tag: '01 · VILLA', title: t.craft.woolTitle, desc: t.craft.woolDesc, pos: 'center 18%', scale: 1.3, alt: t.craft.woolTitle },
+            { tag: '02 · PUUVILLA', title: t.craft.cottonTitle, desc: t.craft.cottonDesc, pos: 'center 45%', scale: 1.5, alt: t.craft.cottonTitle },
+            { tag: '03 · KÄSITYÖ', title: t.craft.craftTitle, desc: t.craft.craftDesc, pos: 'center 70%', scale: 1.4, alt: t.craft.craftTitle },
+          ].map((item, i) => (
+            <div key={i} className="flex flex-col group cursor-default">
+              <div className="aspect-[3/4] sm:aspect-[3/5] overflow-hidden border border-black/[0.05] bg-white mb-4 sm:mb-6 shadow-sm group-hover:shadow-md transition-shadow duration-500 gradient-overlay relative">
+                <FashionImage
+                  alt={item.alt}
+                  position={item.pos}
+                  scale={item.scale}
+                  aspectRatio="auto"
+                  className="w-full h-full"
+                  imageClassName="group-hover:scale-[1.03] transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                />
+              </div>
+              <span className="text-[10px] font-mono tracking-widest uppercase text-black/40 mb-1">
+                {item.tag}
+              </span>
+              <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2">
+                {item.title}
+              </h3>
+              <p className="text-xs font-sans text-black/60 leading-relaxed">
+                {item.desc}
+              </p>
             </div>
-            <span className="text-[10px] font-mono tracking-widest uppercase text-black/40 mb-1">
-              01 · VILLA
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2">
-              {t.craft.woolTitle}
-            </h3>
-            <p className="text-xs font-sans text-black/60 leading-relaxed">
-              {t.craft.woolDesc}
-            </p>
-          </div>
-
-          {/* Puuvilla */}
-          <div className="flex flex-col">
-            <div className="aspect-[3/4] sm:aspect-[3/5] overflow-hidden border border-black/5 bg-white mb-4 sm:mb-6">
-              <FashionImage
-                alt={t.craft.cottonTitle}
-                position="center 45%"
-                scale={1.5}
-                aspectRatio="auto"
-                className="w-full h-full"
-              />
-            </div>
-            <span className="text-[10px] font-mono tracking-widest uppercase text-black/40 mb-1">
-              02 · PUUVILLA
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2">
-              {t.craft.cottonTitle}
-            </h3>
-            <p className="text-xs font-sans text-black/60 leading-relaxed">
-              {t.craft.cottonDesc}
-            </p>
-          </div>
-
-          {/* Käsityö */}
-          <div className="flex flex-col">
-            <div className="aspect-[3/4] sm:aspect-[3/5] overflow-hidden border border-black/5 bg-white mb-4 sm:mb-6">
-              <FashionImage
-                alt={t.craft.craftTitle}
-                position="center 70%"
-                scale={1.4}
-                aspectRatio="auto"
-                className="w-full h-full"
-              />
-            </div>
-            <span className="text-[10px] font-mono tracking-widest uppercase text-black/40 mb-1">
-              03 · KÄSITYÖ
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2">
-              {t.craft.craftTitle}
-            </h3>
-            <p className="text-xs font-sans text-black/60 leading-relaxed">
-              {t.craft.craftDesc}
-            </p>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* 8. JOURNAL TEASER (3 image cards) */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-20 md:py-28 border-b border-black/10">
+      {/* 8. JOURNAL TEASER */}
+      <section ref={journalReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-20 md:py-28 border-b border-black/[0.08]">
         <div className="mb-8 sm:mb-12 flex items-baseline justify-between">
           <div>
             <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-1 sm:mb-2">
@@ -471,7 +472,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           <button
             type="button"
             onClick={() => onOpenJournalArticle(JOURNAL_ARTICLES[0].id)}
-            className="text-xs font-mono uppercase tracking-[0.14em] text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+            className="text-xs font-mono uppercase tracking-[0.14em] text-black/60 hover:text-black link-underline cursor-pointer"
           >
             {language === 'fi' ? 'Kaikki merkinnät' : 'All Entries'} →
           </button>
@@ -482,17 +483,17 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <article
               key={article.id}
               onClick={() => onOpenJournalArticle(article.id)}
-              className="group cursor-pointer flex flex-col justify-between"
+              className="group cursor-pointer flex flex-col justify-between card-lift"
             >
               <div>
-                <div className="aspect-[16/10] overflow-hidden border border-black/5 bg-white mb-3 sm:mb-4">
+                <div className="aspect-[16/10] overflow-hidden border border-black/[0.05] bg-white mb-3 sm:mb-4 shadow-sm gradient-overlay relative">
                   <FashionImage
                     alt={article.title[language]}
                     position={article.cropPosition}
                     scale={1.2}
                     aspectRatio="auto"
                     className="w-full h-full"
-                    imageClassName="group-hover:scale-105 transition-transform duration-700"
+                    imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   />
                 </div>
                 <div className="flex items-center gap-2 sm:gap-3 text-[10px] font-mono text-black/40 mb-1.5 sm:mb-2">
@@ -508,8 +509,8 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 </p>
               </div>
 
-              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-black/5">
-                <span className="text-[11px] font-mono tracking-wider text-black/80 group-hover:text-black">
+              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-black/[0.06]">
+                <span className="text-[11px] font-mono tracking-wider text-black/80 group-hover:text-black group-hover:translate-x-1 transition-all duration-300 inline-block">
                   {t.journal.readArticle} →
                 </span>
               </div>
@@ -519,9 +520,11 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
       </section>
 
       {/* 9. SUSTAINABILITY STRIP */}
-      <section className="w-full bg-[#000000] text-[#FFFFFF] py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-10">
-        <div className="max-w-[1720px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-14">
-          <div className="border-t border-white/20 pt-4 sm:pt-6">
+      <section ref={sustainReveal} className="w-full bg-[#000000] text-[#FFFFFF] py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-10 relative overflow-hidden">
+        {/* Subtle radial glow for depth */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.06] bg-[radial-gradient(circle_at_30%_50%,white,transparent_60%)]" />
+        <div className="max-w-[1720px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-14 relative">
+          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
             <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
               01 · KIERRÄTYS
             </span>
@@ -533,7 +536,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             </p>
           </div>
 
-          <div className="border-t border-white/20 pt-4 sm:pt-6">
+          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
             <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
               02 · PUHTAUS
             </span>
@@ -545,7 +548,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             </p>
           </div>
 
-          <div className="border-t border-white/20 pt-4 sm:pt-6">
+          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
             <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
               03 · VASTUU
             </span>
@@ -560,15 +563,17 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
       </section>
 
       {/* 10. WAITLIST / INVITATION */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/10">
+      <section ref={waitlistReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/[0.08]">
         <div className="max-w-2xl mx-auto text-center">
+          {/* Decorative divider */}
+          <div className="divider-gradient w-24 mx-auto mb-6 sm:mb-8" />
           <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.24em] uppercase text-black/40 block mb-2 sm:mb-3">
             {t.waitlist.tag}
           </span>
-          <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl font-normal mb-3 sm:mb-4">
+          <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl font-normal mb-3 sm:mb-4 text-balance">
             {t.waitlist.title}
           </h2>
-          <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-2">
+          <p className="text-xs sm:text-sm font-sans text-black/55 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-2">
             {t.waitlist.subtitle}
           </p>
 
@@ -580,7 +585,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.waitlist.placeholder}
-                className="flex-1 px-4 py-3 border border-black/20 text-xs font-sans placeholder:text-black/35 focus:outline-none focus:border-black transition-colors"
+                className="flex-1 px-4 py-3 border border-black/[0.15] text-xs font-sans placeholder:text-black/35 focus:outline-none focus:border-black focus:shadow-sm transition-all"
               />
               <button
                 type="submit"
@@ -590,7 +595,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               </button>
             </form>
           ) : (
-            <div className="p-4 border border-black flex items-center justify-center gap-2 max-w-md mx-auto">
+            <div className="p-4 border border-black flex items-center justify-center gap-2 max-w-md mx-auto animate-fadeIn">
               <Check className="w-4 h-4" />
               <span className="text-xs font-sans tracking-wide">
                 {t.waitlist.success}

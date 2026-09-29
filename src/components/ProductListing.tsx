@@ -363,9 +363,9 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   key={product.id}
                   onMouseEnter={() => setHoveredCardId(product.id)}
                   onMouseLeave={() => setHoveredCardId(null)}
-                  className={`group relative flex flex-col justify-between ${
+                  className={`group relative flex flex-col justify-between transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                     isFeatureTile ? 'lg:col-span-2' : ''
-                  }`}
+                  } hover:-translate-y-1`}
                 >
                   <div>
                     {/* Top Whisper Plate Number and Limited Badge */}
@@ -383,9 +383,9 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                     {/* Image Box */}
                     <div
                       onClick={() => onOpenQuickLook(product)}
-                      className={`cursor-pointer overflow-hidden border border-black/5 bg-white relative ${
+                      className={`cursor-pointer overflow-hidden border border-black/[0.04] bg-white relative transition-shadow duration-500 group-hover:shadow-lg ${
                         isFeatureTile ? 'aspect-[16/10]' : 'aspect-[3/4]'
-                      }`}
+                      } gradient-overlay`}
                     >
                       <FashionImage
                         alt={product.name[language]}
@@ -404,7 +404,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                           e.stopPropagation();
                           onToggleWishlist(product.id);
                         }}
-                        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-white/80 backdrop-blur-sm border border-black/10 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 hover:bg-white z-20 cursor-pointer"
+                        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-white/70 backdrop-blur-md border border-black/[0.06] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:shadow-sm z-20 cursor-pointer"
                         aria-label="Tallenna suosikkeihin"
                       >
                         <Heart
@@ -415,7 +415,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                       </button>
 
                       {/* Thin Quick-Add Size Strip sliding up on desktop hover */}
-                      <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-black/15 translate-y-full group-hover:translate-y-0 transition-transform duration-300 p-2 items-center justify-center gap-1.5 z-10">
+                      <div className="hidden sm:flex absolute bottom-0 left-0 right-0 glass border-t border-black/[0.08] translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2 items-center justify-center gap-1.5 z-10">
                         <span className="text-[9px] font-mono uppercase tracking-wider text-black/50 mr-1">
                           {language === 'fi' ? 'Koko:' : 'Size:'}
                         </span>

@@ -88,12 +88,12 @@ export const Header: React.FC<HeaderProps> = ({
     <>
       <header
         onMouseLeave={() => setHoveredNav(null)}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
           isHidden ? '-translate-y-full' : 'translate-y-0'
         } ${
           isOverHeroAtTop
             ? 'bg-transparent text-black'
-            : 'bg-white/80 backdrop-blur-md text-black border-b border-black/[0.08] shadow-[0_2px_12px_rgba(0,0,0,0.03)]'
+            : 'glass text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.04)]'
         }`}
       >
         {/* ROW 1: BRAND LOGO (CENTER), MENU (LEFT), TRANSLATION (RIGHT) */}
@@ -124,12 +124,10 @@ export const Header: React.FC<HeaderProps> = ({
                       onSelectCategory(item.key === 'uutuudet' ? 'all' : item.key);
                     }
                   }}
-                  className="relative py-2 hover:opacity-60 transition-opacity whitespace-nowrap cursor-pointer"
+                  className="relative py-2 hover:opacity-70 transition-opacity whitespace-nowrap cursor-pointer group/link"
                 >
                   <span>{item.label}</span>
-                  {hoveredNav === item.subKey && (
-                    <span className="absolute bottom-0 left-0 w-full h-[1px] bg-current" />
-                  )}
+                  <span className="absolute bottom-0 left-0 w-full h-[1px] bg-current scale-x-0 group-hover/link:scale-x-100 transition-transform duration-400 origin-left" />
                 </button>
               ))}
             </nav>
@@ -279,7 +277,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div
             onMouseEnter={() => setHoveredNav(hoveredNav)}
             onMouseLeave={() => setHoveredNav(null)}
-            className="absolute top-full left-0 w-full bg-white text-black border-b border-black/10 shadow-xl transition-all duration-300 animate-fadeIn hidden lg:block"
+            className="absolute top-full left-0 w-full bg-white text-black border-b border-black/[0.06] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.14)] transition-all duration-400 animate-fadeIn hidden lg:block"
           >
             <div className="max-w-[1720px] mx-auto px-10 py-10 grid grid-cols-12 gap-10">
               {/* Subcategories list */}
