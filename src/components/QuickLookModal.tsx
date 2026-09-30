@@ -84,10 +84,10 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
           <button
             type="button"
             onClick={goToPrevPlate}
-            className="w-12 h-12 border border-black/20 flex items-center justify-center hover:border-black transition-colors cursor-pointer"
+            className="p-2 text-black/50 hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
             title="Edellinen levy (←)"
           >
-            <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+            <ChevronLeft className="w-8 h-8 stroke-[1.2]" />
           </button>
         </div>
 
@@ -95,6 +95,8 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
         <div className="lg:col-span-6 flex justify-center">
           <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg aspect-[3/4] border border-black/10 overflow-hidden relative bg-white">
             <FashionImage
+              product={product}
+              src={product.hoverImage || product.image}
               alt={product.name[language]}
               position={product.cropVariation.onModel.position}
               scale={product.cropVariation.onModel.scale}
@@ -102,7 +104,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
               className="w-full h-full"
             />
             {product.isLimited && (
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 font-mono text-[9.5px] sm:text-[10px] tracking-wider uppercase bg-white/90 border border-black/20 px-2 py-0.5 sm:px-2.5 sm:py-1">
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 font-mono text-[9.5px] sm:text-[10px] tracking-wider uppercase text-black/70">
                 {t.archive.limited}
               </div>
             )}
@@ -134,15 +136,15 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
             <span className="text-[9.5px] sm:text-[10px] font-mono tracking-wider uppercase text-black/50 block mb-2">
               {language === 'fi' ? 'VALITSE KOKO PIKALISÄYKSELLÄ:' : 'SELECT SIZE FOR QUICK ADD:'}
             </span>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-6">
+            <div className="flex flex-wrap gap-2.5 sm:gap-3 mb-4 sm:mb-6">
               {product.sizes.map((sz) => (
                 <button
                   type="button"
                   key={sz}
                   onClick={() => onQuickAdd(product, sz)}
-                  className="px-3.5 sm:px-4 py-1.5 sm:py-2 border border-black/20 text-xs font-mono hover:bg-black hover:text-white hover:border-black transition-colors cursor-pointer"
+                  className="py-1 px-2 text-xs font-mono text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer"
                 >
-                  {sz}
+                  +{sz}
                 </button>
               ))}
             </div>
@@ -153,7 +155,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
                 onClose();
                 onSelectProduct(product);
               }}
-              className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.2em] btn-primary flex items-center justify-center gap-2 cursor-pointer font-medium"
+              className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.2em] btn-primary flex items-center justify-between cursor-pointer font-medium"
             >
               <span>{language === 'fi' ? 'Avaa tuotesivu' : 'Open Product Page'}</span>
               <ArrowRight className="w-4 h-4 stroke-[1.5]" />
@@ -166,10 +168,10 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
           <button
             type="button"
             onClick={goToNextPlate}
-            className="w-12 h-12 border border-black/20 flex items-center justify-center hover:border-black transition-colors cursor-pointer"
+            className="p-2 text-black/50 hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
             title="Seuraava levy (→)"
           >
-            <ChevronRight className="w-5 h-5 stroke-[1.5]" />
+            <ChevronRight className="w-8 h-8 stroke-[1.2]" />
           </button>
         </div>
       </div>

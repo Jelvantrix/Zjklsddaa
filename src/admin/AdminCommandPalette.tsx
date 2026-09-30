@@ -36,13 +36,17 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
   if (!isOpen) return null;
 
   const quickNav = [
-    { id: 'products', label: 'Tuotteet & Arkisto (Products)', icon: Package },
-    { id: 'collections', label: 'Kokoelmat & Pudotukset (Collections & Drops)', icon: Layers },
-    { id: 'categories', label: 'Kategoriapuu (Categories)', icon: FolderTree },
-    { id: 'media', label: 'Mediakirjasto (Media Library)', icon: Image },
-    { id: 'orders', label: 'Tilaukset (Orders)', icon: ShoppingBag },
-    { id: 'advisor', label: 'Tekoälyneuvonantaja (AI Advisor)', icon: Sparkles },
-    { id: 'settings', label: 'Asetukset (Store Settings)', icon: Settings },
+    { id: 'products', label: 'Products & Archive', icon: Package },
+    { id: 'collections', label: 'Collections & Drops', icon: Layers },
+    { id: 'categories', label: 'Categories', icon: FolderTree },
+    { id: 'media', label: 'Media Library', icon: Image },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'inventory', label: 'Inventory', icon: Package },
+    { id: 'customers', label: 'Customers', icon: Package },
+    { id: 'discounts', label: 'Discounts', icon: Package },
+    { id: 'analytics', label: 'Analytics', icon: Package },
+    { id: 'advisor', label: 'AI Advisor', icon: Sparkles },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const filteredNav = quickNav.filter((n) =>
@@ -64,16 +68,16 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4">
       <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
 
-      <div className="relative w-full max-w-2xl bg-white border border-black shadow-2xl z-10 overflow-hidden animate-fadeIn">
+      <div className="relative w-full max-w-2xl bg-white border border-black/10 shadow-2xl z-10 overflow-hidden animate-fadeIn">
         {/* Search Input */}
-        <div className="flex items-center px-4 py-3.5 border-b border-black/15 bg-white">
+        <div className="flex items-center px-4 py-3.5 border-b border-black/[0.08] bg-white">
           <Search className="w-4 h-4 text-black/40 mr-3" />
           <input
             autoFocus
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Hae tuotteita, pudotuksia tai toimintoja... (Cmd+K)"
+            placeholder="Search products, drops or actions... (Cmd+K)"
             className="w-full text-xs font-mono bg-transparent focus:outline-none placeholder:text-black/30"
           />
           <button onClick={onClose} className="p-1 text-black/40 hover:text-black cursor-pointer">
@@ -86,7 +90,7 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
           {filteredProducts.length > 0 && (
             <div className="py-2">
               <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-black/40">
-                Tuotteet ({filteredProducts.length})
+                Products ({filteredProducts.length})
               </div>
               {filteredProducts.map((p) => (
                 <button
@@ -99,8 +103,8 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
                 >
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono text-[11px] font-semibold">{p.nr || p.plateNumber}</span>
-                    <span className="text-xs">{p.name.fi}</span>
-                    <span className="text-[10px] text-black/40">({p.name.en})</span>
+                    <span className="text-xs">{p.name.en || p.name.fi}</span>
+                    <span className="text-[10px] text-black/40">({p.name.fi})</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-medium">{p.price} €</span>
@@ -114,7 +118,7 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
           {/* Navigation Shortcuts */}
           <div className="py-2">
             <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-black/40">
-              Pikasiirtymät
+              Quick Navigation
             </div>
             {filteredNav.map((n) => {
               const Icon = n.icon;
@@ -138,9 +142,9 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
           </div>
         </div>
 
-        <div className="px-4 py-2 border-t border-black/10 bg-black/[0.02] flex items-center justify-between text-[10px] font-mono text-black/40">
-          <span>Selaa nuolinäppäimillä</span>
-          <span>Sulje ESC</span>
+        <div className="px-4 py-2 border-t border-black/10 bg-white flex items-center justify-between text-[10px] font-mono text-black/40">
+          <span>Navigate with arrow keys</span>
+          <span>Close with ESC</span>
         </div>
       </div>
     </div>

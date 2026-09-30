@@ -1,16 +1,14 @@
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Language, Product } from '../types';
 import {
   translations,
   ARCHIVE_PRODUCTS,
-  JOURNAL_ARTICLES,
   formatPrice,
   PLACEHOLDER_IMG,
 } from '../data/mockData';
 import { FashionImage } from './FashionImage';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { joinWaitlist } from '../firebase/dbService';
-import { useReveal } from '../hooks/useReveal';
 
 interface HomeSectionsProps {
   language: Language;
@@ -20,7 +18,7 @@ interface HomeSectionsProps {
   onQuickAdd: (product: Product, size: string) => void;
   onToggleWishlist: (productId: string) => void;
   wishlistIds: string[];
-  onOpenJournalArticle: (articleId: string) => void;
+  onOpenJournalArticle?: (articleId: string) => void;
   products?: Product[];
 }
 
@@ -32,573 +30,403 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
   onQuickAdd,
   onToggleWishlist,
   wishlistIds,
-  onOpenJournalArticle,
   products,
 }) => {
-  const t = translations[language];
-  const featuredRailRef = useRef<HTMLDivElement | null>(null);
-
   const liveProducts = products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
 
-  const [email, setEmail] = useState('');
-  const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
+  // Hover state for seamless packshot -> on-model crossfade
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
 
-  const handleWaitlistSubmit = (e: React.FormEvent) => {
+  // Quick-add feedback
+  const [addedFeedback, setAddedFeedback] = useState<string | null>(null);
+
+  // Private Client Newsletter
+  const [email, setEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  const handleQuickAdd = (product: Product, size: string) => {
+    onQuickAdd(product, size);
+    setAddedFeedback(`${product.id}-${size}`);
+    setTimeout(() => setAddedFeedback(null), 1600);
+  };
+
+  const handleNewsletterSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (email.trim() && email.includes('@')) {
-      joinWaitlist(email, 'drop-02-monoliitti', 'homepage_waitlist').catch(() => {});
-      setWaitlistSubmitted(true);
+      joinWaitlist(email, 'client_newsletter', 'homepage_footer').catch(() => {});
+      setIsSubscribed(true);
     }
   };
 
-  const scrollRail = (direction: 'left' | 'right') => {
-    if (featuredRailRef.current) {
-      const offset = direction === 'left' ? -320 : 320;
-      featuredRailRef.current.scrollBy({ left: offset, behavior: 'smooth' });
-    }
-  };
-
-  // Scroll reveal refs
-  const dropReveal = useReveal();
-  const mosaicReveal = useReveal({ stagger: true });
-  const featuredReveal = useReveal();
-  const lookbookReveal = useReveal();
-  const craftReveal = useReveal({ stagger: true });
-  const journalReveal = useReveal({ stagger: true });
-  const sustainReveal = useReveal({ stagger: true });
-  const waitlistReveal = useReveal();
-
-  const marqueeItems = [
-    t.announcement,
-    'COMPLIMENTARY SHIPPING OVER €200',
-    'SUSTAINABLE NORDIC ATELIER',
-    'HAND-FINISHED IN HELSINKI',
-    'ARCHIVE EDITION · LIMITED RUNS',
-  ];
+  const womenHighlight = liveProducts.find((p) => p.category === 'naiset') || liveProducts[0];
+  const menHighlight = liveProducts.find((p) => p.category === 'miehet') || liveProducts[1];
 
   return (
-    <div className="w-full bg-[#FFFFFF] text-[#000000]">
-      {/* 2. SLIM ANNOUNCEMENT MARQUEE */}
-      <div className="w-full border-y border-black/[0.08] py-2.5 sm:py-3 overflow-hidden bg-white select-none">
+    <div className="w-full bg-[#FFFFFF] text-[#000000] selection:bg-black selection:text-white">
+      {/* 1. QUIET LUXURY ATELIER MARQUEE */}
+      <div className="w-full border-y border-black/[0.08] py-2 overflow-hidden bg-white select-none">
         <div className="flex animate-marquee whitespace-nowrap">
-          {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span
+          {[...Array(6)].map((_, i) => (
+            <div
               key={i}
-              className="text-[9.5px] sm:text-[11px] md:text-[11.5px] font-mono tracking-[0.22em] uppercase text-black/70 px-6 sm:px-10 flex items-center gap-6 sm:gap-10 shrink-0"
+              className="text-[10px] font-mono tracking-[0.3em] uppercase text-black/60 px-8 flex items-center gap-8 shrink-0"
             >
-              {item}
-              <span className="text-black/20">✦</span>
-            </span>
+              <span>HELSINKI ATELIER</span>
+              <span className="text-black/30">/</span>
+              <span>PORTO KNITWEAR</span>
+              <span className="text-black/30">/</span>
+              <span>CERTIFIED VIRGIN WOOL</span>
+              <span className="text-black/30">/</span>
+              <span>NUMBERED EDITIONS 01–50</span>
+              <span className="text-black/30">/</span>
+              <span>COMPLIMENTARY GLOBAL COURIER</span>
+              <span className="text-black/30">/</span>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* 3. "UUSIN PUDOTUS" (LATEST DROP) */}
-      <section ref={dropReveal} className="w-full border-b border-black/[0.08]">
-        <div className="max-w-[1720px] mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[60vh] lg:min-h-[75vh]">
-          {/* Huge Image Split */}
-          <div
-            onClick={() => onSelectProduct(liveProducts[0])}
-            className="lg:col-span-7 relative group cursor-pointer overflow-hidden border-b lg:border-b-0 lg:border-r border-black/[0.08] aspect-[4/3] sm:aspect-[16/10] lg:aspect-auto gradient-overlay"
-          >
-            <FashionImage
-              alt={t.latestDrop.title}
-              position="center 18%"
-              scale={1.05}
-              aspectRatio="auto"
-              className="w-full h-full min-h-[40vh] sm:min-h-[50vh] lg:min-h-[75vh]"
-              imageClassName="group-hover:scale-[1.03] transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-            />
-            <div className="absolute top-4 sm:top-6 left-4 sm:left-6 font-mono text-[9px] sm:text-[10px] tracking-[0.18em] uppercase px-3 py-1.5 bg-white/80 backdrop-blur-md border border-black/[0.08] shadow-sm">
-              {t.latestDrop.edition}
-            </div>
-            {/* Bottom gradient + title overlay on hover */}
-            <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-10 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-              <span className="text-white text-xs font-mono tracking-[0.18em] uppercase">
-                {language === 'fi' ? 'Tutustu →' : 'Explore →'}
-              </span>
-            </div>
-          </div>
-
-          {/* Editorial Content Split */}
-          <div className="lg:col-span-5 p-6 sm:p-10 md:p-14 lg:p-20 flex flex-col justify-between bg-white relative">
-            <div className="space-y-4 sm:space-y-6">
-              <span className="text-[10px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block">
-                {t.latestDrop.tag}
-              </span>
-              <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-normal leading-[1.08] tracking-tight text-balance">
-                {t.latestDrop.title}
-              </h2>
-              <p className="text-xs sm:text-sm md:text-base font-sans text-black/60 leading-relaxed max-w-md">
-                {t.latestDrop.description}
-              </p>
-            </div>
-
-            <div className="pt-8 sm:pt-10">
-              <div className="flex items-baseline justify-between border-t border-black/[0.08] pt-4 mb-5 sm:mb-6">
-                <span className="font-mono text-xs text-black/45">Nº 001 · 680g/m² Villa</span>
-                <span className="font-mono text-sm sm:text-base font-medium">{formatPrice(490)}</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => onSelectProduct(ARCHIVE_PRODUCTS[0])}
-                className="w-full py-3.5 sm:py-4 text-xs font-sans tracking-[0.18em] uppercase btn-primary font-medium cursor-pointer"
-              >
-                {t.latestDrop.link}
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 4. CATEGORY MOSAIC */}
-      <section ref={mosaicReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-14 sm:py-20 md:py-28 border-b border-black/[0.08]">
-        <div className="mb-8 sm:mb-12 flex items-baseline justify-between">
-          <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40">
-            {language === 'fi' ? 'KOKONAISUUDET' : 'CHAPTERS'}
-          </span>
-          <span className="text-[10.5px] sm:text-[11px] font-mono tracking-wider text-black/40">
-            04 OSION MOSAIIKKI
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-6 sm:gap-8">
-          {/* Naiset */}
+      {/* 2. THE SEASONAL EDIT: MONUMENTAL 2-COLUMN FASHION DIPTYCH */}
+      <section className="w-full border-b border-black/[0.08]">
+        <div className="max-w-[1880px] mx-auto grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-black/[0.08]">
+          {/* Left Column: Women's Winter Tailoring */}
           <div
             onClick={() => onSelectCategory('naiset')}
-            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift"
+            className="group cursor-pointer relative overflow-hidden bg-neutral-50/30 flex flex-col justify-between"
           >
-            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[16/11] gradient-overlay relative">
+            <div className="relative aspect-[3/4] sm:aspect-[4/5] lg:aspect-[3/4] overflow-hidden">
               <FashionImage
-                alt={t.categoriesMosaic.women}
-                position="center 20%"
-                scale={1.08}
+                product={womenHighlight}
+                src={womenHighlight.image}
+                alt="Women's Collection"
+                position={womenHighlight.cropVariation.onModel.position}
+                scale={womenHighlight.cropVariation.onModel.scale}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                imageClassName="group-hover:scale-[1.04] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
-            </div>
-            <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
-              <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
-                  {t.categoriesMosaic.women}
-                </h3>
-                <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
-                  {t.categoriesMosaic.subWomen}
-                </p>
+              <div className="absolute top-6 left-6 font-mono text-[9px] tracking-[0.25em] uppercase text-black/70 bg-white/90 backdrop-blur-md px-3 py-1 border border-black/[0.08]">
+                COLLECTION I · WOMEN
               </div>
-              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">01 →</span>
+            </div>
+
+            <div className="p-6 sm:p-10 lg:p-12 flex items-baseline justify-between border-t border-black/[0.08] bg-white">
+              <div>
+                <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-normal text-black tracking-tight group-hover:underline underline-offset-4">
+                  {language === 'fi' ? 'Naisten Talvimallisto' : 'Women’s Winter Collection'}
+                </h2>
+                <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-black/50 block mt-1">
+                  Overcoats · Structured Tailoring · Pure Cashmere
+                </span>
+              </div>
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-black/70 group-hover:translate-x-2 transition-transform">
+                {language === 'fi' ? 'Tutustu' : 'Shop Women'} →
+              </span>
             </div>
           </div>
 
-          {/* Miehet */}
+          {/* Right Column: Men's Monolithic Greatcoats */}
           <div
             onClick={() => onSelectCategory('miehet')}
-            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift lg:mt-10"
+            className="group cursor-pointer relative overflow-hidden bg-neutral-50/30 flex flex-col justify-between"
           >
-            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] gradient-overlay relative">
+            <div className="relative aspect-[3/4] sm:aspect-[4/5] lg:aspect-[3/4] overflow-hidden">
               <FashionImage
-                alt={t.categoriesMosaic.men}
-                position="center 22%"
-                scale={1.12}
+                product={menHighlight}
+                src={menHighlight.image}
+                alt="Men's Collection"
+                position={menHighlight.cropVariation.onModel.position}
+                scale={menHighlight.cropVariation.onModel.scale}
                 flipped={true}
                 aspectRatio="auto"
                 className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                imageClassName="group-hover:scale-[1.04] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
               />
+              <div className="absolute top-6 left-6 font-mono text-[9px] tracking-[0.25em] uppercase text-black/70 bg-white/90 backdrop-blur-md px-3 py-1 border border-black/[0.08]">
+                COLLECTION II · MEN
+              </div>
             </div>
-            <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
+
+            <div className="p-6 sm:p-10 lg:p-12 flex items-baseline justify-between border-t border-black/[0.08] bg-white">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
-                  {t.categoriesMosaic.men}
-                </h3>
-                <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
-                  {t.categoriesMosaic.subMen}
-                </p>
-              </div>
-              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">02 →</span>
-            </div>
-          </div>
-
-          {/* Asusteet */}
-          <div
-            onClick={() => onSelectCategory('asusteet')}
-            className="sm:col-span-1 lg:col-span-5 group cursor-pointer card-lift"
-          >
-            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[4/5] lg:aspect-[4/5] gradient-overlay relative">
-              <FashionImage
-                alt={t.categoriesMosaic.accessories}
-                position="center 60%"
-                scale={1.3}
-                aspectRatio="auto"
-                className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-              />
-            </div>
-            <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
-              <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
-                  {t.categoriesMosaic.accessories}
-                </h3>
-                <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
-                  {t.categoriesMosaic.subAcc}
-                </p>
-              </div>
-              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">03 →</span>
-            </div>
-          </div>
-
-          {/* Kokoelmat */}
-          <div
-            onClick={() => onSelectCategory('kokoelmat')}
-            className="sm:col-span-1 lg:col-span-7 group cursor-pointer card-lift lg:-mt-10"
-          >
-            <div className="overflow-hidden border border-black/[0.05] bg-white aspect-[4/3] sm:aspect-[16/11] gradient-overlay relative">
-              <FashionImage
-                alt={t.categoriesMosaic.collections}
-                position="center 30%"
-                scale={1.12}
-                aspectRatio="auto"
-                className="w-full h-full"
-                imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-              />
-            </div>
-            <div className="mt-3 sm:mt-4 flex items-baseline justify-between">
-              <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal link-underline inline-block">
-                  {t.categoriesMosaic.collections}
-                </h3>
-                <p className="text-xs font-sans text-black/50 mt-0.5 sm:mt-1">
-                  {t.categoriesMosaic.subCol}
-                </p>
-              </div>
-              <span className="text-xs font-mono text-black/40 group-hover:text-black group-hover:translate-x-1 transition-all duration-300">04 →</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. "VALITUT" (FEATURED HORIZONTAL SCROLL RAIL) */}
-      <section ref={featuredReveal} className="w-full py-14 sm:py-20 md:py-28 border-b border-black/[0.08]">
-        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-6 sm:mb-8 flex items-end justify-between">
-          <div>
-            <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-1 sm:mb-2">
-              {t.featured.tag}
-            </span>
-            <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-normal">
-              {t.featured.title}
-            </h2>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => scrollRail('left')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
-              aria-label="Vieritä vasemmalle"
-            >
-              <ChevronLeft className="w-4 h-4 stroke-[1.5]" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollRail('right')}
-              className="w-9 h-9 sm:w-10 sm:h-10 border border-black/[0.15] flex items-center justify-center hover:border-black hover:bg-black hover:text-white transition-all duration-300 cursor-pointer active:scale-90"
-              aria-label="Vieritä oikealle"
-            >
-              <ChevronRight className="w-4 h-4 stroke-[1.5]" />
-            </button>
-          </div>
-        </div>
-
-        <div
-          ref={featuredRailRef}
-          className="flex gap-4 sm:gap-6 overflow-x-auto no-scrollbar px-4 sm:px-6 md:px-10 snap-x snap-mandatory"
-        >
-          {liveProducts.slice(0, 8).map((product) => (
-            <div
-              key={product.id}
-              className="w-[240px] sm:w-[300px] md:w-[340px] flex-shrink-0 snap-start group relative flex flex-col justify-between"
-            >
-              <div className="relative">
-                <div className="flex items-center justify-between pb-1.5 sm:pb-2">
-                  <span className="font-mono text-[10px] tracking-wider text-black/40">
-                    {product.plateNumber}
-                  </span>
-                  {product.isLimited && (
-                    <span className="font-mono text-[9px] tracking-wider uppercase text-black/60">
-                      {language === 'fi' ? 'Rajoitettu erä' : 'Limited'}
-                    </span>
-                  )}
-                </div>
-
-                <div
-                  onClick={() => onSelectProduct(product)}
-                  className="cursor-pointer overflow-hidden border border-black/[0.05] bg-white relative aspect-[3/4] shadow-sm transition-shadow duration-500 group-hover:shadow-lg"
-                >
-                  <FashionImage
-                    alt={product.name[language]}
-                    position={product.cropVariation.packshot.position}
-                    scale={product.cropVariation.packshot.scale}
-                    aspectRatio="auto"
-                    className="w-full h-full"
-                    imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  />
-
-                  {/* Quick-add size strip */}
-                  <div className="hidden sm:flex absolute bottom-0 left-0 right-0 glass border-t border-black/[0.08] translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2 items-center justify-center gap-1.5 z-10">
-                    <span className="text-[9px] font-mono uppercase tracking-wider text-black/50 mr-1">
-                      {language === 'fi' ? 'Koko:' : 'Size:'}
-                    </span>
-                    {product.sizes.map((sz) => (
-                      <button
-                        type="button"
-                        key={sz}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onQuickAdd(product, sz);
-                        }}
-                        className="px-2 py-1 text-[10px] font-mono border border-black/20 hover:border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
-                      >
-                        {sz}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 sm:pt-3">
-                <div className="flex items-baseline justify-between gap-2">
-                  <h4
-                    onClick={() => onSelectProduct(product)}
-                    className="font-sans text-xs font-medium text-black group-hover:underline underline-offset-4 cursor-pointer truncate"
-                  >
-                    {product.name[language]}
-                  </h4>
-                  <span className="font-mono text-xs text-black/90 whitespace-nowrap">
-                    {formatPrice(product.price)}
-                  </span>
-                </div>
-                <p className="font-mono text-[10px] text-black/40 mt-0.5 truncate">
-                  {product.material[language]}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 6. FULL-BLEED LOOKBOOK BAND */}
-      <section ref={lookbookReveal} className="relative w-full h-[60vh] sm:h-[75vh] md:h-[90vh] overflow-hidden select-none bg-black group">
-        <img
-          src={PLACEHOLDER_IMG}
-          alt="Campaign Lookbook"
-          className="w-full h-full object-cover object-[center_18%] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
-        />
-        {/* Cinematic gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/15 pointer-events-none" />
-        <div className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 z-10">
-          <button
-            type="button"
-            onClick={() => onSelectCategory('kokoelmat')}
-            className="px-3.5 sm:px-4 py-2 bg-white/90 backdrop-blur-md border border-white/20 text-xs font-mono uppercase tracking-[0.16em] hover:bg-white hover:shadow-lg transition-all duration-300 cursor-pointer"
-          >
-            {t.lookbook.link}
-          </button>
-        </div>
-        {/* Floating caption */}
-        <div className="absolute top-6 sm:top-10 left-4 sm:left-8 z-10 text-white/80">
-          <span className="font-mono text-[10px] tracking-[0.22em] uppercase block">
-            {language === 'fi' ? 'KAMPANJA' : 'CAMPAIGN'}
-          </span>
-          <span className="font-editorial text-2xl sm:text-3xl font-normal block mt-1">
-            {language === 'fi' ? 'Talvi 2026' : 'Winter 2026'}
-          </span>
-        </div>
-      </section>
-
-      {/* 7. "MATERIAALI JA TYÖ" */}
-      <section ref={craftReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/[0.08]">
-        <div className="mb-10 sm:mb-14 text-center max-w-xl mx-auto">
-          <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-2 sm:mb-3">
-            {t.craft.tag}
-          </span>
-          <h2 className="font-editorial text-2xl sm:text-4xl md:text-5xl font-normal leading-tight text-balance">
-            {t.craft.title}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-12">
-          {[
-            { tag: '01 · VILLA', title: t.craft.woolTitle, desc: t.craft.woolDesc, pos: 'center 18%', scale: 1.3, alt: t.craft.woolTitle },
-            { tag: '02 · PUUVILLA', title: t.craft.cottonTitle, desc: t.craft.cottonDesc, pos: 'center 45%', scale: 1.5, alt: t.craft.cottonTitle },
-            { tag: '03 · KÄSITYÖ', title: t.craft.craftTitle, desc: t.craft.craftDesc, pos: 'center 70%', scale: 1.4, alt: t.craft.craftTitle },
-          ].map((item, i) => (
-            <div key={i} className="flex flex-col group cursor-default">
-              <div className="aspect-[3/4] sm:aspect-[3/5] overflow-hidden border border-black/[0.05] bg-white mb-4 sm:mb-6 shadow-sm group-hover:shadow-md transition-shadow duration-500 gradient-overlay relative">
-                <FashionImage
-                  alt={item.alt}
-                  position={item.pos}
-                  scale={item.scale}
-                  aspectRatio="auto"
-                  className="w-full h-full"
-                  imageClassName="group-hover:scale-[1.03] transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                />
-              </div>
-              <span className="text-[10px] font-mono tracking-widest uppercase text-black/40 mb-1">
-                {item.tag}
-              </span>
-              <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2">
-                {item.title}
-              </h3>
-              <p className="text-xs font-sans text-black/60 leading-relaxed">
-                {item.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 8. JOURNAL TEASER */}
-      <section ref={journalReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-20 md:py-28 border-b border-black/[0.08]">
-        <div className="mb-8 sm:mb-12 flex items-baseline justify-between">
-          <div>
-            <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.22em] uppercase text-black/40 block mb-1 sm:mb-2">
-              {t.journal.tag}
-            </span>
-            <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-normal">
-              {t.journal.title}
-            </h2>
-          </div>
-          <button
-            type="button"
-            onClick={() => onOpenJournalArticle(JOURNAL_ARTICLES[0].id)}
-            className="text-xs font-mono uppercase tracking-[0.14em] text-black/60 hover:text-black link-underline cursor-pointer"
-          >
-            {language === 'fi' ? 'Kaikki merkinnät' : 'All Entries'} →
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-          {JOURNAL_ARTICLES.map((article) => (
-            <article
-              key={article.id}
-              onClick={() => onOpenJournalArticle(article.id)}
-              className="group cursor-pointer flex flex-col justify-between card-lift"
-            >
-              <div>
-                <div className="aspect-[16/10] overflow-hidden border border-black/[0.05] bg-white mb-3 sm:mb-4 shadow-sm gradient-overlay relative">
-                  <FashionImage
-                    alt={article.title[language]}
-                    position={article.cropPosition}
-                    scale={1.2}
-                    aspectRatio="auto"
-                    className="w-full h-full"
-                    imageClassName="group-hover:scale-105 transition-transform duration-[800ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-                  />
-                </div>
-                <div className="flex items-center gap-2 sm:gap-3 text-[10px] font-mono text-black/40 mb-1.5 sm:mb-2">
-                  <span>{article.date}</span>
-                  <span>·</span>
-                  <span>{article.readTime}</span>
-                </div>
-                <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-1.5 sm:mb-2 leading-snug group-hover:underline underline-offset-4">
-                  {article.title[language]}
-                </h3>
-                <p className="text-xs font-sans text-black/60 leading-relaxed">
-                  {article.subtitle[language]}
-                </p>
-              </div>
-
-              <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-black/[0.06]">
-                <span className="text-[11px] font-mono tracking-wider text-black/80 group-hover:text-black group-hover:translate-x-1 transition-all duration-300 inline-block">
-                  {t.journal.readArticle} →
+                <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-normal text-black tracking-tight group-hover:underline underline-offset-4">
+                  {language === 'fi' ? 'Miesten Talvimallisto' : 'Men’s Winter Collection'}
+                </h2>
+                <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-black/50 block mt-1">
+                  Greatcoats · Heavy Knitwear · Fluid Trousers
                 </span>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* 9. SUSTAINABILITY STRIP */}
-      <section ref={sustainReveal} className="w-full bg-[#000000] text-[#FFFFFF] py-12 sm:py-16 md:py-20 px-4 sm:px-6 md:px-10 relative overflow-hidden">
-        {/* Subtle radial glow for depth */}
-        <div className="absolute inset-0 pointer-events-none opacity-[0.06] bg-[radial-gradient(circle_at_30%_50%,white,transparent_60%)]" />
-        <div className="max-w-[1720px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10 md:gap-14 relative">
-          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
-            <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
-              01 · KIERRÄTYS
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-2 sm:mb-3 text-white">
-              {t.sustainability.pledge1Title}
-            </h3>
-            <p className="text-xs font-sans text-white/70 leading-relaxed">
-              {t.sustainability.pledge1Desc}
-            </p>
-          </div>
-
-          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
-            <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
-              02 · PUHTAUS
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-2 sm:mb-3 text-white">
-              {t.sustainability.pledge2Title}
-            </h3>
-            <p className="text-xs font-sans text-white/70 leading-relaxed">
-              {t.sustainability.pledge2Desc}
-            </p>
-          </div>
-
-          <div className="border-t border-white/15 pt-4 sm:pt-6 group">
-            <span className="font-mono text-[10px] tracking-[0.22em] text-white/50 block mb-1.5 sm:mb-2 uppercase">
-              03 · VASTUU
-            </span>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal mb-2 sm:mb-3 text-white">
-              {t.sustainability.pledge3Title}
-            </h3>
-            <p className="text-xs font-sans text-white/70 leading-relaxed">
-              {t.sustainability.pledge3Desc}
-            </p>
+              <span className="font-mono text-xs uppercase tracking-[0.2em] text-black/70 group-hover:translate-x-2 transition-transform">
+                {language === 'fi' ? 'Tutustu' : 'Shop Men'} →
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 10. WAITLIST / INVITATION */}
-      <section ref={waitlistReveal} className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 md:py-32 border-b border-black/[0.08]">
-        <div className="max-w-2xl mx-auto text-center">
-          {/* Decorative divider */}
-          <div className="divider-gradient w-24 mx-auto mb-6 sm:mb-8" />
-          <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.24em] uppercase text-black/40 block mb-2 sm:mb-3">
-            {t.waitlist.tag}
+      {/* 3. THE BRAND STORE SHOWCASE: PURE HIGH-FASHION PRODUCT GRID */}
+      <section className="w-full max-w-[1880px] mx-auto px-4 sm:px-8 lg:px-12 py-16 sm:py-24 border-b border-black/[0.08]">
+        {/* Section Header */}
+        <div className="flex items-baseline justify-between pb-6 sm:pb-8 border-b border-black/[0.08] mb-8 sm:mb-12">
+          <div>
+            <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-black/50 block mb-1">
+              CURRENT PRESENTATION
+            </span>
+            <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-black tracking-tight">
+              {language === 'fi' ? 'Valitut Arkistoteokset' : 'Current Archival Rotation'}
+            </h2>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => onSelectCategory('all')}
+            className="text-xs font-mono uppercase tracking-[0.22em] text-black hover:opacity-60 underline underline-offset-4 cursor-pointer transition-opacity"
+          >
+            {language === 'fi' ? 'Kaikki 24 teosta' : 'View All 24 Pieces'} →
+          </button>
+        </div>
+
+        {/* 4-Column High-Fashion Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 sm:gap-x-8 gap-y-12 sm:gap-y-16">
+          {liveProducts.slice(0, 8).map((product) => {
+            const isHovered = hoveredCardId === product.id;
+            return (
+              <div
+                key={product.id}
+                onMouseEnter={() => setHoveredCardId(product.id)}
+                onMouseLeave={() => setHoveredCardId(null)}
+                className="group flex flex-col justify-between"
+              >
+                <div>
+                  {/* Card Header: Plate number & season */}
+                  <div className="flex items-center justify-between text-[10px] font-mono tracking-wider text-black/45 pb-2">
+                    <span>{product.plateNumber}</span>
+                    <span className="uppercase text-black/50">
+                      {product.collectionSeason === 'talvi' ? 'Winter 2026' : 'Essentials'}
+                    </span>
+                  </div>
+
+                  {/* Image with seamless crossfade on hover */}
+                  <div
+                    onClick={() => onSelectProduct(product)}
+                    className="relative aspect-[3/4] overflow-hidden bg-neutral-50/40 border border-black/[0.06] cursor-pointer"
+                  >
+                    {/* Primary packshot */}
+                    <div
+                      className={`w-full h-full transition-opacity duration-700 ${
+                        isHovered ? 'opacity-0' : 'opacity-100'
+                      }`}
+                    >
+                      <FashionImage
+                        product={product}
+                        src={product.image}
+                        alt={product.name[language]}
+                        position={product.cropVariation.packshot.position}
+                        scale={product.cropVariation.packshot.scale}
+                        aspectRatio="auto"
+                        className="w-full h-full"
+                        imageClassName="group-hover:scale-105 transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                      />
+                    </div>
+
+                    {/* Secondary runway image */}
+                    <div
+                      className={`absolute inset-0 transition-opacity duration-700 ${
+                        isHovered ? 'opacity-100' : 'opacity-0'
+                      }`}
+                    >
+                      <FashionImage
+                        product={product}
+                        src={product.hoverImage || product.image}
+                        isHover={true}
+                        alt={`${product.name[language]} on model`}
+                        position={product.cropVariation.onModel.position}
+                        scale={product.cropVariation.onModel.scale}
+                        flipped={product.cropVariation.onModel.flipped}
+                        aspectRatio="auto"
+                        className="w-full h-full"
+                        imageClassName="scale-105"
+                      />
+                    </div>
+
+                    {/* Size Selector Strip on Hover */}
+                    <div className="hidden sm:flex absolute bottom-0 left-0 right-0 p-2.5 bg-white/95 backdrop-blur-md border-t border-black/[0.08] items-center justify-between z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <span className="text-[9px] font-mono uppercase tracking-wider text-black/50">
+                        {language === 'fi' ? 'Lisää:' : 'Size:'}
+                      </span>
+                      <div className="flex gap-1.5">
+                        {product.sizes.map((sz) => {
+                          const isAdded = addedFeedback === `${product.id}-${sz}`;
+                          return (
+                            <button
+                              key={sz}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleQuickAdd(product, sz);
+                              }}
+                              className={`px-2 py-0.5 text-[10px] font-mono border cursor-pointer transition-colors ${
+                                isAdded
+                                  ? 'bg-black text-white border-black font-semibold'
+                                  : 'border-black/[0.12] text-black/80 hover:border-black hover:text-black'
+                              }`}
+                            >
+                              {isAdded ? '✓' : sz}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Title & Price */}
+                <div className="pt-3.5 space-y-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <h3
+                      onClick={() => onSelectProduct(product)}
+                      className="font-editorial text-lg sm:text-xl font-normal text-black cursor-pointer hover:underline underline-offset-4 truncate"
+                    >
+                      {product.name[language]}
+                    </h3>
+                    <span className="font-mono text-xs sm:text-sm text-black font-medium shrink-0">
+                      {formatPrice(product.price)}
+                    </span>
+                  </div>
+                  <p className="font-mono text-[10.5px] text-black/50 truncate">
+                    {product.material[language]}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* 4. THE COAT EDIT & KNITWEAR ARCHIVE (CAMPAIGN SPREAD) */}
+      <section className="w-full border-b border-black/[0.08]">
+        <div className="max-w-[1880px] mx-auto grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-black/[0.08]">
+          <div
+            onClick={() => onSelectCategory('kokoelmat')}
+            className="group cursor-pointer relative overflow-hidden bg-black aspect-[4/5] sm:aspect-[16/10] md:aspect-[4/5]"
+          >
+            <img
+              src="/src/assets/images/wool_coat_model_1790736253323.jpg"
+              alt="The Coat Edit"
+              className="w-full h-full object-cover object-[center_18%] group-hover:scale-105 transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] opacity-90"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+            <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between text-white">
+              <div>
+                <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-white/60 block mb-1">
+                  CURATED FOCUS
+                </span>
+                <h3 className="font-editorial text-2xl sm:text-4xl font-normal text-white">
+                  The Overcoat Archive
+                </h3>
+              </div>
+              <span className="text-xs font-mono uppercase tracking-[0.2em] text-white/80 group-hover:translate-x-2 transition-transform">
+                Explore →
+              </span>
+            </div>
+          </div>
+
+          <div
+            onClick={() => onSelectCategory('asusteet')}
+            className="group cursor-pointer relative overflow-hidden bg-black aspect-[4/5] sm:aspect-[16/10] md:aspect-[4/5]"
+          >
+            <img
+              src="/src/assets/images/leather_bag_tote_1790736295648.jpg"
+              alt="Leather Objects & Accessories"
+              className="w-full h-full object-cover object-[center_50%] group-hover:scale-105 transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] opacity-90"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+            <div className="absolute bottom-8 left-8 right-8 flex items-end justify-between text-white">
+              <div>
+                <span className="text-[10px] font-mono tracking-[0.25em] uppercase text-white/60 block mb-1">
+                  SCULPTURAL PIECES
+                </span>
+                <h3 className="font-editorial text-2xl sm:text-4xl font-normal text-white">
+                  Leather Objects & Accents
+                </h3>
+              </div>
+              <span className="text-xs font-mono uppercase tracking-[0.2em] text-white/80 group-hover:translate-x-2 transition-transform">
+                Explore →
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5. FULL-BLEED LOOKBOOK BANNER */}
+      <section className="relative w-full h-[65vh] sm:h-[80vh] md:h-[90vh] overflow-hidden select-none bg-neutral-950 group">
+        <img
+          src="/src/assets/images/mens_trench_model_1790736267744.jpg"
+          alt="Campaign Lookbook"
+          className="w-full h-full object-cover object-[center_18%] transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105 opacity-90"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none" />
+
+        <div className="absolute top-8 left-6 sm:left-12 z-10 text-white font-mono">
+          <span className="text-[10px] tracking-[0.28em] uppercase text-white/60 block">
+            LOOKBOOK EDITION 03
           </span>
-          <h2 className="font-editorial text-3xl sm:text-4xl md:text-5xl font-normal mb-3 sm:mb-4 text-balance">
-            {t.waitlist.title}
+          <span className="font-editorial text-2xl sm:text-4xl font-normal text-white mt-1 block">
+            Winter 2026 · The Silence of Northern Wool
+          </span>
+        </div>
+
+        <div className="absolute bottom-8 right-6 sm:right-12 z-10">
+          <button
+            type="button"
+            onClick={() => onSelectCategory('kokoelmat')}
+            className="px-6 py-3.5 bg-white text-black hover:bg-neutral-100 transition-colors text-xs font-mono uppercase tracking-[0.24em] cursor-pointer flex items-center gap-2"
+          >
+            <span>{language === 'fi' ? 'Avaa Lookbook' : 'View Complete Lookbook'}</span>
+            <span>→</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 6. NEWSLETTER & PRIVATE CLIENT ACCESS */}
+      <section className="w-full py-20 sm:py-28 px-4 sm:px-8 bg-white border-t border-black/[0.08]">
+        <div className="max-w-xl mx-auto text-center space-y-5">
+          <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-black/50 block">
+            STUDIO NEWSLETTER
+          </span>
+          <h2 className="font-editorial text-3xl sm:text-4xl font-normal text-black">
+            {language === 'fi'
+              ? 'Tilaa ateljee-ilmoitukset'
+              : 'Receive Private Edition Announcements'}
           </h2>
-          <p className="text-xs sm:text-sm font-sans text-black/55 mb-6 sm:mb-8 max-w-md mx-auto leading-relaxed px-2">
-            {t.waitlist.subtitle}
+          <p className="text-xs sm:text-sm font-sans text-black/60 font-light max-w-sm mx-auto">
+            {language === 'fi'
+              ? 'Saat etuoikeutetun pääsyn uusiin numeroituihin eriin 24 tuntia ennen julkista esittelyä.'
+              : 'Privileged 24-hour advance access to each newly numbered release before public unveiling.'}
           </p>
 
-          {!waitlistSubmitted ? (
-            <form onSubmit={handleWaitlistSubmit} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 max-w-md mx-auto">
+          {!isSubscribed ? (
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-3 pt-3">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t.waitlist.placeholder}
-                className="flex-1 px-4 py-3 border border-black/[0.15] text-xs font-sans placeholder:text-black/35 focus:outline-none focus:border-black focus:shadow-sm transition-all"
+                placeholder={language === 'fi' ? 'Sähköpostiosoite...' : 'Enter your email...'}
+                className="w-full sm:flex-1 py-3 px-3.5 border border-black/[0.15] text-xs font-mono placeholder:text-black/35 focus:outline-none focus:border-black bg-white"
               />
               <button
                 type="submit"
-                className="px-8 py-3 text-xs uppercase tracking-[0.18em] btn-primary font-medium cursor-pointer"
+                className="w-full sm:w-auto px-6 py-3 bg-black text-white text-xs font-mono uppercase tracking-[0.20em] hover:bg-black/85 transition-colors cursor-pointer"
               >
-                {t.waitlist.button}
+                {language === 'fi' ? 'Tilaa' : 'Subscribe'}
               </button>
             </form>
           ) : (
-            <div className="p-4 border border-black flex items-center justify-center gap-2 max-w-md mx-auto animate-fadeIn">
-              <Check className="w-4 h-4" />
-              <span className="text-xs font-sans tracking-wide">
-                {t.waitlist.success}
+            <div className="py-3 border border-black/[0.1] bg-neutral-50 flex items-center justify-center gap-2 font-mono text-xs text-black">
+              <Check className="w-4 h-4 stroke-[2]" />
+              <span>
+                {language === 'fi' ? 'Kiitos tilauksestasi.' : 'Thank you. You are on the private register.'}
               </span>
             </div>
           )}

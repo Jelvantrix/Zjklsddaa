@@ -124,6 +124,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {/* Thumbnail */}
                 <div className="w-16 sm:w-20 aspect-[3/4] border border-black/10 overflow-hidden flex-shrink-0 bg-white">
                   <FashionImage
+                    product={item.product}
+                    src={item.product.image}
                     alt={item.product.name[language]}
                     position={item.product.cropVariation.packshot.position}
                     scale={item.product.cropVariation.packshot.scale}
@@ -156,23 +158,23 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </p>
 
                   <div className="mt-2.5 sm:mt-3 flex items-center justify-between">
-                    {/* Quantity Stepper */}
-                    <div className="flex items-center border border-black/20">
+                    {/* Quantity Stepper: pure text affordances, no boxes */}
+                    <div className="flex items-center gap-2.5">
                       <button
                         type="button"
                         onClick={() => onUpdateQuantity(item.product.id, item.size, -1)}
-                        className="p-1 sm:p-1.5 text-black/60 hover:text-black cursor-pointer"
+                        className="p-1 text-black/40 hover:text-black transition-colors cursor-pointer"
                         aria-label="Vähennä"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="px-2 sm:px-2.5 text-xs font-mono">
+                      <span className="text-xs font-mono text-black font-medium min-w-[14px] text-center">
                         {item.quantity}
                       </span>
                       <button
                         type="button"
                         onClick={() => onUpdateQuantity(item.product.id, item.size, 1)}
-                        className="p-1 sm:p-1.5 text-black/60 hover:text-black cursor-pointer"
+                        className="p-1 text-black/40 hover:text-black transition-colors cursor-pointer"
                         aria-label="Lisää"
                       >
                         <Plus className="w-3 h-3" />
@@ -192,19 +194,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         {/* Footer Checkout Summary */}
         {items.length > 0 && (
           <div className="p-4 sm:p-6 border-t border-black/10 bg-white space-y-3 sm:space-y-4">
-            {/* Promo code */}
-            <div className="flex gap-2">
+            {/* Promo code: clean border-b input and text apply */}
+            <div className="flex items-center gap-3">
               <input
                 type="text"
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
                 placeholder={t.promoCode}
-                className="flex-1 px-3 py-1.5 text-xs font-mono border border-black/20 focus:outline-none focus:border-black uppercase"
+                className="flex-1 py-1.5 px-1 text-xs font-mono border-b border-black/20 focus:border-black focus:outline-none uppercase bg-transparent"
               />
               <button
                 type="button"
                 onClick={() => setPromoApplied(true)}
-                className="px-3 sm:px-4 py-1.5 text-xs font-mono uppercase tracking-wider border border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                className="py-1.5 px-2 text-xs font-mono uppercase tracking-wider text-black border-b border-black hover:opacity-60 transition-opacity cursor-pointer shrink-0"
               >
                 {t.apply}
               </button>

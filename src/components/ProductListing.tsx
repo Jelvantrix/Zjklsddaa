@@ -190,40 +190,42 @@ export const ProductListing: React.FC<ProductListingProps> = ({
         </div>
       </div>
 
-      {/* STICKY FILTER & CONTROLS BAR WITH HAIRLINE BORDER */}
-      <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-black/10 py-2.5 sm:py-3.5 px-4 sm:px-6 md:px-10">
+      {/* STICKY FILTER & CONTROLS BAR: Pure typographic controls, no boxes */}
+      <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-black/10 py-3 sm:py-4 px-4 sm:px-6 md:px-10">
         <div className="max-w-[1720px] mx-auto flex flex-wrap items-center justify-between gap-3 sm:gap-4">
           {/* LEFT: Filter button & active filters indicator */}
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-4 sm:gap-6">
             <button
+              type="button"
               onClick={() => setIsFilterOpen(true)}
-              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 border border-black text-xs font-mono uppercase tracking-[0.14em] hover:bg-black hover:text-white transition-colors cursor-pointer"
+              className="flex items-center gap-2 py-1 text-xs font-mono uppercase tracking-[0.18em] text-black hover:opacity-60 transition-opacity cursor-pointer"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 stroke-[1.5]" />
               <span>{t.archive.filters}</span>
               {activeFiltersCount > 0 && (
-                <span className="ml-1 bg-black text-white hover:bg-white hover:text-black w-4 h-4 rounded-full text-[9px] flex items-center justify-center font-mono">
-                  {activeFiltersCount}
+                <span className="text-[10px] font-mono text-black font-semibold">
+                  ({activeFiltersCount})
                 </span>
               )}
             </button>
 
-            {/* Sort Dropdown (Visible on all devices) */}
+            {/* Sort Dropdown: Clean minimal selector */}
             <div className="relative flex items-center">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="appearance-none bg-transparent pr-6 sm:pr-7 pl-2 sm:pl-3 py-1 sm:py-1.5 border border-black/20 text-[10.5px] sm:text-xs font-mono uppercase tracking-[0.10em] sm:tracking-[0.12em] focus:outline-none focus:border-black cursor-pointer"
+                className="appearance-none bg-transparent pr-6 pl-1 py-1 text-[11px] sm:text-xs font-mono uppercase tracking-[0.14em] text-black border-b border-black/20 focus:border-black focus:outline-none cursor-pointer"
               >
                 <option value="newest">{t.archive.sortNewest}</option>
                 <option value="priceAsc">{t.archive.sortPriceAsc}</option>
                 <option value="priceDesc">{t.archive.sortPriceDesc}</option>
               </select>
-              <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 absolute right-1.5 sm:right-2 pointer-events-none text-black/60" />
+              <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5 absolute right-0 pointer-events-none text-black/60" />
             </div>
 
             {activeFiltersCount > 0 && (
               <button
+                type="button"
                 onClick={clearAllFilters}
                 className="hidden md:inline-block text-xs font-mono text-black/50 hover:text-black underline underline-offset-4 cursor-pointer"
               >
@@ -233,70 +235,67 @@ export const ProductListing: React.FC<ProductListingProps> = ({
           </div>
 
           {/* RIGHT: Look/Product Toggle & Column Density Switch */}
-          <div className="flex items-center gap-3 sm:gap-6">
-            {/* "Look / Product" Toggle */}
-            <div className="flex items-center border border-black/20 p-0.5 text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider">
+          <div className="flex items-center gap-4 sm:gap-8">
+            {/* "Look / Product" Toggle: Pure text tabs */}
+            <div className="flex items-center gap-3 sm:gap-4 text-[11px] font-mono uppercase tracking-[0.16em]">
               <button
+                type="button"
                 onClick={() => setViewMode('product')}
-                className={`px-2.5 sm:px-3 py-1 transition-colors cursor-pointer ${
+                className={`py-1 transition-colors cursor-pointer ${
                   viewMode === 'product'
-                    ? 'bg-black text-white font-medium'
-                    : 'text-black/60 hover:text-black'
+                    ? 'text-black font-semibold border-b border-black'
+                    : 'text-black/40 hover:text-black'
                 }`}
               >
                 {t.archive.viewProduct}
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('look')}
-                className={`px-2.5 sm:px-3 py-1 transition-colors cursor-pointer ${
+                className={`py-1 transition-colors cursor-pointer ${
                   viewMode === 'look'
-                    ? 'bg-black text-white font-medium'
-                    : 'text-black/60 hover:text-black'
+                    ? 'text-black font-semibold border-b border-black'
+                    : 'text-black/40 hover:text-black'
                 }`}
               >
                 {t.archive.viewLook}
               </button>
             </div>
 
-            {/* Live Firestore Sync Status Indicator */}
-            {isLiveFromFirestore && (
-              <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono uppercase tracking-widest border border-black/15 bg-white text-black/80">
-                <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-                <span>Live Firestore</span>
-              </div>
-            )}
-
-            {/* Density Switch: 1 / 2 / 4 columns (Desktop & Tablet) */}
-            <div className="hidden md:flex items-center gap-1 border border-black/20 p-1">
+            {/* Density Switch: 1 / 2 / 4 columns (Desktop & Tablet) - pure borderless icons */}
+            <div className="hidden md:flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setColumnsDensity(1)}
-                className={`p-1.5 transition-colors cursor-pointer ${
-                  columnsDensity === 1 ? 'bg-black text-white' : 'text-black/40 hover:text-black'
+                className={`p-1 transition-colors cursor-pointer ${
+                  columnsDensity === 1 ? 'text-black' : 'text-black/30 hover:text-black'
                 }`}
                 title="1 palsta"
                 aria-label="1 palsta"
               >
-                <Square className="w-3.5 h-3.5 stroke-[1.5]" />
+                <Square className="w-4 h-4 stroke-[1.5]" />
               </button>
               <button
+                type="button"
                 onClick={() => setColumnsDensity(2)}
-                className={`p-1.5 transition-colors cursor-pointer ${
-                  columnsDensity === 2 ? 'bg-black text-white' : 'text-black/40 hover:text-black'
+                className={`p-1 transition-colors cursor-pointer ${
+                  columnsDensity === 2 ? 'text-black' : 'text-black/30 hover:text-black'
                 }`}
                 title="2 palstaa"
                 aria-label="2 palstaa"
               >
-                <Columns className="w-3.5 h-3.5 stroke-[1.5]" />
+                <Columns className="w-4 h-4 stroke-[1.5]" />
               </button>
               <button
+                type="button"
                 onClick={() => setColumnsDensity(4)}
-                className={`p-1.5 transition-colors cursor-pointer ${
-                  columnsDensity === 4 ? 'bg-black text-white' : 'text-black/40 hover:text-black'
+                className={`p-1 transition-colors cursor-pointer ${
+                  columnsDensity === 4 ? 'text-black' : 'text-black/30 hover:text-black'
                 }`}
                 title="4 palstaa"
                 aria-label="4 palstaa"
               >
-                <Grid className="w-3.5 h-3.5 stroke-[1.5]" />
+                <Grid className="w-4 h-4 stroke-[1.5]" />
               </button>
             </div>
           </div>
@@ -388,6 +387,9 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                       } gradient-overlay`}
                     >
                       <FashionImage
+                        product={product}
+                        isHover={hoveredCardId === product.id}
+                        src={hoveredCardId === product.id ? product.hoverImage : product.image}
                         alt={product.name[language]}
                         position={activeCrop.position}
                         scale={activeCrop.scale}
@@ -397,26 +399,26 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         imageClassName="transition-transform duration-700 group-hover:scale-105"
                       />
 
-                      {/* Wishlist Heart Button */}
+                      {/* Wishlist Heart Button: pure icon without box */}
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onToggleWishlist(product.id);
                         }}
-                        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1.5 sm:p-2 bg-white/70 backdrop-blur-md border border-black/[0.06] opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:shadow-sm z-20 cursor-pointer"
+                        className="absolute top-2 sm:top-3 right-2 sm:right-3 p-1 text-black/70 hover:text-black opacity-80 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity z-20 cursor-pointer"
                         aria-label="Tallenna suosikkeihin"
                       >
                         <Heart
-                          className={`w-3 sm:w-3.5 h-3 sm:h-3.5 stroke-[1.5] ${
+                          className={`w-4 h-4 stroke-[1.5] ${
                             isWishlisted ? 'fill-black text-black' : 'text-black'
                           }`}
                         />
                       </button>
 
-                      {/* Thin Quick-Add Size Strip sliding up on desktop hover */}
-                      <div className="hidden sm:flex absolute bottom-0 left-0 right-0 glass border-t border-black/[0.08] translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2 items-center justify-center gap-1.5 z-10">
-                        <span className="text-[9px] font-mono uppercase tracking-wider text-black/50 mr-1">
+                      {/* Thin Quick-Add Size Strip sliding up on desktop hover: pure typography */}
+                      <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10">
+                        <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 mr-1">
                           {language === 'fi' ? 'Koko:' : 'Size:'}
                         </span>
                         {product.sizes.map((sz) => (
@@ -427,7 +429,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                               e.stopPropagation();
                               onQuickAdd(product, sz);
                             }}
-                            className="px-2 py-0.5 text-[10px] font-mono border border-black/20 hover:border-black hover:bg-black hover:text-white transition-colors cursor-pointer"
+                            className="text-[10.5px] font-mono text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer px-1 py-0.5"
                           >
                             {sz}
                           </button>
@@ -436,14 +438,14 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                     </div>
                   </div>
 
-                  {/* Mobile Tap-to-add size strip */}
-                  <div className="sm:hidden flex flex-wrap gap-1 mt-1.5">
-                    {product.sizes.slice(0, 3).map((sz) => (
+                  {/* Mobile Tap-to-add size strip: pure text links */}
+                  <div className="sm:hidden flex flex-wrap gap-2 mt-2">
+                    {product.sizes.slice(0, 4).map((sz) => (
                       <button
                         type="button"
                         key={sz}
                         onClick={() => onQuickAdd(product, sz)}
-                        className="px-1.5 py-0.5 text-[8.5px] font-mono border border-black/20 text-black/70 cursor-pointer"
+                        className="text-[10px] font-mono text-black/60 hover:text-black hover:underline underline-offset-2 cursor-pointer"
                       >
                         +{sz}
                       </button>
@@ -483,7 +485,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
           </div>
         )}
 
-        {/* PROGRESS AND "LOAD MORE" THIN-LINE BUTTON */}
+        {/* PROGRESS AND "LOAD MORE" PURE TEXT ACTION */}
         {visibleCount < filteredProducts.length && (
           <div className="mt-14 sm:mt-20 pt-8 sm:pt-10 border-t border-black/10 flex flex-col items-center justify-center">
             <span className="font-mono text-xs text-black/50 mb-3 sm:mb-4 tracking-wider">
@@ -494,9 +496,10 @@ export const ProductListing: React.FC<ProductListingProps> = ({
             <button
               type="button"
               onClick={() => setVisibleCount((prev) => prev + 8)}
-              className="px-8 sm:px-10 py-2.5 sm:py-3 border border-black text-xs font-mono uppercase tracking-[0.2em] hover:bg-black hover:text-white transition-colors cursor-pointer"
+              className="py-2 px-3 text-xs font-mono uppercase tracking-[0.24em] text-black hover:opacity-60 transition-opacity border-b border-black cursor-pointer flex items-center gap-2"
             >
-              {t.archive.loadMore}
+              <span>{t.archive.loadMore}</span>
+              <span>↓</span>
             </button>
           </div>
         )}
@@ -530,12 +533,12 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                 </button>
               </div>
 
-              {/* 1. Size Filter */}
+              {/* 1. Size Filter: pure text items */}
               <div className="mb-6 sm:mb-8">
                 <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
                   {t.archive.filterSize}
                 </span>
-                <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap gap-2 sm:gap-2.5">
                   {allSizes.map((sz) => (
                     <button
                       type="button"
@@ -543,10 +546,10 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                       onClick={() =>
                         setSelectedSizeFilter(selectedSizeFilter === sz ? null : sz)
                       }
-                      className={`py-1.5 sm:py-2 text-xs font-mono border transition-colors cursor-pointer ${
+                      className={`py-1 px-2 text-xs font-mono transition-colors cursor-pointer ${
                         selectedSizeFilter === sz
-                          ? 'bg-black text-white border-black'
-                          : 'border-black/20 hover:border-black text-black'
+                          ? 'text-black font-semibold border-b border-black'
+                          : 'text-black/50 hover:text-black'
                       }`}
                     >
                       {sz}
@@ -555,12 +558,12 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                 </div>
               </div>
 
-              {/* 2. Color Filter */}
+              {/* 2. Color Filter: pure typographic items */}
               <div className="mb-6 sm:mb-8">
                 <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
                   {language === 'fi' ? 'Väri' : 'Colour'}
                 </span>
-                <div className="flex items-center gap-3 sm:gap-4">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <button
                     type="button"
                     onClick={() =>
@@ -568,13 +571,12 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         selectedColorFilter === '#000000' ? null : '#000000'
                       )
                     }
-                    className={`flex items-center gap-2 px-3 py-1.5 border text-xs font-mono uppercase cursor-pointer ${
+                    className={`py-1 text-xs font-mono uppercase cursor-pointer transition-colors ${
                       selectedColorFilter === '#000000'
-                        ? 'border-black bg-black text-white'
-                        : 'border-black/30 hover:border-black text-black'
+                        ? 'text-black font-semibold border-b border-black'
+                        : 'text-black/50 hover:text-black'
                     }`}
                   >
-                    <span className="w-3 h-3 bg-black border border-white" />
                     <span>{language === 'fi' ? 'Musta' : 'Black'}</span>
                   </button>
 
@@ -585,24 +587,23 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         selectedColorFilter === '#FFFFFF' ? null : '#FFFFFF'
                       )
                     }
-                    className={`flex items-center gap-2 px-3 py-1.5 border text-xs font-mono uppercase cursor-pointer ${
+                    className={`py-1 text-xs font-mono uppercase cursor-pointer transition-colors ${
                       selectedColorFilter === '#FFFFFF'
-                        ? 'border-black bg-black text-white'
-                        : 'border-black/30 hover:border-black text-black'
+                        ? 'text-black font-semibold border-b border-black'
+                        : 'text-black/50 hover:text-black'
                     }`}
                   >
-                    <span className="w-3 h-3 bg-white border border-black" />
                     <span>{language === 'fi' ? 'Valkoinen' : 'White'}</span>
                   </button>
                 </div>
               </div>
 
-              {/* 3. Material Filter */}
+              {/* 3. Material Filter: pure text items */}
               <div className="mb-6 sm:mb-8">
                 <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
                   {t.archive.filterMaterial}
                 </span>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {allMaterials.map((mat) => (
                     <button
                       type="button"
@@ -612,10 +613,10 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                           selectedMaterialFilter === mat ? null : mat
                         )
                       }
-                      className={`px-3 py-1.5 text-xs font-sans border transition-colors cursor-pointer ${
+                      className={`py-1 text-xs font-sans tracking-wide transition-colors cursor-pointer ${
                         selectedMaterialFilter === mat
-                          ? 'bg-black text-white border-black'
-                          : 'border-black/20 hover:border-black'
+                          ? 'text-black font-semibold border-b border-black'
+                          : 'text-black/50 hover:text-black'
                       }`}
                     >
                       {mat}

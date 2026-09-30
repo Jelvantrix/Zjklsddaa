@@ -69,6 +69,8 @@ export interface Product {
     soldCount?: number;
   };
   images?: ProductImage[];
+  image?: string;
+  hoverImage?: string;
   status?: ProductStatus;
   publishAt?: string | number; // ISO string or timestamp
   seo?: {
@@ -302,18 +304,46 @@ export interface AdminUser {
   role: 'owner' | 'editor' | 'viewer';
 }
 
+export type TrackingEventType =
+  | 'page_view'
+  | 'scroll_depth'
+  | 'click'
+  | 'hover_dwell'
+  | 'product_view'
+  | 'product_dwell'
+  | 'image_interaction'
+  | 'hero_video'
+  | 'search'
+  | 'filter_use'
+  | 'density_toggle'
+  | 'look_product_toggle'
+  | 'quicklook_open'
+  | 'size_select'
+  | 'add_to_bag'
+  | 'remove_from_bag'
+  | 'wishlist_add'
+  | 'wishlist_remove'
+  | 'cart_open'
+  | 'checkout_step'
+  | 'purchase'
+  | 'waitlist_signup'
+  | 'language_switch'
+  | 'outbound_click'
+  | 'error';
+
 export interface TrackingEvent {
-  id: string;
-  type: string;
+  id?: string;
+  type: TrackingEventType | string;
   timestamp: number;
   sessionId: string;
-  visitorId?: string;
+  visitorId: string;
   page: string;
   deviceClass: 'desktop' | 'tablet' | 'mobile';
-  viewport: { width: number; height: number };
+  viewport: string | { width: number; height: number };
   language: string;
   referrer?: string;
   utm?: Record<string, string>;
+  payload?: Record<string, any>;
   data?: Record<string, any>;
 }
 
@@ -364,6 +394,7 @@ export interface JournalArticle {
   id: string;
   slug: string;
   date: string;
+  tag?: string;
   title: {
     fi: string;
     en: string;

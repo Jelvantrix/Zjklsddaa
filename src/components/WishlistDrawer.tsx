@@ -84,6 +84,8 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                   className="w-20 aspect-[3/4] border border-black/10 overflow-hidden flex-shrink-0 bg-white cursor-pointer"
                 >
                   <FashionImage
+                    product={product}
+                    src={product.image}
                     alt={product.name[language]}
                     position={product.cropVariation.packshot.position}
                     scale={product.cropVariation.packshot.scale}
@@ -120,12 +122,13 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                     {formatPrice(product.price)}
                   </p>
 
-                  <div className="mt-3 flex flex-wrap gap-1">
+                  <div className="mt-2.5 flex flex-wrap gap-2">
                     {product.sizes.map((sz) => (
                       <button
+                        type="button"
                         key={sz}
                         onClick={() => onQuickAdd(product, sz)}
-                        className="px-2 py-0.5 text-[10px] font-mono border border-black/20 hover:border-black hover:bg-black hover:text-white transition-colors"
+                        className="text-[10.5px] font-mono text-black/60 hover:text-black hover:underline underline-offset-2 transition-colors cursor-pointer"
                       >
                         +{sz}
                       </button>

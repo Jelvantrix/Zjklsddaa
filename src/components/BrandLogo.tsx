@@ -14,20 +14,20 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   // Dimension tuning per size with responsive breakpoints
   const sizeStyles = {
     sm: {
-      title: 'text-[15px] sm:text-[18px] tracking-[0.20em] sm:tracking-[0.22em]',
-      sub: 'text-[5.5px] sm:text-[7px] tracking-[0.40em] sm:tracking-[0.45em] mt-[1px]',
+      title: 'text-[16px] sm:text-[19px]',
+      sub: 'text-[6px] sm:text-[7.5px] mt-[1.5px]',
     },
     md: {
-      title: 'text-[17px] sm:text-[23px] md:text-[26px] tracking-[0.20em] sm:tracking-[0.22em]',
-      sub: 'text-[6px] sm:text-[7.5px] md:text-[8.5px] tracking-[0.42em] sm:tracking-[0.46em] mt-[1.5px]',
+      title: 'text-[20px] sm:text-[26px] md:text-[30px]',
+      sub: 'text-[7.5px] sm:text-[9px] md:text-[10px] mt-[2px]',
     },
     lg: {
-      title: 'text-[28px] sm:text-[38px] md:text-[42px] tracking-[0.22em] sm:tracking-[0.24em]',
-      sub: 'text-[9px] sm:text-[11px] md:text-[12px] tracking-[0.46em] sm:tracking-[0.50em] mt-[3px]',
+      title: 'text-[32px] sm:text-[44px] md:text-[50px]',
+      sub: 'text-[11px] sm:text-[13px] md:text-[15px] mt-[4px]',
     },
     hero: {
-      title: 'text-[40px] sm:text-[64px] md:text-[80px] tracking-[0.24em] sm:tracking-[0.26em]',
-      sub: 'text-[11px] sm:text-[15px] md:text-[18px] tracking-[0.48em] sm:tracking-[0.54em] mt-[4px]',
+      title: 'text-[44px] sm:text-[68px] md:text-[88px]',
+      sub: 'text-[13px] sm:text-[18px] md:text-[22px] mt-[6px]',
     },
   };
 
@@ -41,17 +41,19 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       aria-label="ZEJESH CLOTHES"
     >
       <span
-        className={`font-editorial uppercase font-medium leading-none whitespace-nowrap pl-[0.20em] ${selectedSize.title}`}
+        className={`uppercase font-semibold leading-none whitespace-nowrap pl-[0.22em] ${selectedSize.title}`}
         style={{
-          fontFamily: '"Cormorant Garamond", "Instrument Serif", Georgia, serif',
+          fontFamily: '"Bodoni Moda", "Playfair Display", "Didot", Georgia, serif',
+          letterSpacing: '0.22em',
         }}
       >
         ZEJESH
       </span>
       <span
-        className={`font-sans uppercase font-light leading-none whitespace-nowrap pl-[0.42em] opacity-90 ${selectedSize.sub}`}
+        className={`uppercase font-normal leading-none whitespace-nowrap pl-[0.52em] opacity-95 ${selectedSize.sub}`}
         style={{
-          fontFamily: '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, sans-serif',
+          fontFamily: '"Bodoni Moda", "Playfair Display", "Didot", Georgia, serif',
+          letterSpacing: '0.52em',
         }}
       >
         CLOTHES

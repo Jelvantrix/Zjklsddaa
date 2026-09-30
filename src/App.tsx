@@ -62,17 +62,40 @@ function StorefrontApp() {
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const homeSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // Browser History & Popstate integration
+  // Browser History, Hash & Popstate integration
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       if (e.state && e.state.route) {
         setRoute(e.state.route);
+      } else if (window.location.hash === '#admin' || window.location.pathname.startsWith('/admin')) {
+        setRoute({ type: 'admin' });
       } else {
         setRoute({ type: 'home' });
       }
     };
+
+    const handleHashChange = () => {
+      if (window.location.hash === '#admin') {
+        setRoute({ type: 'admin' });
+      }
+    };
+
+    // Keyboard shortcut for studio admin: Cmd/Ctrl + Shift + A
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        setRoute((prev) => (prev.type === 'admin' ? { type: 'home' } : { type: 'admin' }));
+      }
+    };
+
     window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handleHashChange);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handleHashChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const navigateTo = (newRoute: PageRoute, addToHistory = true) => {
@@ -216,8 +239,9 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
+        currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
+        currentRouteType={route.type}
       />
 
       {/* 4. MULTI-PAGE VIEW ROUTER (50+ Pages) */}
@@ -314,39 +338,39 @@ function StorefrontApp() {
         {route.type === 'journal' && (
           <div className="max-w-[1720px] mx-auto px-6 md:px-10 py-24 min-h-screen">
             <div className="max-w-4xl mx-auto text-center mb-16">
-              <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
-                ARKISTOMERKINTÖJÄ
+              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 block mb-2">
+                ATELIER MONOGRAPHS
               </span>
-              <h1 className="font-editorial text-5xl sm:text-6xl font-normal mb-4">
-                {language === 'fi' ? 'Zejesh Journal' : 'The Zejesh Journal'}
+              <h1 className="font-editorial text-4xl sm:text-6xl font-normal mb-3 text-black">
+                {language === 'fi' ? 'Tekstiilitutkielmat' : 'Textile Studies & Archival Notes'}
               </h1>
-              <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto">
+              <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto font-light leading-relaxed">
                 {language === 'fi'
-                  ? 'Esseitä ja pohjoisia havaintoja valosta, sidosrakenteista ja pysyvyydestä.'
-                  : 'Essays and northern observations on illumination, textile topography, and permanent design.'}
+                  ? 'Dokumentointia pohjoisen materiaaleista, sidosrakenteista ja ateljeen menetelmistä.'
+                  : 'Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.'}
               </p>
             </div>
 
-            <div className="max-w-4xl mx-auto space-y-12">
+            <div className="max-w-4xl mx-auto space-y-8">
               {JOURNAL_ARTICLES.map((article) => (
                 <article
                   key={article.id}
                   onClick={() => setJournalArticleId(article.id)}
-                  className="p-8 border border-black/10 hover:border-black transition-colors cursor-pointer group bg-white"
+                  className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
                 >
-                  <div className="flex items-center gap-3 text-xs font-mono text-black/40 mb-3">
+                  <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
                     <span>{article.date}</span>
                     <span>·</span>
-                    <span>{article.readTime}</span>
+                    <span>ARCHIVE DOSSIER</span>
                   </div>
-                  <h2 className="font-editorial text-3xl sm:text-4xl font-normal mb-3 group-hover:underline">
+                  <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
                     {article.title[language]}
                   </h2>
-                  <p className="text-xs sm:text-sm font-sans text-black/70 mb-4 leading-relaxed">
+                  <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
                     {article.subtitle[language]}
                   </p>
-                  <span className="text-xs font-mono tracking-wider underline">
-                    {language === 'fi' ? 'Lue koko artikkeli →' : 'Read Full Essay →'}
+                  <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
+                    {language === 'fi' ? 'Avaa tutkielma' : 'Inspect Dossier'} →
                   </span>
                 </article>
               ))}
