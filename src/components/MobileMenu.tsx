@@ -53,7 +53,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             className="flex items-center gap-1.5 text-xs font-mono tracking-wider uppercase text-black"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>{language === 'fi' ? 'Takaisin' : 'Back'}</span>
+            <span>Back</span>
           </button>
         ) : (
           <div onClick={onNavigateHome} className="cursor-pointer">
@@ -131,7 +131,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               }}
               className="text-left text-sm font-sans font-medium uppercase tracking-[0.14em] py-2 border-b border-black/10"
             >
-              {language === 'fi' ? 'Näytä kaikki' : 'View All'}
+              View All
             </button>
             {SUB_CATEGORIES[activeCategory as keyof typeof SUB_CATEGORIES]?.map((sub) => (
               <button
@@ -149,11 +149,13 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         )}
       </div>
 
-      {/* Bottom 1-Click Translation & Info */}
+      {/* Bottom Atelier Info */}
       <div className="px-8 py-5 border-t border-black/10 flex items-center justify-between bg-white text-xs font-mono">
-        <TranslationBar language={language} onSetLanguage={onSetLanguage} />
-        <span className="text-[10px] text-black/50 tracking-wider">
-          HELSINKI
+        <span className="text-[10px] text-black/60 tracking-widest uppercase">
+          ZEJESH CLOTHES
+        </span>
+        <span className="text-[10px] text-black/40 tracking-wider">
+          HELSINKI · PORTO
         </span>
       </div>
     </div>

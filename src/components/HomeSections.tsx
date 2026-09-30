@@ -113,14 +113,14 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <div className="p-6 sm:p-10 lg:p-12 flex items-baseline justify-between border-t border-black/[0.08] bg-white">
               <div>
                 <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-normal text-black tracking-tight group-hover:underline underline-offset-4">
-                  {language === 'fi' ? 'Naisten Talvimallisto' : 'Women’s Winter Collection'}
+                  Women’s Winter Collection
                 </h2>
                 <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-black/50 block mt-1">
                   Overcoats · Structured Tailoring · Pure Cashmere
                 </span>
               </div>
               <span className="font-mono text-xs uppercase tracking-[0.2em] text-black/70 group-hover:translate-x-2 transition-transform">
-                {language === 'fi' ? 'Tutustu' : 'Shop Women'} →
+                Shop Women →
               </span>
             </div>
           </div>
@@ -150,14 +150,14 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             <div className="p-6 sm:p-10 lg:p-12 flex items-baseline justify-between border-t border-black/[0.08] bg-white">
               <div>
                 <h2 className="font-editorial text-2xl sm:text-3xl lg:text-4xl font-normal text-black tracking-tight group-hover:underline underline-offset-4">
-                  {language === 'fi' ? 'Miesten Talvimallisto' : 'Men’s Winter Collection'}
+                  Men’s Winter Collection
                 </h2>
                 <span className="text-[11px] font-mono uppercase tracking-[0.2em] text-black/50 block mt-1">
                   Greatcoats · Heavy Knitwear · Fluid Trousers
                 </span>
               </div>
               <span className="font-mono text-xs uppercase tracking-[0.2em] text-black/70 group-hover:translate-x-2 transition-transform">
-                {language === 'fi' ? 'Tutustu' : 'Shop Men'} →
+                Shop Men →
               </span>
             </div>
           </div>
@@ -173,7 +173,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
               CURRENT PRESENTATION
             </span>
             <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-black tracking-tight">
-              {language === 'fi' ? 'Valitut Arkistoteokset' : 'Current Archival Rotation'}
+              Current Archival Rotation
             </h2>
           </div>
 
@@ -182,7 +182,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             onClick={() => onSelectCategory('all')}
             className="text-xs font-mono uppercase tracking-[0.22em] text-black hover:opacity-60 underline underline-offset-4 cursor-pointer transition-opacity"
           >
-            {language === 'fi' ? 'Kaikki 24 teosta' : 'View All 24 Pieces'} →
+            View All 24 Pieces →
           </button>
         </div>
 
@@ -252,7 +252,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                     {/* Size Selector Strip on Hover */}
                     <div className="hidden sm:flex absolute bottom-0 left-0 right-0 p-2.5 bg-white/95 backdrop-blur-md border-t border-black/[0.08] items-center justify-between z-10 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
                       <span className="text-[9px] font-mono uppercase tracking-wider text-black/50">
-                        {language === 'fi' ? 'Lisää:' : 'Size:'}
+                        Size:
                       </span>
                       <div className="flex gap-1.5">
                         {product.sizes.map((sz) => {
@@ -382,7 +382,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             onClick={() => onSelectCategory('kokoelmat')}
             className="px-6 py-3.5 bg-white text-black hover:bg-neutral-100 transition-colors text-xs font-mono uppercase tracking-[0.24em] cursor-pointer flex items-center gap-2"
           >
-            <span>{language === 'fi' ? 'Avaa Lookbook' : 'View Complete Lookbook'}</span>
+            <span>View Complete Lookbook</span>
             <span>→</span>
           </button>
         </div>
@@ -395,14 +395,10 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             STUDIO NEWSLETTER
           </span>
           <h2 className="font-editorial text-3xl sm:text-4xl font-normal text-black">
-            {language === 'fi'
-              ? 'Tilaa ateljee-ilmoitukset'
-              : 'Receive Private Edition Announcements'}
+            Receive Private Edition Announcements
           </h2>
           <p className="text-xs sm:text-sm font-sans text-black/60 font-light max-w-sm mx-auto">
-            {language === 'fi'
-              ? 'Saat etuoikeutetun pääsyn uusiin numeroituihin eriin 24 tuntia ennen julkista esittelyä.'
-              : 'Privileged 24-hour advance access to each newly numbered release before public unveiling.'}
+            Privileged 24-hour advance access to each newly numbered release before public unveiling.
           </p>
 
           {!isSubscribed ? (
@@ -412,21 +408,21 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={language === 'fi' ? 'Sähköpostiosoite...' : 'Enter your email...'}
+                placeholder="Enter your email..."
                 className="w-full sm:flex-1 py-3 px-3.5 border border-black/[0.15] text-xs font-mono placeholder:text-black/35 focus:outline-none focus:border-black bg-white"
               />
               <button
                 type="submit"
                 className="w-full sm:w-auto px-6 py-3 bg-black text-white text-xs font-mono uppercase tracking-[0.20em] hover:bg-black/85 transition-colors cursor-pointer"
               >
-                {language === 'fi' ? 'Tilaa' : 'Subscribe'}
+                Subscribe
               </button>
             </form>
           ) : (
             <div className="py-3 border border-black/[0.1] bg-neutral-50 flex items-center justify-center gap-2 font-mono text-xs text-black">
               <Check className="w-4 h-4 stroke-[2]" />
               <span>
-                {language === 'fi' ? 'Kiitos tilauksestasi.' : 'Thank you. You are on the private register.'}
+                Thank you. You are on the private register.
               </span>
             </div>
           )}

@@ -169,12 +169,12 @@ export const ProductListing: React.FC<ProductListingProps> = ({
               <span className="text-black/20 font-mono">/</span>
               <span className="text-[10px] sm:text-[11px] font-mono tracking-wider uppercase text-black/60 truncate">
                 {selectedCategory === 'all'
-                  ? (language === 'fi' ? 'KAIKKI KOKOELMAT' : 'COMPLETE CATALOGUE')
+                  ? 'COMPLETE CATALOGUE'
                   : selectedCategory.toUpperCase()}
               </span>
             </div>
             <h1 className="font-editorial text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight">
-              {selectedSubcategory && !selectedSubcategory.startsWith('Kaikki')
+              {selectedSubcategory && !selectedSubcategory.startsWith('All') && !selectedSubcategory.startsWith('Kaikki')
                 ? selectedSubcategory
                 : selectedCategory === 'all'
                 ? t.archive.title
@@ -184,7 +184,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
 
           <div className="flex items-center gap-4">
             <span className="font-mono text-xs text-black/50">
-              {filteredProducts.length} {language === 'fi' ? 'numeroitua teosta' : 'numbered plates'}
+              {filteredProducts.length} numbered plates
             </span>
           </div>
         </div>
@@ -419,7 +419,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                       {/* Thin Quick-Add Size Strip sliding up on desktop hover: pure typography */}
                       <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10">
                         <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 mr-1">
-                          {language === 'fi' ? 'Koko:' : 'Size:'}
+                          Size:
                         </span>
                         {product.sizes.map((sz) => (
                           <button
@@ -561,7 +561,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
               {/* 2. Color Filter: pure typographic items */}
               <div className="mb-6 sm:mb-8">
                 <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
-                  {language === 'fi' ? 'Väri' : 'Colour'}
+                  Colour
                 </span>
                 <div className="flex items-center gap-4 sm:gap-6">
                   <button
@@ -577,7 +577,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         : 'text-black/50 hover:text-black'
                     }`}
                   >
-                    <span>{language === 'fi' ? 'Musta' : 'Black'}</span>
+                    <span>Black</span>
                   </button>
 
                   <button
@@ -593,7 +593,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         : 'text-black/50 hover:text-black'
                     }`}
                   >
-                    <span>{language === 'fi' ? 'Valkoinen' : 'White'}</span>
+                    <span>White</span>
                   </button>
                 </div>
               </div>

@@ -20,24 +20,28 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   const [query, setQuery] = useState('');
   const t = translations[language];
 
-  const suggestedQueries = language === 'fi' 
-    ? ['Villa', 'Päällystakki', 'Kashmir', 'Pellava', 'Nahka', 'Talvi 2026']
-    : language === 'sv'
-    ? ['Ull', 'Rock', 'Kashmir', 'Linne', 'Läder', 'Vinter 2026']
-    : ['Wool', 'Overcoat', 'Cashmere', 'Linen', 'Leather', 'Winter 2026'];
+  const suggestedQueries = [
+    'Wool',
+    'Overcoat',
+    'Cashmere',
+    'Linen',
+    'Leather',
+    'Tailored Trousers',
+    'Winter 2026',
+  ];
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
     return ARCHIVE_PRODUCTS.filter(
       (p) =>
-        p.name[language].toLowerCase().includes(q) ||
+        (p.name.en || p.name.fi).toLowerCase().includes(q) ||
         p.plateNumber.toLowerCase().includes(q) ||
-        p.material[language].toLowerCase().includes(q) ||
+        (p.material.en || p.material.fi).toLowerCase().includes(q) ||
         p.category.toLowerCase().includes(q) ||
         p.subcategory.toLowerCase().includes(q)
     );
-  }, [query, language]);
+  }, [query]);
 
   if (!isOpen) return null;
 
@@ -52,7 +56,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             autoFocus
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={language === 'fi' ? 'Hae tuotteita, materiaaleja, numeroita...' : 'Search pieces, materials, plate numbers...'}
+            placeholder="Search pieces, materials, plate numbers..."
             className="w-full text-lg sm:text-2xl font-editorial font-light tracking-wide outline-none placeholder:text-black/30 bg-transparent"
           />
         </div>
@@ -71,7 +75,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
         {!query.trim() ? (
           <div>
             <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-3 sm:mb-4 font-mono">
-              {language === 'fi' ? 'SUOSITELTAVAT HAUT' : 'SUGGESTED SEARCHES'}
+              SUGGESTED SEARCHES
             </p>
             <div className="flex flex-wrap gap-4 sm:gap-6 mb-8 sm:mb-12">
               {suggestedQueries.map((item) => (
@@ -87,7 +91,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             </div>
 
             <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-4 sm:mb-6 font-mono">
-              {language === 'fi' ? 'ARKISTON AVAINTEOKSET' : 'ARCHIVE HIGHLIGHTS'}
+              ARCHIVE HIGHLIGHTS
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               {ARCHIVE_PRODUCTS.slice(0, 4).map((product) => (
@@ -102,7 +106,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   <FashionImage
                     product={product}
                     src={product.image}
-                    alt={product.name[language]}
+                    alt={product.name.en || product.name.fi}
                     position={product.cropVariation.packshot.position}
                     scale={product.cropVariation.packshot.scale}
                     aspectRatio="3/4"
@@ -112,7 +116,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                     {product.plateNumber}
                   </span>
                   <h4 className="text-xs font-sans font-medium text-black group-hover:underline underline-offset-4 truncate">
-                    {product.name[language]}
+                    {product.name.en || product.name.fi}
                   </h4>
                   <p className="text-xs font-mono text-black/60">
                     {formatPrice(product.price)}
@@ -125,24 +129,24 @@ export const SearchModal: React.FC<SearchModalProps> = ({
           <div>
             <div className="flex items-center justify-between mb-6 sm:mb-8 pb-3 border-b border-black/10">
               <span className="text-xs font-mono text-black/60">
-                {language === 'fi' ? `${results.length} tulosta haulle "${query}"` : `${results.length} results for "${query}"`}
+                {results.length} results for "{query}"
               </span>
               <button
                 type="button"
                 onClick={() => setQuery('')}
                 className="text-xs underline text-black/50 hover:text-black cursor-pointer"
               >
-                {language === 'fi' ? 'Tyhjennä haku' : 'Clear search'}
+                Clear search
               </button>
             </div>
 
             {results.length === 0 ? (
               <div className="py-16 sm:py-20 text-center">
                 <p className="text-lg font-serif text-black/70 mb-2">
-                  {language === 'fi' ? 'Ei hakutuloksia' : 'No results found'}
+                  No results found
                 </p>
                 <p className="text-xs text-black/40">
-                  {language === 'fi' ? 'Kokeile toista hakusanaa tai selaa koko arkistoa.' : 'Try another keyword or explore the entire archive.'}
+                  Try another keyword or explore the entire archive.
                 </p>
               </div>
             ) : (

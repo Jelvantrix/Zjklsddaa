@@ -60,20 +60,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
     });
   }, [currentIndex, slides]);
 
-  // Keyboard navigation for desktop (ArrowLeft / ArrowRight)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isAddModalOpen) return;
-      if (e.key === 'ArrowRight') {
-        nextSlide();
-      } else if (e.key === 'ArrowLeft') {
-        prevSlide();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAddModalOpen, nextSlide, prevSlide]);
-
   // Wheel / Trackpad horizontal scroll listener:
   // "when scroll left that should be go left when right that should be go right"
   useEffect(() => {
@@ -308,7 +294,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
                 goToSlide(i);
               }}
               className="group p-1 cursor-pointer flex items-center justify-center transition-all focus:outline-none"
-              aria-label={language === 'fi' ? `Siirry diaan ${i + 1}` : `Go to slide ${i + 1}`}
+              aria-label={`Go to slide ${i + 1}`}
             >
               <span
                 className={`block rounded-full transition-all duration-300 ${
@@ -358,8 +344,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             prevSlide();
           }}
           className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
-          aria-label="Edellinen kuva tai video (Vieritä oikealle)"
-          title="Edellinen (←)"
+          aria-label="Previous slide"
+          title="Previous slide"
         >
           <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
         </button>
@@ -370,8 +356,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             nextSlide();
           }}
           className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
-          aria-label="Seuraava kuva tai video (Vieritä vasemmalle)"
-          title="Seuraava (→)"
+          aria-label="Next slide"
+          title="Next slide"
         >
           <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
         </button>
@@ -385,7 +371,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
           <span className="text-black/50">0{slides.length}</span>
           <span className="hidden sm:inline text-black/30">·</span>
           <span className="hidden sm:inline uppercase text-[10px] tracking-[0.2em] text-black/60">
-            {currentSlide.type === 'video' ? 'VIDEO' : 'STUDIO FOTO'}
+            {currentSlide.type === 'video' ? 'VIDEO' : 'STUDIO PHOTO'}
           </span>
         </div>
 
@@ -396,17 +382,17 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             setIsAddModalOpen(true);
           }}
           className="flex items-center gap-1.5 py-1 text-black/50 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer text-[10.5px] uppercase tracking-wider"
-          title="Lisää uusi kuva tai video hero-karuselliin"
-          aria-label="Lisää uusi kuva tai video"
+          title="Add new slide to hero carousel"
+          aria-label="Add new slide"
         >
           <Plus className="w-3.5 h-3.5 stroke-[1.5]" />
-          <span className="hidden sm:inline">Lisää</span>
+          <span className="hidden sm:inline">Add Slide</span>
         </button>
       </div>
 
       {/* Subtle swipe gesture hint on mobile/tablet */}
       <div className="md:hidden absolute bottom-6 right-4 z-20 font-mono text-[9.5px] uppercase tracking-widest text-black/40 pointer-events-none">
-        ← Pyyhkäise →
+        ← Swipe →
       </div>
 
       {/* Tiny 1px animated vertical scroll cue at bottom centre - NO WORDS */}
@@ -414,7 +400,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
         onClick={onScrollCueClick}
         role="button"
         tabIndex={0}
-        aria-label="Vieritä alas"
+        aria-label="Scroll to explore"
         className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20"
       >
         <div className="w-[1px] h-9 sm:h-12 bg-black/25 overflow-hidden relative">
@@ -431,7 +417,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
           <div className="w-full max-w-md bg-white text-black p-5 sm:p-8 border border-black shadow-2xl animate-fadeIn">
             <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-black/10 mb-4 sm:mb-6">
               <h3 className="font-editorial text-xl sm:text-2xl font-normal">
-                {language === 'fi' ? 'Lisää Hero-media' : 'Add Hero Media Slide'}
+                Add Hero Media Slide
               </h3>
               <button
                 type="button"
@@ -445,7 +431,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
             <form onSubmit={handleAddSlide} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-2">
-                  Mediatyyppi:
+                  Media Type:
                 </label>
                 <div className="flex gap-4">
                   <label className="flex items-center gap-2 cursor-pointer text-xs font-mono">
@@ -456,7 +442,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
                       onChange={() => setNewSlideType('image')}
                       className="accent-black"
                     />
-                    <span>Kuva (Studio Photo)</span>
+                    <span>Image (Studio Photo)</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer text-xs font-mono">
                     <input
@@ -473,27 +459,27 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
 
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-1">
-                  Kuvan / Videon URL:
+                  Media URL:
                 </label>
                 <input
                   type="text"
                   required
                   value={newSlideUrl}
                   onChange={(e) => setNewSlideUrl(e.target.value)}
-                  placeholder="https://... tai /src/assets/..."
+                  placeholder="https://... or /src/assets/..."
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-1">
-                  Otsikko tai kuvaus:
+                  Caption or Title:
                 </label>
                 <input
                   type="text"
                   value={newSlideCaption}
                   onChange={(e) => setNewSlideCaption(e.target.value)}
-                  placeholder="Esim. Talvikampanja 2026"
+                  placeholder="e.g. Winter Campaign 2026"
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                 />
               </div>
@@ -504,13 +490,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
                   onClick={() => setIsAddModalOpen(false)}
                   className="px-4 py-2.5 btn-secondary text-xs uppercase tracking-wider cursor-pointer"
                 >
-                  Peruuta
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2.5 btn-primary text-xs uppercase tracking-wider font-medium cursor-pointer"
                 >
-                  Lisää dia karuselliin
+                  Add Slide to Hero
                 </button>
               </div>
             </form>

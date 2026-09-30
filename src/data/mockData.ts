@@ -766,6 +766,10 @@ export const translations = {
   },
 };
 
+// Pure English enforcement across the entire application
+translations.fi = translations.en;
+translations.sv = translations.en;
+
 /**
  * 24 Curated Numbered Archive Pieces (Nº 001 - Nº 024)
  * Each piece represents its own individual product page with dedicated URLs,
@@ -1626,38 +1630,38 @@ export const JOURNAL_ARTICLES: JournalArticle[] = [
 
 export const SUB_CATEGORIES = {
   naiset: [
-    'Kaikki naiset',
-    'Takit ja Ulkovaatteet',
-    'Neuleet',
-    'Paidat ja Topit',
-    'Housut',
-    'Mekot ja Hameet',
-    'Alusvaatteet ja Kotivaatteet',
+    'All Women',
+    'Coats & Outerwear',
+    'Knitwear',
+    'Shirts & Tops',
+    'Trousers',
+    'Dresses & Skirts',
+    'Loungewear',
   ],
   miehet: [
-    'Kaikki miehet',
-    'Takit ja Ulkovaatteet',
-    'Neuleet',
-    'Paidat ja T-paidat',
-    'Housut',
-    'Collegepaidat',
-    'Alusvaatteet ja Kotivaatteet',
+    'All Men',
+    'Coats & Outerwear',
+    'Knitwear',
+    'Shirts & Tees',
+    'Trousers',
+    'Sweatshirts',
+    'Loungewear',
   ],
   asusteet: [
-    'Kaikki asusteet',
-    'Pipot ja Hanskat',
-    'Huivit',
-    'Laukut',
-    'Vyöt',
-    'Sukat',
-    'Kengät',
+    'All Accessories',
+    'Beanies & Gloves',
+    'Scarves',
+    'Bags & Totes',
+    'Belts',
+    'Socks',
+    'Footwear',
   ],
   kokoelmat: [
-    'Kaikki kokoelmat',
-    'Talvi 2026',
-    'Kevät',
-    'Kesä',
-    'Syksy',
-    'Perusvaatteet',
+    'All Collections',
+    'Winter 2026',
+    'Spring Archive',
+    'Summer Editions',
+    'Autumn Capsule',
+    'Archival Essentials',
   ],
 };

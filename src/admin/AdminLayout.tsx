@@ -268,16 +268,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         </div>
 
-        {/* Global Search (Cmd+K) & Security Controls */}
+        {/* Global Search & Security Controls */}
         <div className="flex items-center gap-3 sm:gap-4">
           <button
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-2 py-1 px-2 text-xs text-black/60 hover:text-black cursor-pointer transition-colors border border-black/[0.08] hover:border-black/[0.2]"
+            className="hidden sm:flex items-center gap-2 py-1 px-2.5 text-xs text-black/60 hover:text-black cursor-pointer transition-colors border border-black/[0.08] hover:border-black/[0.2]"
           >
             <Search className="w-3.5 h-3.5 text-black/50" />
             <span>Search</span>
-            <kbd className="text-[10px] text-black/40">⌘K</kbd>
           </button>
 
           {/* Notifications Bell */}

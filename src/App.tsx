@@ -23,16 +23,31 @@ import { AuthProvider } from './firebase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
 
+export const ADMIN_SECRET_PATH = '/zejesh-studio-atelier-vault-terminal-secure-governance-849204810-console';
+export const ADMIN_SECRET_HASH = '#zejesh-studio-atelier-vault-terminal-secure-governance-849204810-console';
+
+function isSecretAdminUrl(): boolean {
+  if (typeof window === 'undefined') return false;
+  const path = window.location.pathname;
+  const hash = window.location.hash;
+  return (
+    path === ADMIN_SECRET_PATH ||
+    path === `${ADMIN_SECRET_PATH}/` ||
+    hash === ADMIN_SECRET_HASH ||
+    hash === `#${ADMIN_SECRET_PATH}`
+  );
+}
+
 function StorefrontApp() {
   const { products, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
   const [preloaderDone, setPreloaderDone] = useState(false);
 
-  // Internationalization: default Finnish ('fi'), switchable in 1 click
-  const [language, setLanguage] = useState<Language>('fi');
+  // Pure English language (all other languages removed)
+  const [language, setLanguage] = useState<Language>('en');
 
-  // Multi-Page Route State (Supporting 50+ distinct page routes & /admin)
+  // Multi-Page Route State (Supporting 50+ distinct page routes & long secret admin console)
   const [route, setRoute] = useState<PageRoute>(() => {
-    if (typeof window !== 'undefined' && (window.location.pathname.startsWith('/admin') || window.location.hash === '#admin')) {
+    if (isSecretAdminUrl()) {
       return { type: 'admin' };
     }
     return { type: 'home' };
@@ -62,12 +77,22 @@ function StorefrontApp() {
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const homeSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // Browser History, Hash & Popstate integration
+  // Browser History & Hash integration (Strictly via long secret URL, zero keyboard shortcuts)
   useEffect(() => {
+    // If user attempted to access short /admin or #admin, neutralize it immediately
+    if (
+      window.location.pathname === '/admin' ||
+      window.location.pathname === '/admin/' ||
+      window.location.hash === '#admin'
+    ) {
+      window.history.replaceState({ route: { type: 'home' } }, '', '/');
+      setRoute({ type: 'home' });
+    }
+
     const handlePopState = (e: PopStateEvent) => {
       if (e.state && e.state.route) {
         setRoute(e.state.route);
-      } else if (window.location.hash === '#admin' || window.location.pathname.startsWith('/admin')) {
+      } else if (isSecretAdminUrl()) {
         setRoute({ type: 'admin' });
       } else {
         setRoute({ type: 'home' });
@@ -75,26 +100,19 @@ function StorefrontApp() {
     };
 
     const handleHashChange = () => {
-      if (window.location.hash === '#admin') {
+      if (window.location.hash === ADMIN_SECRET_HASH) {
         setRoute({ type: 'admin' });
-      }
-    };
-
-    // Keyboard shortcut for studio admin: Cmd/Ctrl + Shift + A
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === 'a' || e.key === 'A')) {
-        e.preventDefault();
-        setRoute((prev) => (prev.type === 'admin' ? { type: 'home' } : { type: 'admin' }));
+      } else if (window.location.hash === '#admin') {
+        window.history.replaceState({ route: { type: 'home' } }, '', '/');
+        setRoute({ type: 'home' });
       }
     };
 
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handleHashChange);
-    window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('hashchange', handleHashChange);
-      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -210,7 +228,12 @@ function StorefrontApp() {
   if (route.type === 'admin') {
     return (
       <AdminLayout
-        onBackToStorefront={() => navigateTo({ type: 'home' })}
+        onBackToStorefront={() => {
+          if (window.location.hash === ADMIN_SECRET_HASH || window.location.pathname.startsWith(ADMIN_SECRET_PATH)) {
+            window.history.pushState(null, '', '/');
+          }
+          navigateTo({ type: 'home' });
+        }}
         onViewProductInStore={(p) => navigateTo({ type: 'product', productId: p.id })}
       />
     );
@@ -342,12 +365,10 @@ function StorefrontApp() {
                 ATELIER MONOGRAPHS
               </span>
               <h1 className="font-editorial text-4xl sm:text-6xl font-normal mb-3 text-black">
-                {language === 'fi' ? 'Tekstiilitutkielmat' : 'Textile Studies & Archival Notes'}
+                Textile Studies & Archival Notes
               </h1>
               <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto font-light leading-relaxed">
-                {language === 'fi'
-                  ? 'Dokumentointia pohjoisen materiaaleista, sidosrakenteista ja ateljeen menetelmistä.'
-                  : 'Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.'}
+                Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.
               </p>
             </div>
 
@@ -364,13 +385,13 @@ function StorefrontApp() {
                     <span>ARCHIVE DOSSIER</span>
                   </div>
                   <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
-                    {article.title[language]}
+                    {article.title.en || article.title.fi}
                   </h2>
                   <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
-                    {article.subtitle[language]}
+                    {article.subtitle.en || article.subtitle.fi}
                   </p>
                   <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
-                    {language === 'fi' ? 'Avaa tutkielma' : 'Inspect Dossier'} →
+                    Inspect Dossier →
                   </span>
                 </article>
               ))}

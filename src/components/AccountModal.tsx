@@ -45,21 +45,19 @@ export const AccountModal: React.FC<AccountModalProps> = ({
         {!isSubmitted ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <p className="text-xs font-sans text-black/70 leading-relaxed">
-              {language === 'fi'
-                ? 'Kirjaudu sisään sähköpostillasi seurataksesi tilauksiasi tai tarkastellaksesi arkistovarauksiasi.'
-                : 'Sign in with your email to track active shipments or inspect your archival allocations.'}
+              Sign in with your email to track active shipments or inspect your archival allocations.
             </p>
 
             <div>
               <label className="block text-[10.5px] font-mono uppercase tracking-wider text-black/60 mb-1">
-                {language === 'fi' ? 'Sähköpostiosoite' : 'Email Address'}
+                Email Address
               </label>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nimi@osoite.fi"
+                placeholder="name@example.com"
                 className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
               />
             </div>
@@ -68,7 +66,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               type="submit"
               className="w-full py-3.5 bg-black text-white text-xs uppercase tracking-[0.18em] font-medium hover:bg-black/80 transition-colors cursor-pointer"
             >
-              {language === 'fi' ? 'Lähetä kirjautumiskoodi' : 'Send Access Key'}
+              Send Access Key
             </button>
           </form>
         ) : (
@@ -77,15 +75,13 @@ export const AccountModal: React.FC<AccountModalProps> = ({
               <Check className="w-5 h-5" />
             </div>
             <p className="text-xs font-sans text-black/80">
-              {language === 'fi'
-                ? `Kertakäyttöinen kirjautumislinkki on lähetetty osoitteeseen ${email}.`
-                : `A one-time access key has been dispatched to ${email}.`}
+              A one-time access key has been dispatched to {email}.
             </p>
             <button
               onClick={onClose}
               className="mt-4 px-6 py-2 border border-black text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-colors cursor-pointer"
             >
-              {t.nav.close}
+              Close
             </button>
           </div>
         )}

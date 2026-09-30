@@ -106,11 +106,11 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onOpenMobileMenu}
               className="lg:hidden py-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
-              aria-label="Valikko"
+              aria-label="Menu"
             >
               <Menu className="w-4 h-4 stroke-[1.5]" />
               <span className="text-[11px] uppercase tracking-[0.20em] font-sans font-medium hidden xs:inline">
-                {language === 'fi' ? 'Valikko' : language === 'sv' ? 'Meny' : 'Menu'}
+                Menu
               </span>
             </button>
 
@@ -134,13 +134,13 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
               onClick={onNavigateHome}
               className="cursor-pointer group focus-visible:outline-none inline-flex items-center justify-center py-1"
-              aria-label="Palaa etusivulle"
+              aria-label="Back to home"
             >
               <BrandLogo size="md" invert={false} />
             </button>
           </div>
 
-          {/* RIGHT: Pure Typographic Actions & Translation */}
+          {/* RIGHT: Pure Typographic Actions */}
           <div className="flex items-center justify-end gap-3 sm:gap-4 md:gap-6 z-20">
             {/* Wishlist Trigger */}
             <button
@@ -188,15 +188,6 @@ export const Header: React.FC<HeaderProps> = ({
                 ({cartCount})
               </span>
             </button>
-
-            {/* 1-Click Translation Switcher (Tablet & Desktop; available in menu on small phones) */}
-            <div className="pl-1 shrink-0 hidden sm:block">
-              <TranslationBar
-                language={language}
-                onSetLanguage={onSetLanguage}
-                className={isOverHeroAtTop ? 'text-black/90' : 'text-black'}
-              />
-            </div>
           </div>
         </div>
 
@@ -211,7 +202,7 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="max-w-[1720px] mx-auto px-6 md:px-10 h-11 flex items-center justify-center">
             <nav
               className="flex items-center justify-center gap-8 xl:gap-12 2xl:gap-16"
-              aria-label="Päävalikko"
+              aria-label="Main navigation"
             >
               {navItems.map((item) => {
                 const isActive =
@@ -263,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
               {/* Subcategories list */}
               <div className="col-span-4 flex flex-col space-y-3">
                 <span className="text-[11px] tracking-[0.2em] uppercase font-mono text-black/40 mb-2">
-                  {language === 'fi' ? 'ALIKATEGORIAT' : 'SUB-SELECTIONS'}
+                  SUB-SELECTIONS
                 </span>
                 <button
                   onClick={() => {
@@ -272,7 +263,7 @@ export const Header: React.FC<HeaderProps> = ({
                   }}
                   className="text-left font-editorial text-2xl font-normal hover:translate-x-1.5 transition-transform"
                 >
-                  {language === 'fi' ? 'Kaikki vaatteet' : 'All Pieces'}
+                  All Pieces
                 </button>
                 {SUB_CATEGORIES[hoveredNav as keyof typeof SUB_CATEGORIES]?.map((sub) => (
                   <button
@@ -298,7 +289,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <FashionImage
                   src="/src/assets/images/wool_coat_model_1790736253323.jpg"
-                  alt="Kokoelma kampanja 1"
+                  alt="Winter Campaign 1"
                   position="center 20%"
                   scale={1.05}
                   aspectRatio="4/5"
@@ -307,10 +298,10 @@ export const Header: React.FC<HeaderProps> = ({
                 />
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs uppercase tracking-[0.14em] font-sans font-medium group-hover:underline underline-offset-4">
-                    {language === 'fi' ? 'Talvikampanja 2026' : 'Winter Campaign 2026'}
+                    Winter Campaign 2026
                   </span>
                   <span className="text-[11px] font-mono text-black/40">
-                    {language === 'fi' ? 'Katso' : 'Explore'} →
+                    Explore →
                   </span>
                 </div>
               </div>
@@ -325,7 +316,7 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <FashionImage
                   src="/src/assets/images/mens_trench_model_1790736267744.jpg"
-                  alt="Kokoelma kampanja 2"
+                  alt="Archive Series"
                   position="center 65%"
                   scale={1.2}
                   flipped={true}
@@ -335,10 +326,10 @@ export const Header: React.FC<HeaderProps> = ({
                 />
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs uppercase tracking-[0.14em] font-sans font-medium group-hover:underline underline-offset-4">
-                    {language === 'fi' ? 'Arkistolevyjen sarja' : 'Archive Plate Series'}
+                    Archive Plate Series
                   </span>
                   <span className="text-[11px] font-mono text-black/40">
-                    {language === 'fi' ? 'Katso' : 'Explore'} →
+                    Explore →
                   </span>
                 </div>
               </div>

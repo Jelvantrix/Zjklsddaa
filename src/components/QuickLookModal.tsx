@@ -21,24 +21,6 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
 }) => {
   const t = translations[language];
 
-  // Keyboard navigation: Escape to close, ArrowLeft / ArrowRight to cycle plates
-  useEffect(() => {
-    if (!product) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      } else if (e.key === 'ArrowRight') {
-        goToNextPlate();
-      } else if (e.key === 'ArrowLeft') {
-        goToPrevPlate();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [product]);
-
   if (!product) return null;
 
   const currentIndex = ARCHIVE_PRODUCTS.findIndex((p) => p.id === product.id);
@@ -85,7 +67,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
             type="button"
             onClick={goToPrevPlate}
             className="p-2 text-black/50 hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
-            title="Edellinen levy (←)"
+            title="Previous plate"
           >
             <ChevronLeft className="w-8 h-8 stroke-[1.2]" />
           </button>
@@ -97,7 +79,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
             <FashionImage
               product={product}
               src={product.hoverImage || product.image}
-              alt={product.name[language]}
+              alt={product.name.en || product.name.fi}
               position={product.cropVariation.onModel.position}
               scale={product.cropVariation.onModel.scale}
               aspectRatio="auto"
@@ -118,23 +100,23 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
               {product.category.toUpperCase()} · {product.subcategory}
             </span>
             <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-normal leading-tight">
-              {product.name[language]}
+              {product.name.en || product.name.fi}
             </h2>
             <p className="font-mono text-lg sm:text-xl text-black">
               {formatPrice(product.price)}
             </p>
             <p className="font-mono text-xs text-black/50">
-              {product.material[language]} · {product.origin[language]}
+              {product.material.en || product.material.fi} · {product.origin.en || product.origin.fi}
             </p>
             <p className="text-xs sm:text-sm font-sans text-black/70 leading-relaxed pt-1 sm:pt-2">
-              {product.description[language]}
+              {product.description.en || product.description.fi}
             </p>
           </div>
 
           {/* Quick size selection and actions */}
           <div>
             <span className="text-[9.5px] sm:text-[10px] font-mono tracking-wider uppercase text-black/50 block mb-2">
-              {language === 'fi' ? 'VALITSE KOKO PIKALISÄYKSELLÄ:' : 'SELECT SIZE FOR QUICK ADD:'}
+              SELECT SIZE FOR DIRECT ACQUISITION:
             </span>
             <div className="flex flex-wrap gap-2.5 sm:gap-3 mb-4 sm:mb-6">
               {product.sizes.map((sz) => (
@@ -157,7 +139,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
               }}
               className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.2em] btn-primary flex items-center justify-between cursor-pointer font-medium"
             >
-              <span>{language === 'fi' ? 'Avaa tuotesivu' : 'Open Product Page'}</span>
+              <span>Open Product Page</span>
               <ArrowRight className="w-4 h-4 stroke-[1.5]" />
             </button>
           </div>
@@ -169,7 +151,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
             type="button"
             onClick={goToNextPlate}
             className="p-2 text-black/50 hover:text-black hover:scale-110 active:scale-95 transition-all cursor-pointer"
-            title="Seuraava levy (→)"
+            title="Next plate"
           >
             <ChevronRight className="w-8 h-8 stroke-[1.2]" />
           </button>
@@ -184,17 +166,19 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
           className="lg:hidden flex items-center gap-1 hover:text-black cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>{language === 'fi' ? 'Edellinen' : 'Prev'}</span>
+          <span>Prev</span>
         </button>
 
-        <span className="hidden sm:inline text-black/40">Käytä nuolinäppäimiä (← / →) tai ESC sulkeaksesi</span>
+        <span className="hidden sm:inline text-black/40 font-mono text-[10px] tracking-wider uppercase">
+          Archival Plate Dossier · Est. 2026
+        </span>
 
         <button
           type="button"
           onClick={goToNextPlate}
           className="flex items-center gap-1 text-black/80 hover:text-black cursor-pointer font-medium ml-auto"
         >
-          <span>{language === 'fi' ? 'Seuraava arkistolevy' : 'Next Plate'}</span>
+          <span>Next Plate</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       </div>

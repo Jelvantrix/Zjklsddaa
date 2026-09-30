@@ -4,6 +4,8 @@ import { doc, getDoc } from 'firebase/firestore';
 import { auth, db, ensureAuthSession } from './config';
 import { AdminUser } from '../types';
 
+export const PRIMARY_ADMIN_EMAIL = 'huxaifa0fficial@gmail.com';
+
 interface AuthContextType {
   user: User | null;
   adminProfile: AdminUser | null;
@@ -12,6 +14,7 @@ interface AuthContextType {
   isOwner: boolean;
   isEditor: boolean;
   loading: boolean;
+  loginAsPrimaryAdmin: () => void;
   switchRole: (role: 'owner' | 'editor' | 'viewer' | 'customer') => void;
   signOut: () => Promise<void>;
 }
@@ -24,16 +27,36 @@ const AuthContext = createContext<AuthContextType>({
   isOwner: false,
   isEditor: false,
   loading: true,
+  loginAsPrimaryAdmin: () => {},
   switchRole: () => {},
   signOut: async () => {},
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [adminProfile, setAdminProfile] = useState<AdminUser | null>(null);
-  const [mockRole, setMockRole] = useState<'owner' | 'editor' | 'viewer' | 'customer' | null>(() => {
-    return (localStorage.getItem('zejesh_demo_role') as any) || 'owner';
+  const [adminProfile, setAdminProfile] = useState<AdminUser | null>(() => {
+    // Check if session token exists
+    const sessionEmail = typeof window !== 'undefined' ? sessionStorage.getItem('zejesh_admin_session_email') : null;
+    if (sessionEmail && sessionEmail.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        id: 'admin-owner',
+        uid: 'huxaifa0fficial-owner',
+        email: PRIMARY_ADMIN_EMAIL,
+        name: 'Huxaifa (Principal & Owner)',
+        role: 'owner',
+      };
+    }
+    return null;
   });
+
+  const [mockRole, setMockRole] = useState<'owner' | 'editor' | 'viewer' | 'customer' | null>(() => {
+    const sessionEmail = typeof window !== 'undefined' ? sessionStorage.getItem('zejesh_admin_session_email') : null;
+    if (sessionEmail && sessionEmail.toLowerCase() === PRIMARY_ADMIN_EMAIL.toLowerCase()) {
+      return 'owner';
+    }
+    return 'customer';
+  });
+
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,8 +73,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch {
           // Ignore offline errors
         }
-      } else {
-        setAdminProfile(null);
       }
       setLoading(false);
     });
@@ -59,22 +80,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, []);
 
+  const loginAsPrimaryAdmin = () => {
+    const profile: AdminUser = {
+      id: 'admin-owner',
+      uid: 'huxaifa0fficial-owner',
+      email: PRIMARY_ADMIN_EMAIL,
+      name: 'Huxaifa (Principal & Owner)',
+      role: 'owner',
+    };
+    setAdminProfile(profile);
+    setMockRole('owner');
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('zejesh_admin_session_auth', 'authenticated');
+      sessionStorage.setItem('zejesh_admin_session_email', PRIMARY_ADMIN_EMAIL);
+      sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
+    }
+  };
+
   const switchRole = (newRole: 'owner' | 'editor' | 'viewer' | 'customer') => {
     setMockRole(newRole);
-    localStorage.setItem('zejesh_demo_role', newRole);
     if (newRole === 'owner') {
       setAdminProfile({
         id: 'admin-owner',
-        uid: 'demo-owner',
-        email: 'owner@zejesh.fi',
-        name: 'Zejesh Studio Principal (Owner)',
+        uid: 'huxaifa0fficial-owner',
+        email: PRIMARY_ADMIN_EMAIL,
+        name: 'Huxaifa (Principal & Owner)',
         role: 'owner',
       });
     } else if (newRole === 'editor') {
       setAdminProfile({
         id: 'admin-editor',
         uid: 'demo-editor',
-        email: 'merchandiser@zejesh.fi',
+        email: 'editor@zejesh.com',
         name: 'Studio Merchandiser (Editor)',
         role: 'editor',
       });
@@ -82,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAdminProfile({
         id: 'admin-viewer',
         uid: 'demo-viewer',
-        email: 'intern@zejesh.fi',
+        email: 'viewer@zejesh.com',
         name: 'Archival Trainee (Viewer)',
         role: 'viewer',
       });
@@ -100,8 +137,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await firebaseSignOut(auth);
       setMockRole('customer');
-      localStorage.removeItem('zejesh_demo_role');
       setAdminProfile(null);
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('zejesh_admin_session_auth');
+        sessionStorage.removeItem('zejesh_admin_session_email');
+        sessionStorage.removeItem('zejesh_sec_unlocked_ts');
+      }
     } catch (err) {
       console.error('Sign out error:', err);
     }
@@ -117,6 +158,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isOwner,
         isEditor,
         loading,
+        loginAsPrimaryAdmin,
         switchRole,
         signOut,
       }}

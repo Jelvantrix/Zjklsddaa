@@ -102,7 +102,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
           className="flex items-center gap-1.5 sm:gap-2 text-black/60 hover:text-black transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
-          <span>{language === 'fi' ? 'Takaisin arkistoon' : 'Back to Archive'}</span>
+          <span>Back to Archive</span>
         </button>
 
         <div className="flex items-center gap-1.5 sm:gap-2 text-black/40 truncate text-[11px] sm:text-xs">
@@ -201,7 +201,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                       isWishlisted ? 'fill-black text-black' : ''
                     }`}
                   />
-                  <span>{isWishlisted ? (language === 'fi' ? 'Tallennettu' : 'Saved') : t.nav.wishlist}</span>
+                  <span>{isWishlisted ? 'Saved' : t.nav.wishlist}</span>
                 </button>
               </div>
 
@@ -378,7 +378,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             {t.pdp.completeLook}
           </span>
           <h3 className="font-editorial text-2xl sm:text-3xl font-normal">
-            {language === 'fi' ? 'Harmoninen kokonaisuus' : 'Harmonious Synthesis'}
+            Harmonious Synthesis
           </h3>
         </div>
 

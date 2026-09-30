@@ -65,12 +65,10 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
             <div className="h-full flex flex-col items-center justify-center text-center py-20">
               <Heart className="w-10 h-10 stroke-[1] text-black/20 mb-3" />
               <p className="font-editorial text-2xl mb-1">
-                {language === 'fi' ? 'Ei tallennettuja teoksia' : 'No saved pieces'}
+                No saved pieces
               </p>
               <p className="text-xs font-sans text-black/50 max-w-xs">
-                {language === 'fi'
-                  ? 'Paina sydänikonia minkä tahansa teoksen kohdalla lisätäksesi sen suosikkeihisi.'
-                  : 'Click the heart icon on any plate to curate your private wishlist.'}
+                Click the heart icon on any plate to curate your private wishlist.
               </p>
             </div>
           ) : (
@@ -146,7 +144,7 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
               onClick={onClose}
               className="w-full py-4 btn-secondary text-xs uppercase tracking-[0.18em]"
             >
-              {language === 'fi' ? 'Jatka arkiston selaamista' : 'Continue Browsing'}
+              Continue Browsing
             </button>
           </div>
         )}

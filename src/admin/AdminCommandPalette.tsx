@@ -19,20 +19,6 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
 }) => {
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-        e.preventDefault();
-        if (isOpen) onClose();
-        else setQuery('');
-      } else if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
   if (!isOpen) return null;
 
   const quickNav = [
@@ -77,7 +63,7 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search products, drops or actions... (Cmd+K)"
+            placeholder="Search products, drops or actions..."
             className="w-full text-xs font-mono bg-transparent focus:outline-none placeholder:text-black/30"
           />
           <button onClick={onClose} className="p-1 text-black/40 hover:text-black cursor-pointer">
@@ -143,8 +129,10 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
         </div>
 
         <div className="px-4 py-2 border-t border-black/10 bg-white flex items-center justify-between text-[10px] font-mono text-black/40">
-          <span>Navigate with arrow keys</span>
-          <span>Close with ESC</span>
+          <span>Click to select action or navigate</span>
+          <button onClick={onClose} className="hover:text-black cursor-pointer">
+            Close
+          </button>
         </div>
       </div>
     </div>

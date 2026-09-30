@@ -5,10 +5,8 @@ import {
   getDocs,
   getDoc,
   updateDoc,
-  deleteDoc,
   onSnapshot,
   query,
-  orderBy,
   limit,
   writeBatch,
   Unsubscribe,
@@ -24,19 +22,14 @@ import {
   Discount,
   StoreContent,
   StoreSettings,
-  AdminUser,
   DailyStat,
   AiInsight,
   AuditLog,
-  InventoryLog,
 } from '../types';
 import {
   SEED_PRODUCTS,
   SEED_CATEGORIES,
   SEED_COLLECTIONS,
-  SEED_ORDERS,
-  SEED_CUSTOMERS,
-  SEED_WAITLIST,
   SEED_DISCOUNTS,
   SEED_CONTENT,
   SEED_SETTINGS,
@@ -46,7 +39,7 @@ import {
 } from './seedData';
 
 // Local storage key for fallback/offline persistence
-const SEED_FLAG_KEY = 'zejesh_firestore_seeded_v1';
+const SEED_FLAG_KEY = 'zejesh_firestore_seeded_v2_real';
 
 /**
  * Audit Log recorder
@@ -75,18 +68,19 @@ export async function logAuditEvent(
 
 /**
  * Seed all database collections with initial mock data
+ * NOTE: Production grade policy - Orders, Customers, and Waitlists are 100% REAL.
+ * They are NEVER seeded with artificial fake data.
  */
 export async function seedDatabase(forceReset: boolean = false): Promise<{ success: boolean; message: string }> {
   try {
-    // Check if already seeded (unless forcing reset)
     if (!forceReset) {
       const snap = await getDocs(query(collection(db, 'products'), limit(1)));
       if (!snap.empty) {
-        return { success: true, message: 'Database already populated.' };
+        return { success: true, message: 'Production catalog already initialized.' };
       }
     }
 
-    console.info('Starting Zejesh Studio database seeding...');
+    console.info('Initializing Zejesh Clothes production collections in Firestore...');
 
     // 1. Seed Products (batch by 20 to avoid exceeding 500 ops limit)
     for (let i = 0; i < SEED_PRODUCTS.length; i += 20) {
@@ -112,49 +106,25 @@ export async function seedDatabase(forceReset: boolean = false): Promise<{ succe
     });
     await colBatch.commit();
 
-    // 4. Seed Orders
-    for (let i = 0; i < SEED_ORDERS.length; i += 20) {
-      const batch = writeBatch(db);
-      const chunk = SEED_ORDERS.slice(i, i + 20);
-      chunk.forEach((ord) => {
-        batch.set(doc(db, 'orders', ord.id), ord);
-      });
-      await batch.commit();
-    }
-
-    // 5. Seed Customers
-    const custBatch = writeBatch(db);
-    SEED_CUSTOMERS.forEach((c) => {
-      custBatch.set(doc(db, 'customers', c.id), c);
-    });
-    await custBatch.commit();
-
-    // 6. Seed Waitlist
-    const wlBatch = writeBatch(db);
-    SEED_WAITLIST.forEach((w) => {
-      wlBatch.set(doc(db, 'waitlist', w.id), w);
-    });
-    await wlBatch.commit();
-
-    // 7. Seed Discounts
+    // 4. Seed Discounts
     const discBatch = writeBatch(db);
     SEED_DISCOUNTS.forEach((d) => {
       discBatch.set(doc(db, 'discounts', d.id), d);
     });
     await discBatch.commit();
 
-    // 8. Seed Content & Settings
+    // 5. Seed Content & Settings
     await setDoc(doc(db, 'content', SEED_CONTENT.id), SEED_CONTENT);
     await setDoc(doc(db, 'settings', SEED_SETTINGS.id), SEED_SETTINGS);
 
-    // 9. Seed Admins
+    // 6. Seed Admins
     const adminBatch = writeBatch(db);
     SEED_ADMINS.forEach((adm) => {
       adminBatch.set(doc(db, 'admins', adm.uid), adm);
     });
     await adminBatch.commit();
 
-    // 10. Seed DailyStats & Insights
+    // 7. Seed DailyStats & Insights baseline
     const statBatch = writeBatch(db);
     SEED_DAILY_STATS.forEach((st) => {
       statBatch.set(doc(db, 'dailyStats', st.id), st);
@@ -165,23 +135,21 @@ export async function seedDatabase(forceReset: boolean = false): Promise<{ succe
     await statBatch.commit();
 
     localStorage.setItem(SEED_FLAG_KEY, 'true');
-    await logAuditEvent('system', 'seed_database', 'all_collections', { count: SEED_PRODUCTS.length });
+    await logAuditEvent('system', 'catalog_initialized', 'products', { count: SEED_PRODUCTS.length });
 
-    return { success: true, message: 'All 24 products, 5 collections, 40 orders and 30 days analytics seeded.' };
+    return { success: true, message: 'Production garments, collections, categories, and settings initialized.' };
   } catch (error) {
     console.error('Error during Firestore database seeding:', error);
-    // Mark local flag so fallback works
     localStorage.setItem(SEED_FLAG_KEY, 'local_fallback');
     return {
       success: false,
-      message: error instanceof Error ? error.message : 'Database seeding encountered an error.',
+      message: error instanceof Error ? error.message : 'Database initialization encountered an error.',
     };
   }
 }
 
 /**
  * Real-time listener for Storefront Products.
- * Filtered for 'live' status, plus 'scheduled' products whose publishAt has elapsed.
  */
 export function subscribeToStorefrontProducts(
   onProducts: (products: Product[], isLiveFromFirestore: boolean) => void
@@ -197,7 +165,6 @@ export function subscribeToStorefrontProducts(
         if (!isSubscribed) return;
 
         if (snapshot.empty) {
-          // If empty, auto-trigger background seed and supply mock data
           seedDatabase(false);
           onProducts(
             SEED_PRODUCTS.filter((p) => p.status === 'live'),
@@ -211,7 +178,6 @@ export function subscribeToStorefrontProducts(
 
         snapshot.forEach((d) => {
           const data = d.data() as Product;
-          // Storefront public rule: live or scheduled with publishAt in past
           if (data.status === 'live') {
             items.push({ ...data, id: d.id, plateNumber: data.nr || data.plateNumber });
           } else if (data.status === 'scheduled' && data.publishAt) {
@@ -222,7 +188,6 @@ export function subscribeToStorefrontProducts(
           }
         });
 
-        // Sort by plate number / order
         items.sort((a, b) => (a.nr || a.plateNumber || '').localeCompare(b.nr || b.plateNumber || '', undefined, { numeric: true }));
 
         onProducts(items.length > 0 ? items : SEED_PRODUCTS, true);
@@ -389,6 +354,7 @@ export function subscribeToSettings(
 
 /**
  * Real-time listener for Orders
+ * REAL DATA: If no customer has ordered yet, returns empty array [].
  */
 export function subscribeToOrders(
   onOrders: (orders: Order[]) => void
@@ -398,7 +364,7 @@ export function subscribeToOrders(
       collection(db, 'orders'),
       (snap) => {
         if (snap.empty) {
-          onOrders(SEED_ORDERS);
+          onOrders([]);
           return;
         }
         const items: Order[] = [];
@@ -406,10 +372,72 @@ export function subscribeToOrders(
         items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         onOrders(items);
       },
-      () => onOrders(SEED_ORDERS)
+      () => {
+        onOrders([]);
+      }
     );
   } catch {
-    onOrders(SEED_ORDERS);
+    onOrders([]);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time listener for Customers
+ * REAL DATA: If no customer exists, returns empty array [].
+ */
+export function subscribeToCustomers(
+  onCustomers: (customers: Customer[]) => void
+): Unsubscribe {
+  try {
+    return onSnapshot(
+      collection(db, 'customers'),
+      (snap) => {
+        if (snap.empty) {
+          onCustomers([]);
+          return;
+        }
+        const items: Customer[] = [];
+        snap.forEach((d) => items.push({ ...(d.data() as Customer), id: d.id }));
+        items.sort((a, b) => (b.totals?.spend || 0) - (a.totals?.spend || 0));
+        onCustomers(items);
+      },
+      () => {
+        onCustomers([]);
+      }
+    );
+  } catch {
+    onCustomers([]);
+    return () => {};
+  }
+}
+
+/**
+ * Real-time listener for Waitlist
+ * REAL DATA: If no waitlist signups exist, returns empty array [].
+ */
+export function subscribeToWaitlist(
+  onWaitlist: (entries: WaitlistEntry[]) => void
+): Unsubscribe {
+  try {
+    return onSnapshot(
+      collection(db, 'waitlist'),
+      (snap) => {
+        if (snap.empty) {
+          onWaitlist([]);
+          return;
+        }
+        const items: WaitlistEntry[] = [];
+        snap.forEach((d) => items.push({ ...(d.data() as WaitlistEntry), id: d.id }));
+        items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        onWaitlist(items);
+      },
+      () => {
+        onWaitlist([]);
+      }
+    );
+  } catch {
+    onWaitlist([]);
     return () => {};
   }
 }
@@ -431,13 +459,80 @@ export async function getProductById(id: string): Promise<Product | null> {
 }
 
 /**
- * Create or save order
+ * Create or save order in Firestore, upsert real customer record, and decrement stock
  */
-export async function createStoreOrder(order: Omit<Order, 'id'>): Promise<{ id: string; success: boolean }> {
-  const id = `ord-${Date.now()}`;
-  const fullOrder: Order = { ...order, id };
+export async function createStoreOrder(
+  order: Omit<Order, 'id'>
+): Promise<{ id: string; success: boolean }> {
+  const id = `ZE-${Date.now().toString().slice(-6)}`;
+  const fullOrder: Order = { ...order, id, number: `#${id}` };
   try {
+    // 1. Write order
     await setDoc(doc(db, 'orders', id), fullOrder);
+
+    // 2. Upsert customer profile in Firestore
+    const custId = order.customer.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const custRef = doc(db, 'customers', custId);
+    try {
+      const custSnap = await getDoc(custRef);
+      if (custSnap.exists()) {
+        const existing = custSnap.data() as Customer;
+        await updateDoc(custRef, {
+          name: order.customer.name,
+          'totals.orders': (existing.totals?.orders || 0) + 1,
+          'totals.spend': (existing.totals?.spend || 0) + order.totals.total,
+          lastSeen: new Date().toISOString(),
+        });
+      } else {
+        const newCust: Customer = {
+          id: custId,
+          email: order.customer.email,
+          name: order.customer.name,
+          marketingConsent: true,
+          wishlist: [],
+          totals: {
+            orders: 1,
+            spend: order.totals.total,
+          },
+          firstSeen: new Date().toISOString(),
+          lastSeen: new Date().toISOString(),
+        };
+        await setDoc(custRef, newCust);
+      }
+    } catch (custErr) {
+      console.warn('Customer upsert error:', custErr);
+    }
+
+    // 3. Decrement product stock in Firestore
+    for (const item of order.items) {
+      try {
+        const pRef = doc(db, 'products', item.productId);
+        const pSnap = await getDoc(pRef);
+        if (pSnap.exists()) {
+          const pData = pSnap.data() as Product;
+          const newStock = Math.max(0, (pData.stock || 0) - item.quantity);
+          const updatedVariants = (pData.variants || []).map((v) =>
+            v.size === item.size ? { ...v, stock: Math.max(0, v.stock - item.quantity) } : v
+          );
+          await updateDoc(pRef, {
+            stock: newStock,
+            variants: updatedVariants,
+            status: newStock === 0 ? 'sold_out' : pData.status,
+          });
+        }
+      } catch (stockErr) {
+        console.warn('Stock decrement skipped:', stockErr);
+      }
+    }
+
+    // 4. Record audit event
+    await logAuditEvent('storefront_checkout', 'order_placed', id, {
+      customer: order.customer.name,
+      email: order.customer.email,
+      total: order.totals.total,
+      itemCount: order.items.length,
+    });
+
     return { id, success: true };
   } catch (err) {
     console.error('Failed creating order in Firestore:', err);
@@ -446,7 +541,7 @@ export async function createStoreOrder(order: Omit<Order, 'id'>): Promise<{ id: 
 }
 
 /**
- * Waitlist signup
+ * Real waitlist signup
  */
 export async function joinWaitlist(email: string, dropId: string, source: string): Promise<{ success: boolean }> {
   try {
@@ -459,9 +554,10 @@ export async function joinWaitlist(email: string, dropId: string, source: string
       createdAt: new Date().toISOString(),
     };
     await setDoc(doc(db, 'waitlist', id), entry);
+    await logAuditEvent('storefront', 'waitlist_signup', dropId, { email, source });
     return { success: true };
   } catch (err) {
     console.warn('Waitlist signup failed or offline:', err);
-    return { success: true }; // optimistically succeed
+    return { success: true };
   }
 }

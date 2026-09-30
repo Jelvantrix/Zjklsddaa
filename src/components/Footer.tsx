@@ -58,7 +58,7 @@ export const Footer: React.FC<FooterProps> = ({
               onClick={() => onNavigatePage({ type: 'service', slug: 'contact' })}
               className="text-xs font-mono underline underline-offset-4 hover:opacity-70 cursor-pointer"
             >
-              {language === 'fi' ? 'Ota yhteyttä' : 'Contact Us'}
+              Contact House
             </button>
           </div>
         </div>
@@ -252,7 +252,7 @@ export const Footer: React.FC<FooterProps> = ({
                   required
                   value={newsletterEmail}
                   onChange={(e) => setNewsletterEmail(e.target.value)}
-                  placeholder="Sähköposti"
+                  placeholder="Email address"
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none placeholder:text-black/30"
                 />
                 <button
@@ -267,14 +267,14 @@ export const Footer: React.FC<FooterProps> = ({
           ) : (
             <div className="flex items-center gap-1.5 text-xs font-mono text-black">
               <Check className="w-4 h-4" />
-              <span>{language === 'fi' ? 'Kiitos tilauksesta.' : 'Subscribed.'}</span>
+              <span>Subscribed. You are on the private register.</span>
             </div>
           )}
 
           {/* Social Links */}
           <div className="pt-2 sm:pt-4 border-t border-black/10">
             <span className="text-[10px] font-mono tracking-wider uppercase text-black/40 block mb-1.5 sm:mb-2">
-              SOSIAALINEN MEDIA
+              SOCIAL ARCHIVE
             </span>
             <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono">
               <a href="#instagram" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>IG</a>
@@ -287,23 +287,23 @@ export const Footer: React.FC<FooterProps> = ({
         </div>
       </div>
 
-      {/* Bottom Bar: Payment Icons, 1-Click Translation & Country, Copyright */}
+      {/* Bottom Bar: Payment Icons, Location, Copyright */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 sm:py-8 border-t border-black/[0.06] flex flex-col md:flex-row items-center justify-between gap-4 sm:gap-6">
         {/* Payment Icons */}
         <div className="flex items-center w-full md:w-auto justify-center md:justify-start">
           <PaymentIcons />
         </div>
 
-        {/* 1-Click Translation in Footer */}
-        <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono">
-          <span>{t.country}</span>
+        {/* Origin Badge */}
+        <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono text-black/60">
+          <span>WORLDWIDE · EUR (€)</span>
           <span>·</span>
-          <TranslationBar language={language} onSetLanguage={onSetLanguage} />
+          <span>HELSINKI & PORTO ATELIERS</span>
         </div>
 
         {/* Copyright */}
         <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right">
-          <span>© 2026 ZEJESH CLOTHES. {t.allRights}</span>
+          <span>© 2026 ZEJESH CLOTHES. All rights reserved.</span>
         </div>
       </div>
     </footer>

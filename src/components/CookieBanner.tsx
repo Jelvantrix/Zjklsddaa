@@ -28,7 +28,7 @@ export const CookieBanner: React.FC<CookieBannerProps> = ({ language }) => {
   return (
     <div
       role="region"
-      aria-label="Evästeasetukset"
+      aria-label="Privacy and Cookie Preferences"
       className="fixed bottom-0 sm:bottom-4 left-0 sm:left-4 right-0 sm:right-auto z-50 max-w-sm bg-white/95 backdrop-blur-md border-t sm:border border-black/15 p-4 sm:p-5 shadow-xl transition-all duration-500 ease-out"
     >
       <div className="flex flex-col gap-3">

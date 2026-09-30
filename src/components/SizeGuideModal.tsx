@@ -41,24 +41,22 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
         </div>
 
         <p className="text-xs font-sans text-black/70 mb-6 leading-relaxed">
-          {language === 'fi'
-            ? 'Kaikki mitat ovat vartalonmittoja senttimetreinä (cm). Jos mittasi asettuu kahden koon väliin, suosittelemme valitsemaan suuremman koon rennompaa pohjoismaista istuvuutta varten.'
-            : 'All dimensions are body measurements in centimetres (cm). If your measurements fall between two sizes, we recommend opting for the larger size for a relaxed Nordic silhouette.'}
+          All dimensions are body measurements in centimetres (cm). If your measurements fall between two sizes, we recommend opting for the larger size for a relaxed Nordic silhouette.
         </p>
 
         {/* Women's Table */}
         <div className="mb-8">
           <h4 className="font-mono text-xs uppercase tracking-wider text-black/50 mb-3">
-            {language === 'fi' ? 'NAISET (XS – XL)' : 'WOMEN (XS – XL)'}
+            WOMEN (XS – XL)
           </h4>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono border-collapse">
               <thead>
                 <tr className="border-b border-black/20 text-black/50">
-                  <th className="py-2 pr-4 font-normal">Koko / EU</th>
-                  <th className="py-2 pr-4 font-normal">Rinnanympärys (cm)</th>
-                  <th className="py-2 pr-4 font-normal">Vyötärö (cm)</th>
-                  <th className="py-2 font-normal">Lantio (cm)</th>
+                  <th className="py-2 pr-4 font-normal">Size / EU</th>
+                  <th className="py-2 pr-4 font-normal">Bust (cm)</th>
+                  <th className="py-2 pr-4 font-normal">Waist (cm)</th>
+                  <th className="py-2 font-normal">Hips (cm)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10">
@@ -100,16 +98,16 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
         {/* Men's Table */}
         <div>
           <h4 className="font-mono text-xs uppercase tracking-wider text-black/50 mb-3">
-            {language === 'fi' ? 'MIEHET (S – XL / 46 – 54)' : 'MEN (S – XL / 46 – 54)'}
+            MEN (S – XL / 46 – 54)
           </h4>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono border-collapse">
               <thead>
                 <tr className="border-b border-black/20 text-black/50">
-                  <th className="py-2 pr-4 font-normal">Koko / EU</th>
-                  <th className="py-2 pr-4 font-normal">Rinnanympärys (cm)</th>
-                  <th className="py-2 pr-4 font-normal">Vyötärö (cm)</th>
-                  <th className="py-2 font-normal">Lahkeen sisäpituus (cm)</th>
+                  <th className="py-2 pr-4 font-normal">Size / EU</th>
+                  <th className="py-2 pr-4 font-normal">Chest (cm)</th>
+                  <th className="py-2 pr-4 font-normal">Waist (cm)</th>
+                  <th className="py-2 font-normal">Inseam (cm)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/10">
@@ -147,7 +145,7 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
             onClick={onClose}
             className="w-full py-3 btn-secondary text-xs uppercase tracking-[0.18em]"
           >
-            {language === 'fi' ? 'Sulje koko-opas' : 'Close Size Guide'}
+            Close Size Guide
           </button>
         </div>
       </div>
