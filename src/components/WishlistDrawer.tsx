@@ -84,6 +84,8 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
                   className="w-20 aspect-[3/4] border border-black/10 overflow-hidden flex-shrink-0 bg-white cursor-pointer"
                 >
                   <FashionImage
+                    product={product}
+                    src={product.image}
                     alt={product.name[language]}
                     position={product.cropVariation.packshot.position}
                     scale={product.cropVariation.packshot.scale}

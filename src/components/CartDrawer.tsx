@@ -124,6 +124,8 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 {/* Thumbnail */}
                 <div className="w-16 sm:w-20 aspect-[3/4] border border-black/10 overflow-hidden flex-shrink-0 bg-white">
                   <FashionImage
+                    product={item.product}
+                    src={item.product.image}
                     alt={item.product.name[language]}
                     position={item.product.cropVariation.packshot.position}
                     scale={item.product.cropVariation.packshot.scale}

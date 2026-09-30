@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { PLACEHOLDER_IMG } from '../data/mockData';
+import { Product } from '../types';
 
 interface FashionImageProps {
   src?: string;
+  product?: Product;
+  isHover?: boolean;
   alt: string;
   aspectRatio?: '3/4' | '4/5' | '1/1' | '16/9' | 'auto';
   position?: string;
@@ -17,7 +20,9 @@ interface FashionImageProps {
 }
 
 export const FashionImage: React.FC<FashionImageProps> = ({
-  src = PLACEHOLDER_IMG,
+  src,
+  product,
+  isHover = false,
   alt,
   aspectRatio = '3/4',
   position = 'center 30%',
@@ -32,6 +37,12 @@ export const FashionImage: React.FC<FashionImageProps> = ({
 }) => {
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+
+  const resolvedSrc =
+    src ||
+    (isHover ? product?.hoverImage || product?.image : product?.image) ||
+    product?.images?.[0]?.url ||
+    PLACEHOLDER_IMG;
 
   const aspectClasses = {
     '3/4': 'aspect-[3/4]',
@@ -50,7 +61,7 @@ export const FashionImage: React.FC<FashionImageProps> = ({
       className={`relative overflow-hidden bg-[#FFFFFF] ${aspectClasses[aspectRatio]} ${className}`}
     >
       <img
-        src={hasError ? fallbackSVG : src}
+        src={hasError ? fallbackSVG : resolvedSrc}
         alt={alt}
         loading={priority ? 'eager' : 'lazy'}
         decoding="async"

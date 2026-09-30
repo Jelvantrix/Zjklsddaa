@@ -264,7 +264,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({ products
                     if (payload && payload.length) {
                       const data = payload[0].payload;
                       return (
-                        <div className="bg-white border border-black p-2 text-xs font-mono">
+                        <div className="bg-white border border-black/[0.1] shadow-md p-2 text-xs font-mono">
                           <div className="font-bold">{data.name}</div>
                           <div>Attention Score: {data.x}</div>
                           <div>Sales Units: {data.y}</div>

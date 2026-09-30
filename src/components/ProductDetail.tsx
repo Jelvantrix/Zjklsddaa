@@ -123,6 +123,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               className="relative group cursor-zoom-in border border-black/5 overflow-hidden aspect-[3/4] bg-white"
             >
               <FashionImage
+                product={product}
+                src={idx % 2 === 1 ? (product.hoverImage || product.image) : product.image}
                 alt={`${product.name[language]} - Kuva ${idx + 1}`}
                 position={crop.pos}
                 scale={crop.scale}
@@ -149,6 +151,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
         >
           <div className="aspect-[3/4] border border-black/5 overflow-hidden bg-white max-w-lg mx-auto relative group">
             <FashionImage
+              product={product}
+              src={activeMobileImageIdx % 2 === 1 ? (product.hoverImage || product.image) : product.image}
               alt={product.name[language]}
               position={galleryCrops[activeMobileImageIdx].pos}
               scale={galleryCrops[activeMobileImageIdx].scale}
@@ -387,6 +391,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             >
               <div className="aspect-[3/4] overflow-hidden border border-black/5 bg-white mb-3">
                 <FashionImage
+                  product={p}
+                  src={p.image}
                   alt={p.name[language]}
                   position={p.cropVariation.packshot.position}
                   scale={p.cropVariation.packshot.scale}
@@ -424,6 +430,8 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
           </button>
           <div className="max-w-2xl md:max-w-4xl max-h-[85vh] aspect-[3/4] overflow-hidden border border-black/20">
             <FashionImage
+              product={product}
+              src={zoomedImageIndex % 2 === 1 ? (product.hoverImage || product.image) : product.image}
               alt="Suurennettu kuva"
               position={galleryCrops[zoomedImageIndex].pos}
               scale={galleryCrops[zoomedImageIndex].scale * 1.3}

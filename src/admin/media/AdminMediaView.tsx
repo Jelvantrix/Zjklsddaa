@@ -180,8 +180,8 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
       {/* Media Inspector Modal */}
       {selectedMedia && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setSelectedMedia(null)} className="fixed inset-0 bg-black/60" />
-          <div className="relative w-full max-w-lg bg-white border border-black p-6 z-10 font-mono text-xs space-y-4">
+          <div onClick={() => setSelectedMedia(null)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
+          <div className="relative w-full max-w-lg bg-white border border-black/[0.08] shadow-2xl p-6 z-10 font-mono text-xs space-y-4">
             <div className="flex items-center justify-between border-b border-black/10 pb-3">
               <span className="font-semibold uppercase tracking-wider">Asset Details</span>
               <button onClick={() => setSelectedMedia(null)} className="cursor-pointer text-black/50 hover:text-black">

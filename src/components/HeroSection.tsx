@@ -295,30 +295,58 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
         })}
       </div>
 
-      {/* WhatsApp Status Style Top Progress Bars (Clickable hairline segments) */}
-      <div className="absolute top-[102px] sm:top-[112px] lg:top-24 left-0 right-0 z-20 px-6 sm:px-10 max-w-md mx-auto flex items-center gap-1.5 sm:gap-2 pointer-events-auto">
-        {slides.map((slide, i) => (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              goToSlide(i);
-            }}
-            className="flex-1 h-[1.5px] sm:h-[2px] bg-black/10 hover:bg-black/30 overflow-hidden cursor-pointer transition-colors"
-            aria-label={`Siirry diaan ${i + 1}`}
-          >
-            <div
-              className={`h-full transition-all duration-300 ${
-                i === currentIndex
-                  ? 'bg-black w-full'
-                  : i < currentIndex
-                  ? 'bg-black/30 w-full'
-                  : 'w-0'
-              }`}
-            />
-          </button>
-        ))}
+      {/* Slide Navigation Dots (Moved lower & at side, dots instead of lines) */}
+      <div className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 md:right-10 z-20 flex items-center gap-2 pointer-events-auto">
+        {slides.map((slide, i) => {
+          const isActive = i === currentIndex;
+          return (
+            <button
+              key={slide.id}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(i);
+              }}
+              className="group p-1 cursor-pointer flex items-center justify-center transition-all focus:outline-none"
+              aria-label={language === 'fi' ? `Siirry diaan ${i + 1}` : `Go to slide ${i + 1}`}
+            >
+              <span
+                className={`block rounded-full transition-all duration-300 ${
+                  isActive
+                    ? 'w-2.5 h-2.5 bg-black ring-2 ring-black/20 ring-offset-2 ring-offset-white'
+                    : 'w-1.5 h-1.5 bg-black/25 group-hover:bg-black/60 group-hover:scale-125'
+                }`}
+              />
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Side Slide Dots (Clean vertical indicator at the right side) */}
+      <div className="hidden lg:flex absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 flex-col items-center gap-3 pointer-events-auto">
+        {slides.map((slide, i) => {
+          const isActive = i === currentIndex;
+          return (
+            <button
+              key={`side-${slide.id}`}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                goToSlide(i);
+              }}
+              className="group p-1 cursor-pointer flex items-center justify-center transition-transform hover:scale-125 focus:outline-none"
+              aria-label={`Slide ${i + 1}`}
+            >
+              <span
+                className={`block rounded-full transition-all duration-300 ${
+                  isActive
+                    ? 'w-2 h-2 bg-black ring-2 ring-black/25 ring-offset-2 ring-offset-white'
+                    : 'w-1 h-1 bg-black/25 group-hover:bg-black/60'
+                }`}
+              />
+            </button>
+          );
+        })}
       </div>
 
       {/* Manual Slide Navigation Arrows: Pure text/icon affordances, zero boxes or borders */}

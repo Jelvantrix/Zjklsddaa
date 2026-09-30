@@ -69,6 +69,8 @@ export interface Product {
     soldCount?: number;
   };
   images?: ProductImage[];
+  image?: string;
+  hoverImage?: string;
   status?: ProductStatus;
   publishAt?: string | number; // ISO string or timestamp
   seo?: {
@@ -392,6 +394,7 @@ export interface JournalArticle {
   id: string;
   slug: string;
   date: string;
+  tag?: string;
   title: {
     fi: string;
     en: string;

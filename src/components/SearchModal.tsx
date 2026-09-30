@@ -100,6 +100,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                   className="group cursor-pointer"
                 >
                   <FashionImage
+                    product={product}
+                    src={product.image}
                     alt={product.name[language]}
                     position={product.cropVariation.packshot.position}
                     scale={product.cropVariation.packshot.scale}
@@ -155,6 +157,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                     className="group cursor-pointer"
                   >
                     <FashionImage
+                      product={product}
+                      src={product.image}
                       alt={product.name[language]}
                       position={product.cropVariation.packshot.position}
                       scale={product.cropVariation.packshot.scale}

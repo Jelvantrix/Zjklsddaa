@@ -95,6 +95,8 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
         <div className="lg:col-span-6 flex justify-center">
           <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg aspect-[3/4] border border-black/10 overflow-hidden relative bg-white">
             <FashionImage
+              product={product}
+              src={product.hoverImage || product.image}
               alt={product.name[language]}
               position={product.cropVariation.onModel.position}
               scale={product.cropVariation.onModel.scale}

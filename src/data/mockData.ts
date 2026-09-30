@@ -15,6 +15,60 @@ export const PLACEHOLDER_VIDEO =
   'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
 
 /**
+ * HIGH-FASHION DEDICATED PRODUCT PHOTOGRAPHY ASSETS
+ * Distinct studio models, coats, knitwear, leather goods, and tailoring on pure white background (#FFFFFF)
+ */
+export const PRODUCT_IMAGES = {
+  woolCoat: '/src/assets/images/wool_coat_model_1790736253323.jpg',
+  mensTrench: '/src/assets/images/mens_trench_model_1790736267744.jpg',
+  knitwear: '/src/assets/images/knitwear_sweater_1790736282001.jpg',
+  leatherBag: '/src/assets/images/leather_bag_tote_1790736295648.jpg',
+  trousers: '/src/assets/images/tailored_trousers_1790736314928.jpg',
+  studioDrape: '/src/assets/images/studio_fashion_white_bg_1790645923450.jpg',
+  heroSlide: '/src/assets/images/hero_fashion_slide_1790645943420.jpg',
+};
+
+export const PRODUCT_IMAGE_MAP: Record<string, { image: string; hoverImage: string }> = {
+  'ze-001': { image: PRODUCT_IMAGES.woolCoat, hoverImage: PRODUCT_IMAGES.studioDrape },
+  'ze-002': { image: PRODUCT_IMAGES.knitwear, hoverImage: PRODUCT_IMAGES.mensTrench },
+  'ze-003': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.trousers },
+  'ze-004': { image: PRODUCT_IMAGES.mensTrench, hoverImage: PRODUCT_IMAGES.heroSlide },
+  'ze-005': { image: PRODUCT_IMAGES.studioDrape, hoverImage: PRODUCT_IMAGES.woolCoat },
+  'ze-006': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.knitwear },
+  'ze-007': { image: PRODUCT_IMAGES.trousers, hoverImage: PRODUCT_IMAGES.mensTrench },
+  'ze-008': { image: PRODUCT_IMAGES.knitwear, hoverImage: PRODUCT_IMAGES.studioDrape },
+  'ze-009': { image: PRODUCT_IMAGES.trousers, hoverImage: PRODUCT_IMAGES.woolCoat },
+  'ze-010': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.trousers },
+  'ze-011': { image: PRODUCT_IMAGES.mensTrench, hoverImage: PRODUCT_IMAGES.knitwear },
+  'ze-012': { image: PRODUCT_IMAGES.knitwear, hoverImage: PRODUCT_IMAGES.leatherBag },
+  'ze-013': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.heroSlide },
+  'ze-014': { image: PRODUCT_IMAGES.studioDrape, hoverImage: PRODUCT_IMAGES.leatherBag },
+  'ze-015': { image: PRODUCT_IMAGES.woolCoat, hoverImage: PRODUCT_IMAGES.mensTrench },
+  'ze-016': { image: PRODUCT_IMAGES.trousers, hoverImage: PRODUCT_IMAGES.studioDrape },
+  'ze-017': { image: PRODUCT_IMAGES.woolCoat, hoverImage: PRODUCT_IMAGES.trousers },
+  'ze-018': { image: PRODUCT_IMAGES.trousers, hoverImage: PRODUCT_IMAGES.mensTrench },
+  'ze-019': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.studioDrape },
+  'ze-020': { image: PRODUCT_IMAGES.knitwear, hoverImage: PRODUCT_IMAGES.leatherBag },
+  'ze-021': { image: PRODUCT_IMAGES.mensTrench, hoverImage: PRODUCT_IMAGES.woolCoat },
+  'ze-022': { image: PRODUCT_IMAGES.studioDrape, hoverImage: PRODUCT_IMAGES.woolCoat },
+  'ze-023': { image: PRODUCT_IMAGES.leatherBag, hoverImage: PRODUCT_IMAGES.trousers },
+  'ze-024': { image: PRODUCT_IMAGES.knitwear, hoverImage: PRODUCT_IMAGES.heroSlide },
+};
+
+export function getProductImage(productId?: string, isHover?: boolean): string {
+  if (!productId) return PRODUCT_IMAGES.woolCoat;
+  const mapped = PRODUCT_IMAGE_MAP[productId];
+  if (mapped) {
+    return isHover ? mapped.hoverImage : mapped.image;
+  }
+  if (productId.endsWith('1') || productId.endsWith('7')) return isHover ? PRODUCT_IMAGES.studioDrape : PRODUCT_IMAGES.woolCoat;
+  if (productId.endsWith('2') || productId.endsWith('8')) return isHover ? PRODUCT_IMAGES.mensTrench : PRODUCT_IMAGES.knitwear;
+  if (productId.endsWith('3') || productId.endsWith('9')) return isHover ? PRODUCT_IMAGES.trousers : PRODUCT_IMAGES.leatherBag;
+  if (productId.endsWith('4') || productId.endsWith('0')) return isHover ? PRODUCT_IMAGES.heroSlide : PRODUCT_IMAGES.mensTrench;
+  return isHover ? PRODUCT_IMAGES.knitwear : PRODUCT_IMAGES.trousers;
+}
+
+/**
  * Hero Slides allowing seamless mixture of videos and studio images on white background
  */
 export interface HeroSlide {
@@ -36,7 +90,7 @@ export const HERO_SLIDES: HeroSlide[] = [
     id: 'slide-1',
     type: 'video',
     src: PLACEHOLDER_VIDEO,
-    poster: PLACEHOLDER_IMG,
+    poster: '/src/assets/images/hero_nordic_campaign_1790736679172.jpg',
     positionDesktop: 'center 20%',
     positionMobile: 'center 15%',
     caption: {
@@ -48,25 +102,37 @@ export const HERO_SLIDES: HeroSlide[] = [
   {
     id: 'slide-2',
     type: 'image',
-    src: PLACEHOLDER_IMG,
-    positionDesktop: 'center 18%', // Model's face is centered and clearly visible
-    positionMobile: 'center 15%',
+    src: '/src/assets/images/hero_nordic_campaign_1790736679172.jpg',
+    positionDesktop: 'center 25%',
+    positionMobile: 'center 20%',
     caption: {
-      fi: 'Studioarkisto · Valkoisella taustalla · Erä 03',
-      en: 'Studio Archive · Pure White Backdrop · Batch 03',
-      sv: 'Studioarkiv · Ren vit bakgrund · Serie 03',
+      fi: 'Talvikampanja 2026 · Monoliittinen villa',
+      en: 'Winter Campaign 2026 · Monolithic Wool',
+      sv: 'Vinterkampanj 2026 · Monolitisk ull',
     },
   },
   {
     id: 'slide-3',
     type: 'image',
-    src: HERO_SLIDE_IMG,
-    positionDesktop: 'center 22%',
+    src: '/src/assets/images/hero_scandinavian_still_1790736692405.jpg',
+    positionDesktop: 'center 20%',
     positionMobile: 'center 18%',
     caption: {
-      fi: 'Pohjoinen arkkitehtuuri ja villainen ryhti',
-      en: 'Northern Architecture and Wool Stance',
-      sv: 'Nordisk arkitektur och ullens hållning',
+      fi: 'Ateljeesarja · Strukturoitu obsidian-päällystakki',
+      en: 'Atelier Series · Structured Obsidian Greatcoat',
+      sv: 'Ateljéserie · Strukturerad obsidianrock',
+    },
+  },
+  {
+    id: 'slide-4',
+    type: 'image',
+    src: '/src/assets/images/wool_coat_model_1790736253323.jpg',
+    positionDesktop: 'center 18%',
+    positionMobile: 'center 15%',
+    caption: {
+      fi: 'Puhdas linja · Valkoisella taustalla · Erä 03',
+      en: 'Pure Line · Seamless White Backdrop · Batch 03',
+      sv: 'Ren linje · Vit bakgrund · Serie 03',
     },
   },
 ];
@@ -705,7 +771,7 @@ export const translations = {
  * Each piece represents its own individual product page with dedicated URLs,
  * specifications, materials, sizing, and photography.
  */
-export const ARCHIVE_PRODUCTS: Product[] = [
+const ARCHIVE_PRODUCTS_BASE: Omit<Product, 'image' | 'hoverImage'>[] = [
   {
     id: 'ze-001',
     plateNumber: 'Nº 001',
@@ -1443,6 +1509,24 @@ export const ARCHIVE_PRODUCTS: Product[] = [
     },
   },
 ];
+
+export const ARCHIVE_PRODUCTS: Product[] = ARCHIVE_PRODUCTS_BASE.map((p) => {
+  const imgData = PRODUCT_IMAGE_MAP[p.id] || {
+    image: PRODUCT_IMAGES.woolCoat,
+    hoverImage: PRODUCT_IMAGES.studioDrape,
+  };
+  return {
+    ...p,
+    image: imgData.image,
+    hoverImage: imgData.hoverImage,
+    images: [
+      { url: imgData.image, order: 0, isPrimary: true },
+      { url: imgData.hoverImage, order: 1, isHover: true },
+      { url: PRODUCT_IMAGES.studioDrape, order: 2 },
+      { url: PRODUCT_IMAGES.heroSlide, order: 3 },
+    ],
+  };
+});
 
 export const JOURNAL_ARTICLES: JournalArticle[] = [
   {

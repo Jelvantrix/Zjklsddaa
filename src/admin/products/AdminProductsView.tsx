@@ -371,14 +371,14 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                       <button
                         onClick={() => onEditProduct(prod)}
                         className="p-1 hover:opacity-60 cursor-pointer text-black"
-                        title="Muokkaa"
+                        title="Edit"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => onViewProductInStore(prod)}
                         className="p-1 hover:opacity-60 cursor-pointer text-black/60 hover:text-black"
-                        title="Katso kaupassa"
+                        title="View in Store"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>
@@ -392,28 +392,28 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
 
         {filtered.length === 0 && (
           <div className="p-12 text-center text-xs font-mono text-black/50">
-            Ei hakuehtoja vastaavia tuotteita.
+            No products match your search criteria.
           </div>
         )}
       </div>
 
-      {/* Modal: Bulk Price Adjustment (Strictly Black & White Typography) */}
+      {/* Modal: Bulk Price Adjustment (Subtle Hairline Borders) */}
       {showBulkPriceModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setShowBulkPriceModal(false)} className="fixed inset-0 bg-black/60" />
-          <div className="relative w-full max-w-sm bg-white border border-black p-6 z-10 font-mono text-xs">
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2">Massahintamuutos</h3>
+          <div onClick={() => setShowBulkPriceModal(false)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
+          <div className="relative w-full max-w-sm bg-white border border-black/[0.08] shadow-2xl p-6 z-10 font-mono text-xs">
+            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2 text-black">Bulk Price Adjustment</h3>
             <p className="text-black/60 mb-4 text-[11px]">
-              Muuta {selectedIds.length} valitun tuotteen myyntihintaa prosentuaalisesti.
+              Adjust the retail price of {selectedIds.length} selected garments by percentage.
             </p>
             <div className="mb-4">
-              <label className="block text-[10px] uppercase text-black/60 mb-1">Muutosprosentti (%)</label>
+              <label className="block text-[10px] uppercase text-black/60 mb-1">Percentage Change (%)</label>
               <input
                 type="number"
                 value={bulkPricePercent}
                 onChange={(e) => setBulkPricePercent(parseFloat(e.target.value) || 0)}
-                placeholder="+10 tai -15"
-                className="w-full px-3 py-2 border-b border-black focus:outline-none font-semibold bg-transparent"
+                placeholder="+10 or -15"
+                className="w-full px-3 py-2 border-b border-black/[0.2] focus:border-black focus:outline-none font-semibold bg-transparent"
               />
             </div>
             <div className="flex justify-end gap-4 mt-6">
@@ -421,42 +421,42 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                 onClick={() => setShowBulkPriceModal(false)}
                 className="text-xs font-mono uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
               >
-                Peruuta
+                Cancel
               </button>
               <button
                 onClick={handleBulkPriceAdjust}
                 className="text-xs font-mono uppercase text-black hover:opacity-60 underline underline-offset-4 font-semibold cursor-pointer"
               >
-                Käytä hintoihin
+                Apply Changes
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal: Delete Confirmation (Strictly Black & White Typography) */}
+      {/* Modal: Delete Confirmation (Subtle Hairline Borders) */}
       {deleteConfirmOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setDeleteConfirmOpen(false)} className="fixed inset-0 bg-black/60" />
-          <div className="relative w-full max-w-sm bg-white border border-black p-6 z-10 font-mono text-xs">
+          <div onClick={() => setDeleteConfirmOpen(false)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
+          <div className="relative w-full max-w-sm bg-white border border-black/[0.08] shadow-2xl p-6 z-10 font-mono text-xs">
             <h3 className="text-sm font-semibold uppercase tracking-wider mb-2 text-black">
-              Vahvista poisto (Owner)
+              Confirm Deletion (Owner)
             </h3>
             <p className="text-black/70 mb-4 text-[11px] leading-relaxed">
-              Haluatko varmasti poistaa {selectedIds.length} tuotetta pysyvästi Firestoresta? Toimintoa ei voi perua.
+              Are you sure you want to permanently delete {selectedIds.length} products from the Firestore database? This action is irreversible.
             </p>
             <div className="flex justify-end gap-4 mt-6">
               <button
                 onClick={() => setDeleteConfirmOpen(false)}
                 className="text-xs font-mono uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
               >
-                Peruuta
+                Cancel
               </button>
               <button
                 onClick={handleBulkDelete}
-                className="text-xs font-mono uppercase text-black hover:opacity-60 underline underline-offset-4 font-semibold cursor-pointer"
+                className="text-xs font-mono uppercase text-rose-600 hover:text-rose-800 underline underline-offset-4 font-semibold cursor-pointer"
               >
-                Poista pysyvästi
+                Delete Permanently
               </button>
             </div>
           </div>

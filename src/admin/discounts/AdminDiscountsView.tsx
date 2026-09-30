@@ -153,8 +153,8 @@ export const AdminDiscountsView: React.FC<AdminDiscountsViewProps> = ({ discount
       {/* Modal: Create Discount */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-black/60" />
-          <div className="relative w-full max-w-sm bg-white border border-black p-6 z-10 font-mono text-xs shadow-2xl">
+          <div onClick={() => setIsModalOpen(false)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
+          <div className="relative w-full max-w-sm bg-white border border-black/[0.08] p-6 z-10 font-mono text-xs shadow-2xl">
             <div className="flex justify-between items-center mb-4 border-b border-black/[0.08] pb-2">
               <h3 className="text-sm font-semibold uppercase tracking-wider text-black">Create Discount Code</h3>
               <button onClick={() => setIsModalOpen(false)} className="p-1 text-black/50 hover:text-black">

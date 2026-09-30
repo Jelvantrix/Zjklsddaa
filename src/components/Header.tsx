@@ -200,12 +200,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* ROW 2: DESKTOP CATEGORY NAVIGATION STRIP (PERFECT SPACING, SIZING, ALIGNMENT) */}
+        {/* ROW 2: DESKTOP CATEGORY NAVIGATION STRIP (NO BORDER BETWEEN LOGO AND CATEGORIES) */}
         <div
           className={`hidden lg:block transition-colors duration-300 ${
             isOverHeroAtTop
-              ? 'border-t border-black/[0.08] bg-transparent'
-              : 'border-t border-black/[0.05] bg-white/95 backdrop-blur-md'
+              ? 'bg-transparent'
+              : 'bg-white/95 backdrop-blur-md'
           }`}
         >
           <div className="max-w-[1720px] mx-auto px-6 md:px-10 h-11 flex items-center justify-center">
@@ -297,6 +297,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="col-span-4 group cursor-pointer"
               >
                 <FashionImage
+                  src="/src/assets/images/wool_coat_model_1790736253323.jpg"
                   alt="Kokoelma kampanja 1"
                   position="center 20%"
                   scale={1.05}
@@ -323,6 +324,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="col-span-4 group cursor-pointer"
               >
                 <FashionImage
+                  src="/src/assets/images/mens_trench_model_1790736267744.jpg"
                   alt="Kokoelma kampanja 2"
                   position="center 65%"
                   scale={1.2}

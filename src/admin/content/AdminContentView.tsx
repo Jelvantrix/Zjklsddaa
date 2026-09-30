@@ -18,7 +18,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   const [activeTab, setActiveTab] = useState<'sections' | 'hero' | 'announcement' | 'journal'>('sections');
 
   const defaultSections = [
-    { id: 'latest_drop', label: 'Section 01: Latest Archival Drop (Uusin Pudotus)' },
+    { id: 'latest_drop', label: 'Section 01: Latest Archival Drop' },
     { id: 'categories_mosaic', label: 'Section 02: Architectural Categories Mosaic' },
     { id: 'craft_narrative', label: 'Section 03: Nordic Craft & Materials Manifesto' },
     { id: 'featured_pieces', label: 'Section 04: Curated Core Highlights Carousel' },

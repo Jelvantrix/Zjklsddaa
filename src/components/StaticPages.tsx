@@ -202,6 +202,8 @@ export const StaticPages: React.FC<StaticPageProps> = ({
             >
               <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-white mb-3 sm:mb-4">
                 <FashionImage
+                  product={product}
+                  src={product.hoverImage || product.image}
                   alt={product.name[language]}
                   position={product.cropVariation.onModel.position}
                   scale={product.cropVariation.onModel.scale}

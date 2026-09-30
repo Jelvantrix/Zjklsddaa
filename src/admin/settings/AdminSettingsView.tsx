@@ -233,10 +233,10 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
           {(formData.shippingRates || []).map((method, idx) => (
             <div key={idx} className="p-3.5 flex items-center justify-between">
               <div>
-                <span className="font-semibold text-black">{method.name}</span>
-                <span className="text-[10px] text-black/40 block">Estimated delivery: {method.estimatedDays}</span>
+                <span className="font-semibold text-black">{typeof method.name === 'object' ? (method.name.en || method.name.fi) : method.name}</span>
+                <span className="text-[10px] text-black/40 block">Estimated delivery: {method.eta || '2–4 days'}</span>
               </div>
-              <div className="font-bold text-black">{method.rate} €</div>
+              <div className="font-bold text-black">{method.price ?? 0} €</div>
             </div>
           ))}
         </div>

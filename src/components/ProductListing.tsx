@@ -387,6 +387,9 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                       } gradient-overlay`}
                     >
                       <FashionImage
+                        product={product}
+                        isHover={hoveredCardId === product.id}
+                        src={hoveredCardId === product.id ? product.hoverImage : product.image}
                         alt={product.name[language]}
                         position={activeCrop.position}
                         scale={activeCrop.scale}
