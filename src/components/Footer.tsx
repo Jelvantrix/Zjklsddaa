@@ -3,8 +3,8 @@ import { Language } from '../types';
 import { translations } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
-import { TranslationBar } from './TranslationBar';
 import { ArrowRight, Check } from 'lucide-react';
+import { joinWaitlist } from '../firebase/dbService';
 
 interface FooterProps {
   language: Language;
@@ -25,7 +25,8 @@ export const Footer: React.FC<FooterProps> = ({
 
   const handleSubscribe = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newsletterEmail) {
+    if (newsletterEmail && newsletterEmail.includes('@')) {
+      joinWaitlist(newsletterEmail, 'client_register', 'global_footer').catch(() => {});
       setSubscribed(true);
     }
   };
@@ -301,9 +302,17 @@ export const Footer: React.FC<FooterProps> = ({
           <span>HELSINKI & PORTO ATELIERS</span>
         </div>
 
-        {/* Copyright */}
-        <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right">
+        {/* Copyright & Studio Console Access */}
+        <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right flex items-center gap-2 justify-center md:justify-end">
           <span>© 2026 ZEJESH CLOTHES. All rights reserved.</span>
+          <span>·</span>
+          <button
+            type="button"
+            onClick={() => onNavigatePage({ type: 'admin' })}
+            className="hover:text-black underline underline-offset-2 cursor-pointer transition-colors uppercase tracking-wider text-[10px]"
+          >
+            Studio Console
+          </button>
         </div>
       </div>
     </footer>

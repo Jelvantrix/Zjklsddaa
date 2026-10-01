@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Product, Language } from '../types';
+import { Product, Language, Category } from '../types';
 import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
 import { FashionImage } from './FashionImage';
 import { ProductCardSkeleton } from './ProductCardSkeleton';
@@ -25,6 +25,7 @@ interface ProductListingProps {
   onToggleWishlist: (productId: string) => void;
   wishlistIds: string[];
   products?: Product[];
+  categories?: Category[];
   loading?: boolean;
   isLiveFromFirestore?: boolean;
 }
@@ -40,6 +41,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
   onToggleWishlist,
   wishlistIds,
   products,
+  categories = [],
   loading = false,
   isLiveFromFirestore = false,
 }) => {
@@ -532,6 +534,44 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   <X className="w-5 h-5 stroke-[1.5]" />
                 </button>
               </div>
+
+              {/* 0. Department / Category Filter */}
+              {categories && categories.length > 0 && (
+                <div className="mb-6 sm:mb-8">
+                  <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
+                    Department
+                  </span>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelectCategory('all')}
+                      className={`py-1 px-2.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
+                        selectedCategory === 'all'
+                          ? 'border-black bg-black text-white font-semibold'
+                          : 'border-black/15 text-black/70 hover:border-black'
+                      }`}
+                    >
+                      All Pieces
+                    </button>
+                    {categories
+                      .filter((c) => !c.parentId && c.visible)
+                      .map((cat) => (
+                        <button
+                          type="button"
+                          key={cat.id}
+                          onClick={() => onSelectCategory(cat.slug || cat.id)}
+                          className={`py-1 px-2.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
+                            selectedCategory === (cat.slug || cat.id)
+                              ? 'border-black bg-black text-white font-semibold'
+                              : 'border-black/15 text-black/70 hover:border-black'
+                          }`}
+                        >
+                          {cat.name.en || cat.name.fi}
+                        </button>
+                      ))}
+                  </div>
+                </div>
+              )}
 
               {/* 1. Size Filter: pure text items */}
               <div className="mb-6 sm:mb-8">

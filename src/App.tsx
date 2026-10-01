@@ -31,6 +31,9 @@ function isSecretAdminUrl(): boolean {
   const path = window.location.pathname;
   const hash = window.location.hash;
   return (
+    path === '/admin' ||
+    path === '/admin/' ||
+    hash === '#admin' ||
     path === ADMIN_SECRET_PATH ||
     path === `${ADMIN_SECRET_PATH}/` ||
     hash === ADMIN_SECRET_HASH ||
@@ -39,7 +42,7 @@ function isSecretAdminUrl(): boolean {
 }
 
 function StorefrontApp() {
-  const { products, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
+  const { products, categories, collections, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
   const [preloaderDone, setPreloaderDone] = useState(false);
 
   // Pure English language (all other languages removed)
@@ -77,18 +80,8 @@ function StorefrontApp() {
   const [isHeroVisible, setIsHeroVisible] = useState(true);
   const homeSectionRef = useRef<HTMLDivElement | null>(null);
 
-  // Browser History & Hash integration (Strictly via long secret URL, zero keyboard shortcuts)
+  // Browser History & Hash integration
   useEffect(() => {
-    // If user attempted to access short /admin or #admin, neutralize it immediately
-    if (
-      window.location.pathname === '/admin' ||
-      window.location.pathname === '/admin/' ||
-      window.location.hash === '#admin'
-    ) {
-      window.history.replaceState({ route: { type: 'home' } }, '', '/');
-      setRoute({ type: 'home' });
-    }
-
     const handlePopState = (e: PopStateEvent) => {
       if (e.state && e.state.route) {
         setRoute(e.state.route);
@@ -100,11 +93,8 @@ function StorefrontApp() {
     };
 
     const handleHashChange = () => {
-      if (window.location.hash === ADMIN_SECRET_HASH) {
+      if (isSecretAdminUrl()) {
         setRoute({ type: 'admin' });
-      } else if (window.location.hash === '#admin') {
-        window.history.replaceState({ route: { type: 'home' } }, '', '/');
-        setRoute({ type: 'home' });
       }
     };
 
@@ -262,9 +252,11 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
         currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
         currentRouteType={route.type}
+        categories={categories}
       />
 
       {/* 4. MULTI-PAGE VIEW ROUTER (50+ Pages) */}
@@ -315,6 +307,7 @@ function StorefrontApp() {
             onToggleWishlist={handleToggleWishlist}
             wishlistIds={wishlistIds}
             products={products}
+            categories={categories}
             loading={productsLoading}
             isLiveFromFirestore={isLiveFromFirestore}
           />
@@ -425,7 +418,9 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         onOpenJournal={() => navigateTo({ type: 'journal' })}
+        categories={categories}
       />
 
       <CartDrawer
@@ -461,6 +456,7 @@ function StorefrontApp() {
         isOpen={isAccountOpen}
         onClose={() => setIsAccountOpen(false)}
         language={language}
+        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
       />
 
       <QuickLookModal

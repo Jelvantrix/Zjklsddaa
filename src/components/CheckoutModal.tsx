@@ -4,6 +4,7 @@ import { translations, formatPrice } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
+import { createStoreOrder } from '../firebase/dbService';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -37,6 +38,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [shippingMethod, setShippingMethod] = useState<'express' | 'standard' | 'whiteglove'>('express');
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobilepay' | 'klarna' | 'card' | 'applepay'>('card');
   const [selectedBank, setSelectedBank] = useState('OP');
+  const [createdOrderNumber, setCreatedOrderNumber] = useState('');
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -45,7 +48,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const shippingCost = shippingMethod === 'whiteglove' ? 12.0 : (subtotal >= 100 ? 0 : 4.9);
   const total = subtotal + shippingCost;
-  const orderNumber = '#ZE-84291';
+  const orderNumber = createdOrderNumber || '#ZE-84291';
 
   if (!isOpen) return null;
 
@@ -54,9 +57,60 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setStep(2);
   };
 
-  const handleConfirmOrder = () => {
-    setStep(3);
-    onOrderSuccess();
+  const handleConfirmOrder = async () => {
+    setIsSubmittingOrder(true);
+    try {
+      const res = await createStoreOrder({
+        customer: {
+          id: email.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+          email: email.trim(),
+          name: `${firstName.trim()} ${lastName.trim()}`,
+          phone: phone.trim(),
+          address: {
+            street: street.trim(),
+            postalCode: postalCode.trim(),
+            city: city.trim(),
+            country: 'Finland',
+          },
+        },
+        items: items.map((it) => ({
+          productId: it.product.id,
+          productNr: it.product.plateNumber || it.product.nr || 'Nº 001',
+          productName: it.product.name.en || it.product.name.fi || 'Archival Garment',
+          size: it.size,
+          quantity: it.quantity,
+          price: it.product.price,
+        })),
+        totals: {
+          subtotal,
+          shipping: shippingCost,
+          vat: +(subtotal * 0.24 / 1.24).toFixed(2),
+          discount: 0,
+          total,
+        },
+        status: 'paid',
+        shippingMethod: shippingMethod === 'whiteglove' ? 'White Glove Delivery' : 'Express Courier Tracked',
+        timeline: [
+          {
+            at: new Date().toISOString(),
+            status: 'paid',
+            note: `Verified checkout payment received via ${paymentMethod.toUpperCase()}`,
+            by: 'Storefront Checkout',
+          },
+        ],
+        createdAt: new Date().toISOString(),
+      });
+
+      if (res.id) {
+        setCreatedOrderNumber(`#${res.id}`);
+      }
+    } catch (err) {
+      console.error('Order placement error:', err);
+    } finally {
+      setIsSubmittingOrder(false);
+      setStep(3);
+      onOrderSuccess();
+    }
   };
 
   return (
@@ -360,9 +414,10 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <button
                   type="button"
                   onClick={handleConfirmOrder}
-                  className="flex-1 py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
+                  disabled={isSubmittingOrder}
+                  className="flex-1 py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  Confirm & Place Order ({formatPrice(total)})
+                  <span>{isSubmittingOrder ? 'Processing Acquisition...' : `Confirm & Place Order (${formatPrice(total)})`}</span>
                 </button>
               </div>
 

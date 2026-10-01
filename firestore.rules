@@ -13,10 +13,19 @@ service cloud.firestore {
         : null;
     }
 
+    function isAdminEmail() {
+      return isSignedIn() && request.auth.token.email != null && (
+        request.auth.token.email == 'almurtazascoutsdata@gmail.com' ||
+        request.auth.token.email == 'huxaifa0fficial@gmail.com' ||
+        request.auth.token.email == 'owner@zejesh.fi'
+      );
+    }
+
     function isAdmin() {
       return isSignedIn() && (
         exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
-        request.auth.token.admin == true
+        request.auth.token.admin == true ||
+        isAdminEmail()
       );
     }
 
@@ -24,7 +33,8 @@ service cloud.firestore {
       return isSignedIn() && (
         (exists(/databases/$(database)/documents/admins/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'owner') ||
-        request.auth.token.role == 'owner'
+        request.auth.token.role == 'owner' ||
+        isAdminEmail()
       );
     }
 
@@ -34,7 +44,8 @@ service cloud.firestore {
          (get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'owner' ||
           get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.role == 'editor')) ||
         request.auth.token.role == 'owner' ||
-        request.auth.token.role == 'editor'
+        request.auth.token.role == 'editor' ||
+        isAdminEmail()
       );
     }
 
@@ -113,10 +124,10 @@ service cloud.firestore {
       allow update, delete: if false; // Immutable audit trail
     }
 
-    // Admins management (Owner only)
+    // Admins management (Owner or self-register admin doc)
     match /admins/{adminId} {
       allow read: if isSignedIn();
-      allow write: if isOwner();
+      allow write: if isOwner() || (isSignedIn() && request.auth.uid == adminId);
     }
 
     // Anonymous Behavior Tracking Events (Create-only by anyone, never public-readable)

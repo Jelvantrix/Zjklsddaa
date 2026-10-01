@@ -22,9 +22,16 @@ import {
   Shield,
   ShieldCheck,
   Lock,
+  Menu,
+  X,
 } from 'lucide-react';
 import { Product, Order, Customer, WaitlistEntry, Discount, AiInsight, DailyStat, AuditLog } from '../types';
 import { useAuth } from '../firebase/AuthContext';
+import {
+  subscribeToOrders,
+  subscribeToCustomers,
+  subscribeToWaitlist,
+} from '../firebase/dbService';
 import { AdminCommandPalette } from './AdminCommandPalette';
 import { AdminNotificationsModal } from './AdminNotificationsModal';
 import { AdminProductsView } from './products/AdminProductsView';
@@ -189,13 +196,29 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     };
   }, [autoLockMinutes, isTerminalLocked, handleLockTerminalNow]);
 
-  // Local state for datasets
-  const [orders, setOrders] = useState<Order[]>(SEED_ORDERS);
-  const [customers, setCustomers] = useState<Customer[]>(SEED_CUSTOMERS);
-  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>(SEED_WAITLIST);
+  // Mobile navigation state
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Real production datasets: start with empty array so if there are no customers, there are 0 customers
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>(SEED_DISCOUNTS);
   const [dailyStats, setDailyStats] = useState<DailyStat[]>(SEED_DAILY_STATS);
   const [insights, setInsights] = useState<AiInsight[]>(SEED_INSIGHTS);
+
+  // Subscribe to real-time Firestore collections
+  useEffect(() => {
+    const unsubOrders = subscribeToOrders((liveOrders) => setOrders(liveOrders));
+    const unsubCust = subscribeToCustomers((liveCust) => setCustomers(liveCust));
+    const unsubWait = subscribeToWaitlist((liveWait) => setWaitlist(liveWait));
+
+    return () => {
+      unsubOrders();
+      unsubCust();
+      unsubWait();
+    };
+  }, []);
 
   // Command palette & notifications state
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
@@ -243,11 +266,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       />
 
       {/* TOP BAR: Refined Hairline Boundaries */}
-      <header className="h-14 border-b border-black/[0.08] bg-white px-4 sm:px-6 flex items-center justify-between z-20 shrink-0 sticky top-0 font-mono">
-        <div className="flex items-center gap-4">
+      <header className="h-14 border-b border-black/[0.08] bg-white px-3 sm:px-6 flex items-center justify-between z-20 shrink-0 sticky top-0 font-mono">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* Mobile hamburger navigation trigger */}
+          <button
+            type="button"
+            onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
+            className="p-1.5 text-black hover:opacity-60 md:hidden cursor-pointer"
+            aria-label="Toggle admin navigation"
+          >
+            {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </button>
+
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1.5 text-black/50 hover:text-black cursor-pointer hidden sm:block transition-colors"
+            className="p-1.5 text-black/50 hover:text-black cursor-pointer hidden md:block transition-colors"
             title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -255,13 +288,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <div className="flex items-center gap-2">
             <span className="font-editorial text-lg tracking-wider font-semibold">ZEJESH</span>
-            <span className="text-[10px] tracking-[0.25em] uppercase text-black/50 pl-2 border-l border-black/[0.12]">
+            <span className="text-[10px] tracking-[0.25em] uppercase text-black/50 pl-2 border-l border-black/[0.12] hidden xs:inline">
               STUDIO ADMIN
             </span>
           </div>
 
           {/* Visitors Now Pulsing Counter */}
-          <div className="hidden md:flex items-center gap-2 pl-4 border-l border-black/[0.08] text-xs">
+          <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/[0.08] text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
             <span className="text-black/50">Live Visitors:</span>
             <span className="font-medium text-black">{liveVisitors}</span>
@@ -328,12 +361,82 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       </header>
 
       {/* BODY WITH SIDEBAR AND MAIN STAGE */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar: Hairline Minimal Divider */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Mobile Navigation Drawer Overlay */}
+        {isMobileNavOpen && (
+          <div className="fixed inset-0 z-50 md:hidden flex">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+              onClick={() => setIsMobileNavOpen(false)}
+            />
+
+            {/* Slide-out Menu */}
+            <div className="relative w-72 max-w-[80vw] bg-white border-r border-black/[0.1] h-full flex flex-col justify-between p-4 z-10 font-mono shadow-2xl overflow-y-auto">
+              <div>
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.08]">
+                  <span className="font-editorial text-lg tracking-wider font-semibold">NAVIGATION</span>
+                  <button
+                    type="button"
+                    onClick={() => setIsMobileNavOpen(false)}
+                    className="p-1 text-black/60 hover:text-black cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = currentView === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => {
+                          setCurrentView(item.id);
+                          setIsMobileNavOpen(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs transition-colors cursor-pointer text-left ${
+                          isActive
+                            ? 'text-black font-semibold bg-neutral-100'
+                            : 'text-black/70 hover:text-black hover:bg-neutral-50'
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {item.badge !== undefined && (
+                          <span className="text-[10px] text-black/50">({item.badge})</span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-black/[0.08] text-xs space-y-2">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                  <span className="font-semibold text-black uppercase tracking-wider">{adminProfile?.role || role}</span>
+                </div>
+                <div className="text-[11px] text-black/50 truncate">{adminProfile?.email || 'owner@zejesh.fi'}</div>
+                <button
+                  type="button"
+                  onClick={onBackToStorefront}
+                  className="w-full mt-2 py-2 border border-black/20 text-center text-xs uppercase tracking-wider text-black font-medium"
+                >
+                  Exit to Storefront
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Desktop Left Sidebar: Hairline Minimal Divider */}
         <aside
           className={`${
             isSidebarCollapsed ? 'w-16' : 'w-60'
-          } border-r border-black/[0.08] bg-white transition-all duration-300 flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar font-mono`}
+          } border-r border-black/[0.08] bg-white transition-all duration-300 hidden md:flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar font-mono`}
         >
           <div className="p-3 space-y-0.5">
             {navItems.map((item) => {
@@ -507,6 +610,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         product={editingProduct}
         onClose={() => setIsEditorDrawerOpen(false)}
         onSaveSuccess={(updated) => {}}
+        categories={categories}
+        collections={collections}
       />
     </div>
   );

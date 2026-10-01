@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Product, ProductVariant } from '../../types';
+import { Product, ProductVariant, Category, Collection } from '../../types';
 import { useAuth } from '../../firebase/AuthContext';
 import { doc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
@@ -23,6 +23,8 @@ interface AdminProductEditorDrawerProps {
   product: Product | null;
   onClose: () => void;
   onSaveSuccess: (updatedProduct: Product) => void;
+  categories?: Category[];
+  collections?: Collection[];
 }
 
 const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200';
@@ -32,6 +34,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   product,
   onClose,
   onSaveSuccess,
+  categories = [],
+  collections = [],
 }) => {
   const { isEditor, isOwner, adminProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'basic' | 'media' | 'variants' | 'pricing' | 'taxonomy' | 'seo'>('basic');
@@ -587,25 +591,73 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+                    onChange={(e) => {
+                      const newCat = e.target.value;
+                      setFormData({
+                        ...formData,
+                        category: newCat as any,
+                        categoryIds: [newCat],
+                      });
+                    }}
                     className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
                   >
-                    <option value="naiset">Women (Naiset)</option>
-                    <option value="miehet">Men (Miehet)</option>
-                    <option value="asusteet">Accessories (Asusteet)</option>
-                    <option value="kokoelmat">Collections (Kokoelmat)</option>
+                    {categories.length > 0 ? (
+                      categories
+                        .filter((c) => !c.parentId)
+                        .map((cat) => (
+                          <option key={cat.id} value={cat.slug || cat.id}>
+                            {cat.name.en || cat.name.fi} ({cat.slug || cat.id})
+                          </option>
+                        ))
+                    ) : (
+                      <>
+                        <option value="naiset">Women (Naiset)</option>
+                        <option value="miehet">Men (Miehet)</option>
+                        <option value="asusteet">Accessories (Asusteet)</option>
+                        <option value="kokoelmat">Collections (Kokoelmat)</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div>
                   <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
-                    Subcategory Slug
+                    Subcategory
                   </label>
-                  <input
-                    type="text"
-                    value={formData.subcategory || ''}
-                    onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black"
-                  />
+                  {(() => {
+                    const currentParent = categories.find(
+                      (c) => (c.slug || c.id) === formData.category
+                    );
+                    const subcats = currentParent
+                      ? categories.filter((c) => c.parentId === currentParent.id)
+                      : [];
+
+                    if (subcats.length > 0) {
+                      return (
+                        <select
+                          value={formData.subcategory || ''}
+                          onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                          className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
+                        >
+                          <option value="">-- None / All --</option>
+                          {subcats.map((sc) => (
+                            <option key={sc.id} value={sc.slug || sc.id}>
+                              {sc.name.en || sc.name.fi} ({sc.slug})
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    }
+
+                    return (
+                      <input
+                        type="text"
+                        value={formData.subcategory || ''}
+                        placeholder="e.g. coats, knitwear..."
+                        onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
+                        className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black"
+                      />
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -618,9 +670,19 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   onChange={(e) => setFormData({ ...formData, collectionSeason: e.target.value as any })}
                   className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
                 >
-                  <option value="talvi">Talvi 2026 · Kaamoksen Muodot</option>
-                  <option value="perusvaatteet">Archival Essentials</option>
-                  <option value="kevat">Kevät 2026 · Valon Paluu</option>
+                  {collections.length > 0 ? (
+                    collections.map((col) => (
+                      <option key={col.id} value={col.slug || col.id}>
+                        {typeof col.name === 'string' ? col.name : (col.name.en || col.name.fi)} ({col.type})
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="talvi">Talvi 2026 · Kaamoksen Muodot</option>
+                      <option value="perusvaatteet">Archival Essentials</option>
+                      <option value="kevat">Kevät 2026 · Valon Paluu</option>
+                    </>
+                  )}
                 </select>
               </div>
 

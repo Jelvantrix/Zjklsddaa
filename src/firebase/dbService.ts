@@ -462,7 +462,7 @@ export async function getProductById(id: string): Promise<Product | null> {
  * Create or save order in Firestore, upsert real customer record, and decrement stock
  */
 export async function createStoreOrder(
-  order: Omit<Order, 'id'>
+  order: Omit<Order, 'id' | 'number'> & { number?: string }
 ): Promise<{ id: string; success: boolean }> {
   const id = `ZE-${Date.now().toString().slice(-6)}`;
   const fullOrder: Order = { ...order, id, number: `#${id}` };

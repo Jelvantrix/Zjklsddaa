@@ -7,12 +7,14 @@ interface AccountModalProps {
   isOpen: boolean;
   onClose: () => void;
   language: Language;
+  onNavigateAdmin?: () => void;
 }
 
 export const AccountModal: React.FC<AccountModalProps> = ({
   isOpen,
   onClose,
   language,
+  onNavigateAdmin,
 }) => {
   const t = translations[language];
   const [email, setEmail] = useState('');
@@ -68,6 +70,22 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             >
               Send Access Key
             </button>
+
+            {onNavigateAdmin && (
+              <div className="pt-4 border-t border-black/10">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onNavigateAdmin();
+                  }}
+                  className="w-full py-2.5 border border-black/30 hover:border-black text-black text-xs uppercase tracking-[0.16em] font-mono hover:bg-black hover:text-white transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span>Enter Studio Console</span>
+                </button>
+              </div>
+            )}
           </form>
         ) : (
           <div className="text-center py-6 space-y-3">

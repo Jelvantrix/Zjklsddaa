@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Language } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Language, Category } from '../types';
 import { translations, SUB_CATEGORIES } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { TranslationBar } from './TranslationBar';
-import { X, ChevronRight, ArrowLeft } from 'lucide-react';
+import { X, ChevronRight, ArrowLeft, Shield } from 'lucide-react';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -14,7 +14,9 @@ interface MobileMenuProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
+  onNavigateAdmin?: () => void;
   onOpenJournal: () => void;
+  categories?: Category[];
 }
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -26,22 +28,70 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
+  onNavigateAdmin,
   onOpenJournal,
+  categories = [],
 }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const t = translations[language];
 
   if (!isOpen) return null;
 
-  const categories = [
-    { key: 'uutuudet', label: t.nav.new, subKey: null },
-    { key: 'naiset', label: t.nav.women, subKey: 'naiset' as const },
-    { key: 'miehet', label: t.nav.men, subKey: 'miehet' as const },
-    { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet' as const },
-    { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat' as const },
-    { key: 'lookbook', label: t.nav.lookbook, subKey: null },
-    { key: 'journal', label: t.nav.journal, subKey: null },
-  ];
+  const dynamicItems = useMemo(() => {
+    if (categories && categories.length > 0) {
+      const roots = categories
+        .filter((c) => !c.parentId && c.visible)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const items: Array<{ key: string; label: string; subKey: string | null; categoryId: string }> = [
+        { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
+      ];
+
+      roots.forEach((cat) => {
+        items.push({
+          key: cat.slug || cat.id,
+          label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
+          subKey: cat.id,
+          categoryId: cat.slug || cat.id,
+        });
+      });
+
+      items.push(
+        { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+        { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
+        { key: 'journal', label: t.nav.journal, subKey: null, categoryId: 'journal' }
+      );
+      return items;
+    }
+
+    return [
+      { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
+      { key: 'naiset', label: t.nav.women, subKey: 'naiset', categoryId: 'naiset' },
+      { key: 'miehet', label: t.nav.men, subKey: 'miehet', categoryId: 'miehet' },
+      { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet', categoryId: 'asusteet' },
+      { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+      { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
+      { key: 'journal', label: t.nav.journal, subKey: null, categoryId: 'journal' },
+    ];
+  }, [categories, t]);
+
+  const activeSubcategories = useMemo(() => {
+    if (!activeCategory) return [];
+    if (categories && categories.length > 0) {
+      const parent = categories.find((c) => c.id === activeCategory || c.slug === activeCategory);
+      if (parent) {
+        return categories
+          .filter((c) => c.parentId === parent.id && c.visible)
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
+          .map((c) => ({
+            name: c.name.en || c.name.fi,
+            slug: c.slug,
+          }));
+      }
+    }
+    const mockSubs = SUB_CATEGORIES[activeCategory as keyof typeof SUB_CATEGORIES] || [];
+    return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
+  }, [activeCategory, categories]);
 
   return (
     <div className="fixed inset-0 z-[95] bg-[#FFFFFF] flex flex-col justify-between overflow-y-auto animate-fadeIn">
@@ -74,7 +124,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       <div className="flex-1 px-8 py-8 flex flex-col justify-center">
         {!activeCategory ? (
           <nav className="flex flex-col space-y-5">
-            {categories.map((item) => (
+            {dynamicItems.map((item) => (
               <div key={item.key} className="flex items-center justify-between border-b border-black/10 pb-3">
                 <button
                   onClick={() => {
@@ -87,7 +137,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       onNavigateLookbook();
                       onClose();
                     } else {
-                      onSelectCategory('all');
+                      onSelectCategory(item.categoryId);
                       onClose();
                     }
                   }}
@@ -117,12 +167,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               >
                 {t.sitemap}
               </button>
+
+              {onNavigateAdmin && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onNavigateAdmin();
+                    onClose();
+                  }}
+                  className="text-xs font-mono uppercase tracking-[0.2em] text-black border border-black/20 px-3 py-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
+                >
+                  Console →
+                </button>
+              )}
             </div>
           </nav>
         ) : (
           <div className="flex flex-col space-y-4 animate-slideIn">
             <h3 className="font-editorial text-3xl mb-2 font-normal uppercase tracking-wide">
-              {categories.find((c) => c.subKey === activeCategory)?.label}
+              {dynamicItems.find((c) => c.subKey === activeCategory)?.label}
             </h3>
             <button
               onClick={() => {
@@ -133,16 +196,16 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             >
               View All
             </button>
-            {SUB_CATEGORIES[activeCategory as keyof typeof SUB_CATEGORIES]?.map((sub) => (
+            {activeSubcategories.map((sub) => (
               <button
-                key={sub}
+                key={sub.slug}
                 onClick={() => {
-                  onSelectCategory(activeCategory, sub);
+                  onSelectCategory(activeCategory, sub.name);
                   onClose();
                 }}
                 className="text-left text-base font-sans text-black/80 hover:text-black py-1.5 tracking-wide border-b border-black/5"
               >
-                {sub}
+                {sub.name}
               </button>
             ))}
           </div>

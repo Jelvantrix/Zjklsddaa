@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Language } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Language, Category } from '../types';
 import { translations, SUB_CATEGORIES } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { FashionImage } from './FashionImage';
@@ -20,9 +20,11 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
+  onNavigateAdmin?: () => void;
   isHeroVisible: boolean;
   currentCategory?: string;
   currentRouteType?: string;
+  categories?: Category[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -39,9 +41,11 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
+  onNavigateAdmin,
   isHeroVisible,
   currentCategory,
   currentRouteType,
+  categories = [],
 }) => {
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -74,14 +78,59 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY, hoveredNav]);
 
-  const navItems = [
-    { key: 'uutuudet', label: t.nav.new, subKey: null },
-    { key: 'naiset', label: t.nav.women, subKey: 'naiset' as const },
-    { key: 'miehet', label: t.nav.men, subKey: 'miehet' as const },
-    { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet' as const },
-    { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat' as const },
-    { key: 'lookbook', label: t.nav.lookbook, subKey: null },
-  ];
+  const dynamicNavItems = useMemo(() => {
+    if (categories && categories.length > 0) {
+      const roots = categories
+        .filter((c) => !c.parentId && c.visible)
+        .sort((a, b) => (a.order || 0) - (b.order || 0));
+
+      const items: Array<{ key: string; label: string; subKey: string | null; categoryId: string }> = [
+        { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
+      ];
+
+      roots.forEach((cat) => {
+        items.push({
+          key: cat.slug || cat.id,
+          label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
+          subKey: cat.id,
+          categoryId: cat.slug || cat.id,
+        });
+      });
+
+      items.push(
+        { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+        { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' }
+      );
+      return items;
+    }
+
+    return [
+      { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
+      { key: 'naiset', label: t.nav.women, subKey: 'naiset', categoryId: 'naiset' },
+      { key: 'miehet', label: t.nav.men, subKey: 'miehet', categoryId: 'miehet' },
+      { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet', categoryId: 'asusteet' },
+      { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+      { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
+    ];
+  }, [categories, t]);
+
+  const activeSubcategories = useMemo(() => {
+    if (!hoveredNav) return [];
+    if (categories && categories.length > 0) {
+      const parent = categories.find((c) => c.id === hoveredNav || c.slug === hoveredNav);
+      if (parent) {
+        return categories
+          .filter((c) => c.parentId === parent.id && c.visible)
+          .sort((a, b) => (a.order || 0) - (b.order || 0))
+          .map((c) => ({
+            name: c.name.en || c.name.fi,
+            slug: c.slug,
+          }));
+      }
+    }
+    const mockSubs = SUB_CATEGORIES[hoveredNav as keyof typeof SUB_CATEGORIES] || [];
+    return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
+  }, [hoveredNav, categories]);
 
   const isOverHeroAtTop = isHeroVisible && !isScrolled;
 
@@ -188,6 +237,19 @@ export const Header: React.FC<HeaderProps> = ({
                 ({cartCount})
               </span>
             </button>
+
+            {/* Quick Admin Console Switcher */}
+            {onNavigateAdmin && (
+              <button
+                type="button"
+                onClick={onNavigateAdmin}
+                className="py-1 px-2.5 border border-black/20 hover:border-black text-[10px] uppercase tracking-[0.2em] font-mono text-inherit transition-all cursor-pointer hidden md:flex items-center gap-1.5 shrink-0 hover:bg-black hover:text-white"
+                title="Enter Management Console"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Console</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -204,11 +266,11 @@ export const Header: React.FC<HeaderProps> = ({
               className="flex items-center justify-center gap-8 xl:gap-12 2xl:gap-16"
               aria-label="Main navigation"
             >
-              {navItems.map((item) => {
+              {dynamicNavItems.map((item) => {
                 const isActive =
                   (item.key === 'lookbook' && currentRouteType === 'lookbook') ||
                   (currentRouteType === 'archive' &&
-                    (currentCategory === item.key || (item.key === 'uutuudet' && currentCategory === 'all')));
+                    (currentCategory === item.categoryId || (item.key === 'uutuudet' && currentCategory === 'all')));
 
                 return (
                   <button
@@ -220,7 +282,7 @@ export const Header: React.FC<HeaderProps> = ({
                       if (item.key === 'lookbook') {
                         onNavigateLookbook();
                       } else {
-                        onSelectCategory(item.key === 'uutuudet' ? 'all' : item.key);
+                        onSelectCategory(item.categoryId);
                       }
                     }}
                     className={`relative py-2.5 px-3 text-[12px] xl:text-[12.5px] uppercase tracking-[0.22em] xl:tracking-[0.24em] font-sans font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap group/link ${
@@ -265,16 +327,16 @@ export const Header: React.FC<HeaderProps> = ({
                 >
                   All Pieces
                 </button>
-                {SUB_CATEGORIES[hoveredNav as keyof typeof SUB_CATEGORIES]?.map((sub) => (
+                {activeSubcategories.map((sub) => (
                   <button
-                    key={sub}
+                    key={sub.slug}
                     onClick={() => {
-                      onSelectCategory(hoveredNav, sub);
+                      onSelectCategory(hoveredNav, sub.name);
                       setHoveredNav(null);
                     }}
                     className="text-left text-sm font-sans text-black/70 hover:text-black transition-colors"
                   >
-                    {sub}
+                    {sub.name}
                   </button>
                 ))}
               </div>

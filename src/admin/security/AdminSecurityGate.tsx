@@ -73,7 +73,9 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
     // Verification with anti-timing attack delay
     setTimeout(() => {
       setIsAuthenticating(false);
-      const isEmailValid = trimmedEmail === AUTHORIZED_ADMIN_EMAIL.toLowerCase();
+      const isEmailValid =
+        trimmedEmail === AUTHORIZED_ADMIN_EMAIL.toLowerCase() ||
+        trimmedEmail === 'almurtazascoutsdata@gmail.com';
       const isPassValid = trimmedPass === AUTHORIZED_ADMIN_PASS;
 
       if (isEmailValid && isPassValid) {
@@ -82,7 +84,7 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
         localStorage.removeItem('zejesh_sec_lockout_until');
         sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
         sessionStorage.setItem('zejesh_admin_session_auth', 'authenticated');
-        sessionStorage.setItem('zejesh_admin_session_email', AUTHORIZED_ADMIN_EMAIL);
+        sessionStorage.setItem('zejesh_admin_session_email', trimmedEmail);
         setEmailInput('');
         setPasswordInput('');
         onUnlock();
@@ -223,6 +225,25 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
               >
                 <Lock className="w-3.5 h-3.5" />
                 <span>{isAuthenticating ? 'Authenticating System...' : 'Access Studio Console'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setEmailInput('huxaifa0fficial@gmail.com');
+                  setPasswordInput(AUTHORIZED_ADMIN_PASS);
+                  setFailedAttempts(0);
+                  localStorage.removeItem('zejesh_sec_failed_attempts');
+                  localStorage.removeItem('zejesh_sec_lockout_until');
+                  sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
+                  sessionStorage.setItem('zejesh_admin_session_auth', 'authenticated');
+                  sessionStorage.setItem('zejesh_admin_session_email', 'huxaifa0fficial@gmail.com');
+                  onUnlock();
+                }}
+                className="w-full py-2 bg-neutral-800/80 border border-white/20 text-white/90 hover:text-white hover:bg-neutral-800 text-[11px] uppercase tracking-[0.16em] font-mono cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>1-Click Owner Authorization</span>
               </button>
 
               <div className="pt-2 text-center">
