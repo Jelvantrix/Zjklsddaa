@@ -14,7 +14,6 @@ interface MobileMenuProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
-  onNavigateAdmin?: () => void;
   onOpenJournal: () => void;
   categories?: Category[];
 }
@@ -28,7 +27,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
-  onNavigateAdmin,
   onOpenJournal,
   categories = [],
 }) => {
@@ -48,14 +46,20 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       ];
 
       roots.forEach((cat) => {
+        const catKey = cat.slug || cat.id;
+        // Avoid duplicate collections entry if cat-kokoelmat exists in categories
+        if (catKey === 'kokoelmat' || cat.id === 'cat-kokoelmat') {
+          return;
+        }
         items.push({
-          key: cat.slug || cat.id,
+          key: catKey,
           label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
           subKey: cat.id,
           categoryId: cat.slug || cat.id,
         });
       });
 
+      // Exactly ONE collections button, followed by lookbook and journal
       items.push(
         { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
         { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
@@ -167,19 +171,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               >
                 {t.sitemap}
               </button>
-
-              {onNavigateAdmin && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    onNavigateAdmin();
-                    onClose();
-                  }}
-                  className="text-xs font-mono uppercase tracking-[0.2em] text-black border border-black/20 px-3 py-1 hover:bg-black hover:text-white transition-colors cursor-pointer"
-                >
-                  Console →
-                </button>
-              )}
             </div>
           </nav>
         ) : (

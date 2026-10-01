@@ -23,26 +23,30 @@ import { AuthProvider } from './firebase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
 
-export const ADMIN_SECRET_PATH = '/zejesh-studio-atelier-vault-terminal-secure-governance-849204810-console';
-export const ADMIN_SECRET_HASH = '#zejesh-studio-atelier-vault-terminal-secure-governance-849204810-console';
+export const ADMIN_SECRET_PATH = '/atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
+export const ADMIN_SECRET_HASH = '#atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
 
 function isSecretAdminUrl(): boolean {
   if (typeof window === 'undefined') return false;
   const path = window.location.pathname;
   const hash = window.location.hash;
+
+  // Reject basic /admin access attempts as requested by user
+  if (path === '/admin' || path === '/admin/' || hash === '#admin') {
+    return false;
+  }
+
   return (
-    path === '/admin' ||
-    path === '/admin/' ||
-    hash === '#admin' ||
     path === ADMIN_SECRET_PATH ||
     path === `${ADMIN_SECRET_PATH}/` ||
     hash === ADMIN_SECRET_HASH ||
-    hash === `#${ADMIN_SECRET_PATH}`
+    hash === `#${ADMIN_SECRET_PATH}` ||
+    path.startsWith(ADMIN_SECRET_PATH)
   );
 }
 
 function StorefrontApp() {
-  const { products, categories, collections, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
+  const { products, categories, collections, content, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
   const [preloaderDone, setPreloaderDone] = useState(false);
 
   // Pure English language (all other languages removed)
@@ -97,6 +101,15 @@ function StorefrontApp() {
         setRoute({ type: 'admin' });
       }
     };
+
+    const checkDirectAdminAttempt = () => {
+      const p = window.location.pathname;
+      const h = window.location.hash;
+      if (p === '/admin' || p === '/admin/' || h === '#admin') {
+        window.history.replaceState(null, '', '/');
+      }
+    };
+    checkDirectAdminAttempt();
 
     window.addEventListener('popstate', handlePopState);
     window.addEventListener('hashchange', handleHashChange);
@@ -252,7 +265,6 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
         currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
         currentRouteType={route.type}
@@ -268,6 +280,7 @@ function StorefrontApp() {
             <HeroSection
               onScrollCueClick={handleScrollCue}
               language={language}
+              slides={content?.heroSlides && content.heroSlides.length > 0 ? content.heroSlides : undefined}
             />
 
             {/* Sections 2 through 10 in exact requested order */}
@@ -418,7 +431,6 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
         onOpenJournal={() => navigateTo({ type: 'journal' })}
         categories={categories}
       />
@@ -456,7 +468,6 @@ function StorefrontApp() {
         isOpen={isAccountOpen}
         onClose={() => setIsAccountOpen(false)}
         language={language}
-        onNavigateAdmin={() => navigateTo({ type: 'admin' })}
       />
 
       <QuickLookModal

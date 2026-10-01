@@ -37,10 +37,15 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
   const [activeTab, setActiveTab] = useState<'insights' | 'chat' | 'digest'>('insights');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [chatQuery, setChatQuery] = useState('');
-  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; citations?: string }>>([
+  const totalRev = dailyStats.reduce((s, d) => s + (d.revenue || 0), 0);
+  const totalOrd = dailyStats.reduce((s, d) => s + (d.orders || 0), 0);
+
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'ai'; text: string; citations?: string }>>(() => [
     {
       sender: 'ai',
-      text: 'Good evening. I have reviewed the last 30 days of studio telemetry across your 24 numbered pieces. You have generated 36,480 € in sales with a 3.42% conversion rate. How may I advise your retail strategy today?',
+      text: totalOrd > 0
+        ? `Welcome. I have reviewed your live studio telemetry across your ${products.length} catalog items. You have generated ${totalRev.toLocaleString()} € in sales across ${totalOrd} completed orders. How may I advise your retail strategy today?`
+        : `Welcome. I have connected to your live Firestore archive. You currently have ${products.length} catalog garments and 0 settled orders. How may I assist in merchandising, price architecture, or catalog launch preparation?`,
     },
   ]);
   const [isAsking, setIsAsking] = useState(false);

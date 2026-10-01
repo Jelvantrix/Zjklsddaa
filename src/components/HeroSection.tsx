@@ -1,22 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { HeroSlide, HERO_SLIDES } from '../data/mockData';
 import { Language } from '../types';
-import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HeroSectionProps {
   onScrollCueClick: () => void;
   language: Language;
+  slides?: HeroSlide[];
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, language }) => {
-  const [slides, setSlides] = useState<HeroSlide[]>(HERO_SLIDES);
+export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, language, slides: externalSlides }) => {
+  const slides = externalSlides && externalSlides.length > 0 ? externalSlides : HERO_SLIDES;
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-  // New slide form state
-  const [newSlideType, setNewSlideType] = useState<'image' | 'video'>('image');
-  const [newSlideUrl, setNewSlideUrl] = useState('');
-  const [newSlideCaption, setNewSlideCaption] = useState('');
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
@@ -43,6 +38,13 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
     setCurrentIndex(idx);
   };
 
+  // Safe slide index boundaries if slides are removed or added dynamically
+  useEffect(() => {
+    if (currentIndex >= slides.length) {
+      setCurrentIndex(Math.max(0, slides.length - 1));
+    }
+  }, [slides.length, currentIndex]);
+
   // Video autoplay/pause synchronization
   useEffect(() => {
     slides.forEach((s, idx) => {
@@ -60,15 +62,12 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
     });
   }, [currentIndex, slides]);
 
-  // Wheel / Trackpad horizontal scroll listener:
-  // "when scroll left that should be go left when right that should be go right"
+  // Wheel / Trackpad horizontal scroll listener
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (isAddModalOpen) return;
-
       const isHorizontal = Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey;
       const delta = e.shiftKey ? e.deltaY : e.deltaX;
 
@@ -80,10 +79,8 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
         wheelLockRef.current = true;
 
         if (delta > 0) {
-          // Scroll left gesture / wheel right -> moves to next slide
           nextSlide();
         } else {
-          // Scroll right gesture / wheel left -> moves to prev slide
           prevSlide();
         }
 
@@ -95,7 +92,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
 
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
-  }, [isAddModalOpen, nextSlide, prevSlide]);
+  }, [nextSlide, prevSlide]);
 
   // Touch handlers for direct physical touch dragging
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -191,31 +188,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
     if (isPointerDownRef.current) {
       handleMouseUp();
     }
-  };
-
-  const handleAddSlide = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newSlideUrl.trim()) return;
-
-    const newSlide: HeroSlide = {
-      id: `custom-slide-${Date.now()}`,
-      type: newSlideType,
-      src: newSlideUrl.trim(),
-      poster: newSlideType === 'video' ? slides[1]?.src : undefined,
-      positionDesktop: 'center 18%',
-      positionMobile: 'center 18%',
-      caption: {
-        fi: newSlideCaption.trim() || 'Uusi kampanjamedia',
-        en: newSlideCaption.trim() || 'Custom Added Media',
-        sv: newSlideCaption.trim() || 'Nytt kampanjmedia',
-      },
-    };
-
-    setSlides((prev) => [...prev, newSlide]);
-    setCurrentIndex(slides.length);
-    setIsAddModalOpen(false);
-    setNewSlideUrl('');
-    setNewSlideCaption('');
   };
 
   const currentSlide = slides[currentIndex] || slides[0];
@@ -363,31 +335,21 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
         </button>
       </div>
 
-      {/* Bottom Controls: Slide Counter & Add Media (Pure typography, no boxes or borders) */}
-      <div className="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 md:left-10 z-20 flex items-center gap-3 sm:gap-4 text-black text-[11px] sm:text-xs font-mono">
+      {/* Bottom Controls: Slide Counter (Pure typography, no boxes or borders) */}
+      <div className="absolute bottom-6 sm:bottom-8 left-4 sm:left-8 md:left-10 z-20 flex items-center gap-3 sm:gap-4 text-black text-[11px] sm:text-xs font-mono pointer-events-none">
         <div className="flex items-center gap-2 py-1">
-          <span className="font-semibold text-black">0{currentIndex + 1}</span>
+          <span className="font-semibold text-black">
+            {currentIndex + 1 < 10 ? `0${currentIndex + 1}` : currentIndex + 1}
+          </span>
           <span className="text-black/30">/</span>
-          <span className="text-black/50">0{slides.length}</span>
+          <span className="text-black/50">
+            {slides.length < 10 ? `0${slides.length}` : slides.length}
+          </span>
           <span className="hidden sm:inline text-black/30">·</span>
           <span className="hidden sm:inline uppercase text-[10px] tracking-[0.2em] text-black/60">
-            {currentSlide.type === 'video' ? 'VIDEO' : 'STUDIO PHOTO'}
+            {currentSlide?.type === 'video' ? 'VIDEO' : 'STUDIO PHOTO'}
           </span>
         </div>
-
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsAddModalOpen(true);
-          }}
-          className="flex items-center gap-1.5 py-1 text-black/50 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer text-[10.5px] uppercase tracking-wider"
-          title="Add new slide to hero carousel"
-          aria-label="Add new slide"
-        >
-          <Plus className="w-3.5 h-3.5 stroke-[1.5]" />
-          <span className="hidden sm:inline">Add Slide</span>
-        </button>
       </div>
 
       {/* Subtle swipe gesture hint on mobile/tablet */}
@@ -407,102 +369,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
           <div className="w-full h-1/2 bg-black absolute top-0 left-0 animate-scrollCue" />
         </div>
       </div>
-
-      {/* Modal to Add Pictures/Videos to Hero Slider */}
-      {isAddModalOpen && (
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
-        >
-          <div className="w-full max-w-md bg-white text-black p-5 sm:p-8 border border-black shadow-2xl animate-fadeIn">
-            <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-black/10 mb-4 sm:mb-6">
-              <h3 className="font-editorial text-xl sm:text-2xl font-normal">
-                Add Hero Media Slide
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddModalOpen(false)}
-                className="p-1 text-black/60 hover:text-black cursor-pointer"
-              >
-                <X className="w-5 h-5 stroke-[1.5]" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddSlide} className="space-y-4">
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-2">
-                  Media Type:
-                </label>
-                <div className="flex gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-mono">
-                    <input
-                      type="radio"
-                      name="mediaType"
-                      checked={newSlideType === 'image'}
-                      onChange={() => setNewSlideType('image')}
-                      className="accent-black"
-                    />
-                    <span>Image (Studio Photo)</span>
-                  </label>
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-mono">
-                    <input
-                      type="radio"
-                      name="mediaType"
-                      checked={newSlideType === 'video'}
-                      onChange={() => setNewSlideType('video')}
-                      className="accent-black"
-                    />
-                    <span>Video (MP4 / WebM)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-1">
-                  Media URL:
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newSlideUrl}
-                  onChange={(e) => setNewSlideUrl(e.target.value)}
-                  placeholder="https://... or /src/assets/..."
-                  className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-1">
-                  Caption or Title:
-                </label>
-                <input
-                  type="text"
-                  value={newSlideCaption}
-                  onChange={(e) => setNewSlideCaption(e.target.value)}
-                  placeholder="e.g. Winter Campaign 2026"
-                  className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
-                />
-              </div>
-
-              <div className="pt-3 sm:pt-4 flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2.5 btn-secondary text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-2.5 btn-primary text-xs uppercase tracking-wider font-medium cursor-pointer"
-                >
-                  Add Slide to Hero
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       <style>{`
         @keyframes scrollCue {

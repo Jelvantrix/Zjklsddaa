@@ -302,17 +302,9 @@ export const Footer: React.FC<FooterProps> = ({
           <span>HELSINKI & PORTO ATELIERS</span>
         </div>
 
-        {/* Copyright & Studio Console Access */}
-        <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right flex items-center gap-2 justify-center md:justify-end">
+        {/* Copyright */}
+        <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right flex items-center justify-center md:justify-end">
           <span>© 2026 ZEJESH CLOTHES. All rights reserved.</span>
-          <span>·</span>
-          <button
-            type="button"
-            onClick={() => onNavigatePage({ type: 'admin' })}
-            className="hover:text-black underline underline-offset-2 cursor-pointer transition-colors uppercase tracking-wider text-[10px]"
-          >
-            Studio Console
-          </button>
         </div>
       </div>
     </footer>

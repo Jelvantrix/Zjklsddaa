@@ -20,7 +20,6 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
-  onNavigateAdmin?: () => void;
   isHeroVisible: boolean;
   currentCategory?: string;
   currentRouteType?: string;
@@ -41,7 +40,6 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
-  onNavigateAdmin,
   isHeroVisible,
   currentCategory,
   currentRouteType,
@@ -89,14 +87,20 @@ export const Header: React.FC<HeaderProps> = ({
       ];
 
       roots.forEach((cat) => {
+        const catKey = cat.slug || cat.id;
+        // Avoid duplicate collections entry if cat-kokoelmat exists in categories
+        if (catKey === 'kokoelmat' || cat.id === 'cat-kokoelmat') {
+          return;
+        }
         items.push({
-          key: cat.slug || cat.id,
+          key: catKey,
           label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
           subKey: cat.id,
           categoryId: cat.slug || cat.id,
         });
       });
 
+      // Exactly ONE collections button, followed by lookbook
       items.push(
         { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
         { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' }
@@ -237,19 +241,6 @@ export const Header: React.FC<HeaderProps> = ({
                 ({cartCount})
               </span>
             </button>
-
-            {/* Quick Admin Console Switcher */}
-            {onNavigateAdmin && (
-              <button
-                type="button"
-                onClick={onNavigateAdmin}
-                className="py-1 px-2.5 border border-black/20 hover:border-black text-[10px] uppercase tracking-[0.2em] font-mono text-inherit transition-all cursor-pointer hidden md:flex items-center gap-1.5 shrink-0 hover:bg-black hover:text-white"
-                title="Enter Management Console"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>Console</span>
-              </button>
-            )}
           </div>
         </div>
 
