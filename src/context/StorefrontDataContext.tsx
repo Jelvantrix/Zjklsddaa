@@ -24,6 +24,7 @@ interface StorefrontDataContextType {
   settings: StoreSettings;
   loading: boolean;
   isLiveFromFirestore: boolean;
+  updateStoreContentLocal: (updated: StoreContent) => void;
   resetDemoData: () => Promise<boolean>;
 }
 
@@ -35,6 +36,7 @@ const StorefrontDataContext = createContext<StorefrontDataContextType>({
   settings: SEED_SETTINGS,
   loading: true,
   isLiveFromFirestore: false,
+  updateStoreContentLocal: () => {},
   resetDemoData: async () => false,
 });
 
@@ -80,6 +82,10 @@ export const StorefrontDataProvider: React.FC<{ children: React.ReactNode }> = (
     return res.success;
   };
 
+  const updateStoreContentLocal = (updated: StoreContent) => {
+    setContent(updated);
+  };
+
   return (
     <StorefrontDataContext.Provider
       value={{
@@ -90,6 +96,7 @@ export const StorefrontDataProvider: React.FC<{ children: React.ReactNode }> = (
         settings,
         loading,
         isLiveFromFirestore,
+        updateStoreContentLocal,
         resetDemoData,
       }}
     >

@@ -329,6 +329,30 @@ export function subscribeToContent(
 }
 
 /**
+ * Updates Storefront Content in Firestore (Hero slides, video, ticker, journal)
+ */
+export async function updateStoreContent(
+  contentData: Partial<StoreContent>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const targetId = contentData.id || 'storefront-main';
+    await setDoc(
+      doc(db, 'content', targetId),
+      {
+        ...contentData,
+        id: targetId,
+        updatedAt: new Date().toISOString(),
+      },
+      { merge: true }
+    );
+    return { success: true };
+  } catch (err: any) {
+    console.warn('Failed to update store content in Firestore:', err);
+    return { success: false, error: err?.message || 'Failed to update store content' };
+  }
+}
+
+/**
  * Real-time listener for Storefront Settings
  */
 export function subscribeToSettings(

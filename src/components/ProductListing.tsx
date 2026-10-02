@@ -93,7 +93,6 @@ export const ProductListing: React.FC<ProductListingProps> = ({
       // Subcategory filter
       if (
         selectedSubcategory &&
-        !selectedSubcategory.startsWith('Kaikki') &&
         !selectedSubcategory.startsWith('All') &&
         product.subcategory !== selectedSubcategory
       ) {
@@ -176,7 +175,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
               </span>
             </div>
             <h1 className="font-editorial text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight">
-              {selectedSubcategory && !selectedSubcategory.startsWith('All') && !selectedSubcategory.startsWith('Kaikki')
+              {selectedSubcategory && !selectedSubcategory.startsWith('All')
                 ? selectedSubcategory
                 : selectedCategory === 'all'
                 ? t.archive.title

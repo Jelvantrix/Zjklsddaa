@@ -12,7 +12,7 @@ import {
   DailyStat,
   AiInsight,
 } from '../types';
-import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES, PLACEHOLDER_IMG, PLACEHOLDER_VIDEO } from '../data/mockData';
+import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES, PLACEHOLDER_IMG, PLACEHOLDER_VIDEO, HERO_SLIDES } from '../data/mockData';
 
 // 1. Transform the 24 mock products into the full schema
 export const SEED_PRODUCTS: Product[] = ARCHIVE_PRODUCTS.map((p, idx) => {
@@ -362,6 +362,7 @@ export const SEED_CONTENT: StoreContent = {
     mobileSrc: PLACEHOLDER_VIDEO,
     mobilePoster: PLACEHOLDER_IMG,
   },
+  heroSlides: HERO_SLIDES,
   announcementBar: {
     fi: 'ILMAINEN TOIMITUS YLI 100 € TILAUKSIIN · 14 PÄIVÄN PALAUTUSOIKEUS · TOIMITUS NOUTUPISTEISIIN',
     en: 'COMPLIMENTARY SHIPPING OVER 100 € · 14-DAY ARCHIVAL RETURN WINDOW · NORDIC DISPATCH',

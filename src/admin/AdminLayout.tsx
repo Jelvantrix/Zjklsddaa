@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   LayoutDashboard,
   Package,
@@ -24,6 +24,7 @@ import {
   Lock,
   Menu,
   X,
+  Activity,
 } from 'lucide-react';
 import { Product, Order, Customer, WaitlistEntry, Discount, AiInsight, DailyStat, AuditLog } from '../types';
 import { useAuth } from '../firebase/AuthContext';
@@ -50,6 +51,7 @@ import { AdminAdvisorView } from './advisor/AdminAdvisorView';
 import { AdminSettingsView } from './settings/AdminSettingsView';
 import { AdminSecurityGate } from './security/AdminSecurityGate';
 import { AdminSecurityView } from './security/AdminSecurityView';
+import { AdminSystemHealthView } from './health/AdminSystemHealthView';
 import { useStorefrontData } from '../context/StorefrontDataContext';
 import {
   SEED_ORDERS,
@@ -76,12 +78,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [currentView, setCurrentView] = useState<string>('products');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Security & Terminal Gate State
+  // Security & Terminal Gate State: locked by default until authorized credentials entered
   const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(() => {
-    // Only lock initially if not unlocked recently in this browser session
     const unlockedTimestamp = sessionStorage.getItem('zejesh_sec_unlocked_ts');
-    if (!unlockedTimestamp) return false; // allow immediate entry on first load, auto-lock timer starts
-    return false;
+    const authStatus = sessionStorage.getItem('zejesh_admin_session_auth');
+    if (unlockedTimestamp && authStatus === 'authenticated') {
+      return false; // valid active session
+    }
+    return true; // Enforce security gate login
   });
 
   const [masterPasskey, setMasterPasskey] = useState<string>(() => {
@@ -204,8 +208,32 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
   const [discounts, setDiscounts] = useState<Discount[]>(SEED_DISCOUNTS);
-  const [dailyStats, setDailyStats] = useState<DailyStat[]>(SEED_DAILY_STATS);
   const [insights, setInsights] = useState<AiInsight[]>(SEED_INSIGHTS);
+
+  // Compute 100% genuine daily statistics from real orders (empty array if 0 orders)
+  const realDailyStats: DailyStat[] = useMemo(() => {
+    if (orders.length === 0) return [];
+    const map: Record<string, DailyStat> = {};
+    for (const o of orders) {
+      const d = (o.createdAt || new Date().toISOString()).slice(0, 10);
+      if (!map[d]) {
+        map[d] = {
+          id: `stat-${d}`,
+          date: d,
+          revenue: 0,
+          orders: 0,
+          visitors: 1,
+          sessions: 1,
+          addToBags: o.items.length,
+          pageViews: o.items.length * 2,
+        };
+      }
+      map[d].revenue += (o.totals?.total || 0);
+      map[d].orders += 1;
+      map[d].addToBags += o.items.length;
+    }
+    return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
+  }, [orders]);
 
   // Subscribe to real-time Firestore collections
   useEffect(() => {
@@ -228,17 +256,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditorDrawerOpen, setIsEditorDrawerOpen] = useState(false);
 
-  // Live "Visitors now" pulse simulation
-  const [liveVisitors, setLiveVisitors] = useState(14);
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setLiveVisitors(12 + Math.floor(Math.random() * 7));
-    }, 8000);
-    return () => clearInterval(timer);
-  }, []);
+  // Real operator presence
+  const [liveVisitors, setLiveVisitors] = useState(1);
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'health', label: 'System Health', icon: Activity, highlight: true },
     { id: 'products', label: 'Products & Archive', icon: Package, badge: products.length },
     { id: 'collections', label: 'Collections & Drops', icon: Layers, badge: collections.length },
     { id: 'categories', label: 'Categories', icon: FolderTree },
@@ -248,7 +271,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'customers', label: 'Customers', icon: Users, badge: customers.length },
     { id: 'waitlist', label: 'Waitlists', icon: Clock, badge: 'VIP' },
     { id: 'discounts', label: 'Discounts', icon: Percent },
-    { id: 'content', label: 'Store Content', icon: FileText },
+    { id: 'content', label: 'Hero Slides & CMS', icon: FileText, badge: content?.heroSlides?.length || 4 },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'advisor', label: 'AI Advisor', icon: Sparkles, highlight: true },
     { id: 'security', label: 'Security & Audit', icon: ShieldCheck, highlight: true },
@@ -487,7 +510,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         {/* Main Stage */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-white">
           {currentView === 'dashboard' && (
-            <AdminAnalyticsView products={products} dailyStats={dailyStats} />
+            <AdminAnalyticsView products={products} dailyStats={realDailyStats} orders={orders} />
           )}
 
           {currentView === 'products' && (
@@ -548,18 +571,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           )}
 
           {currentView === 'analytics' && (
-            <AdminAnalyticsView products={products} dailyStats={dailyStats} />
+            <AdminAnalyticsView products={products} dailyStats={realDailyStats} orders={orders} />
           )}
 
           {currentView === 'advisor' && (
             <AdminAdvisorView
               products={products}
-              dailyStats={dailyStats}
+              dailyStats={realDailyStats}
               insights={insights}
               onRefresh={() => {}}
               onNavigateView={(v) => setCurrentView(v)}
             />
           )}
+
+          {currentView === 'health' && <AdminSystemHealthView />}
 
           {currentView === 'security' && (
             <AdminSecurityView

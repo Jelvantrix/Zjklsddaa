@@ -58,12 +58,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
   // Diverse crops of the studio model photo on pure white background
   const galleryCrops = [
-    { pos: product.cropVariation.packshot.position, scale: product.cropVariation.packshot.scale, label: '01 · Kokovartalo' },
-    { pos: product.cropVariation.onModel.position, scale: product.cropVariation.onModel.scale, flipped: true, label: '02 · Mallikuva' },
-    { pos: product.cropVariation.detail1.position, scale: product.cropVariation.detail1.scale, label: '03 · Kaulus ja suljenta' },
-    { pos: product.cropVariation.detail2.position, scale: product.cropVariation.detail2.scale, label: '04 · Kankaan sidos' },
-    { pos: product.cropVariation.detail3.position, scale: product.cropVariation.detail3.scale, label: '05 · Sivulinja ja taskut' },
-    { pos: product.cropVariation.detail4.position, scale: product.cropVariation.detail4.scale, label: '06 · Viimeistely ja sauma' },
+    { pos: product.cropVariation.packshot.position, scale: product.cropVariation.packshot.scale, label: '01 · Full Silhouette' },
+    { pos: product.cropVariation.onModel.position, scale: product.cropVariation.onModel.scale, flipped: true, label: '02 · Atelier Model' },
+    { pos: product.cropVariation.detail1.position, scale: product.cropVariation.detail1.scale, label: '03 · Collar & Fastening' },
+    { pos: product.cropVariation.detail2.position, scale: product.cropVariation.detail2.scale, label: '04 · Weave Texture' },
+    { pos: product.cropVariation.detail3.position, scale: product.cropVariation.detail3.scale, label: '05 · Profile & Pockets' },
+    { pos: product.cropVariation.detail4.position, scale: product.cropVariation.detail4.scale, label: '06 · Hand-Finished Seams' },
   ];
 
   // Recommendations
@@ -302,7 +302,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   <div className="pb-4 sm:pb-5 text-xs font-sans text-black/70 leading-relaxed space-y-2">
                     <p>{product.description[language]}</p>
                     <p className="font-mono text-[11px] text-black/50 pt-1">
-                      Mallin pituus 178 cm, yllä koko S.
+                      Model is 178 cm / 5&apos;10&quot; wearing size S.
                     </p>
                   </div>
                 )}
@@ -324,9 +324,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                 </button>
                 {openAccordions.care && (
                   <div className="pb-4 sm:pb-5 text-xs font-sans text-black/70 leading-relaxed space-y-2">
-                    <p><strong>Materiaali:</strong> {product.material[language]}</p>
-                    <p><strong>Alkuperä:</strong> {product.origin[language]}</p>
-                    <p><strong>Hoito-ohje:</strong> {product.care[language]}</p>
+                    <p><strong>Fabrication:</strong> {product.material[language]}</p>
+                    <p><strong>Provenance:</strong> {product.origin[language]}</p>
+                    <p><strong>Care Guidance:</strong> {product.care[language]}</p>
                   </div>
                 )}
               </div>

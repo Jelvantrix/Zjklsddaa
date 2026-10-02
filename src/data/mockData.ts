@@ -1,4 +1,5 @@
-import { Product, JournalArticle } from '../types';
+import { Product, JournalArticle, HeroSlide } from '../types';
+export type { HeroSlide };
 
 /**
  * MANDATORY PLACEHOLDER CONSTANTS
@@ -71,20 +72,6 @@ export function getProductImage(productId?: string, isHover?: boolean): string {
 /**
  * Hero Slides allowing seamless mixture of videos and studio images on white background
  */
-export interface HeroSlide {
-  id: string;
-  type: 'video' | 'image';
-  src: string;
-  poster?: string;
-  positionDesktop: string;
-  positionMobile: string;
-  caption?: {
-    fi: string;
-    en: string;
-    sv: string;
-  };
-}
-
 export const HERO_SLIDES: HeroSlide[] = [
   {
     id: 'slide-1',

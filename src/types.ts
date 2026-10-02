@@ -233,6 +233,20 @@ export interface Discount {
   active: boolean;
 }
 
+export interface HeroSlide {
+  id: string;
+  type: 'video' | 'image';
+  src: string;
+  poster?: string;
+  positionDesktop: string;
+  positionMobile: string;
+  caption?: {
+    fi: string;
+    en: string;
+    sv?: string;
+  };
+}
+
 export interface StoreContent {
   id: string;
   sectionOrder: string[];
@@ -242,6 +256,7 @@ export interface StoreContent {
     mobileSrc: string;
     mobilePoster: string;
   };
+  heroSlides?: HeroSlide[];
   announcementBar: {
     fi: string;
     en: string;
@@ -249,6 +264,7 @@ export interface StoreContent {
   };
   journalPosts: JournalArticle[];
   translations?: Record<string, any>;
+  updatedAt?: string;
 }
 
 export interface StoreSettings {
