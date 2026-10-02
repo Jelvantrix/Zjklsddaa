@@ -131,10 +131,85 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
   if (!isOpen) return null;
 
-  // Active focal point state
+  // Active focal point and image state
   const activeImage = formData.images?.[0];
+  const primaryUrl = activeImage?.url || formData.image || PLACEHOLDER_IMG;
+  const hoverUrl = formData.hoverImage || '';
   const focalX = activeImage?.focalX ?? 50;
   const focalY = activeImage?.focalY ?? 18;
+  const focalScale = (formData as any).imageScale ?? (formData.cropVariation?.onModel?.scale ?? 1.05);
+
+  const handleUpdateImageUrl = (url: string) => {
+    const updatedImages = [...(formData.images || [])];
+    if (updatedImages[0]) {
+      updatedImages[0] = { ...updatedImages[0], url };
+    } else {
+      updatedImages[0] = { url, order: 0, focalX: 50, focalY: 18, isPrimary: true };
+    }
+    setFormData({ ...formData, image: url, images: updatedImages });
+  };
+
+  const handleUpdateHoverUrl = (url: string) => {
+    setFormData({ ...formData, hoverImage: url });
+  };
+
+  const handleUpdateFocalX = (x: number) => {
+    const updatedImages = [...(formData.images || [])];
+    if (updatedImages[0]) {
+      updatedImages[0] = { ...updatedImages[0], focalX: x };
+    }
+    setFormData({
+      ...formData,
+      imagePosition: `${x}% ${focalY}%`,
+      images: updatedImages,
+      cropVariation: {
+        ...(formData.cropVariation || {
+          detail1: { position: 'center center', scale: 1.2 },
+          detail2: { position: 'center center', scale: 1.2 },
+          detail3: { position: 'center center', scale: 1.2 },
+          detail4: { position: 'center center', scale: 1.2 },
+        }),
+        onModel: { position: `${x}% ${focalY}%`, scale: focalScale },
+      },
+    });
+  };
+
+  const handleUpdateFocalY = (y: number) => {
+    const updatedImages = [...(formData.images || [])];
+    if (updatedImages[0]) {
+      updatedImages[0] = { ...updatedImages[0], focalY: y };
+    }
+    setFormData({
+      ...formData,
+      imagePosition: `${focalX}% ${y}%`,
+      images: updatedImages,
+      cropVariation: {
+        ...(formData.cropVariation || {
+          detail1: { position: 'center center', scale: 1.2 },
+          detail2: { position: 'center center', scale: 1.2 },
+          detail3: { position: 'center center', scale: 1.2 },
+          detail4: { position: 'center center', scale: 1.2 },
+        }),
+        onModel: { position: `${focalX}% ${y}%`, scale: focalScale },
+      },
+    });
+  };
+
+  const handleUpdateScale = (scale: number) => {
+    setFormData({
+      ...formData,
+      imageScale: scale,
+      cropVariation: {
+        ...(formData.cropVariation || {
+          detail1: { position: 'center center', scale: 1.2 },
+          detail2: { position: 'center center', scale: 1.2 },
+          detail3: { position: 'center center', scale: 1.2 },
+          detail4: { position: 'center center', scale: 1.2 },
+        }),
+        onModel: { position: `${focalX}% ${focalY}%`, scale },
+      },
+    });
+  };
 
   const handleFocalPointClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -148,7 +223,20 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         focalX: x,
         focalY: y,
       };
-      setFormData({ ...formData, images: updatedImages });
+      setFormData({
+        ...formData,
+        imagePosition: `${x}% ${y}%`,
+        images: updatedImages,
+        cropVariation: {
+          ...(formData.cropVariation || {
+            detail1: { position: 'center center', scale: 1.2 },
+            detail2: { position: 'center center', scale: 1.2 },
+            detail3: { position: 'center center', scale: 1.2 },
+            detail4: { position: 'center center', scale: 1.2 },
+          }),
+          onModel: { position: `${x}% ${y}%`, scale: focalScale },
+        },
+      });
     }
   };
 
@@ -165,6 +253,21 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     const cleanProduct: Product = {
       ...(formData as Product),
       id: productId,
+      image: primaryUrl,
+      hoverImage: hoverUrl || primaryUrl,
+      imagePosition: `${focalX}% ${focalY}%`,
+      imageScale: focalScale,
+      cropVariation: {
+        ...(formData.cropVariation || {
+          detail1: { position: 'center center', scale: 1.2 },
+          detail2: { position: 'center center', scale: 1.2 },
+          detail3: { position: 'center center', scale: 1.2 },
+          detail4: { position: 'center center', scale: 1.2 },
+        }),
+        onModel: { position: `${focalX}% ${focalY}%`, scale: focalScale },
+      },
+      isComingSoon: Boolean(formData.isComingSoon || formData.status === 'coming_soon'),
+      comingSoonNotice: formData.comingSoonNotice || '',
       updatedAt: new Date().toISOString(),
     };
 
@@ -175,8 +278,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       await logAuditEvent(
         adminProfile?.email || 'studio-principal',
         product ? 'PRODUCT_UPDATED' : 'PRODUCT_CREATED',
-        `Product: ${cleanProduct.name.en} (${cleanProduct.nr})`,
-        { price: cleanProduct.price, status: cleanProduct.status }
+        `Product: ${cleanProduct.name?.en || cleanProduct.plateNumber} (${cleanProduct.nr})`,
+        { price: cleanProduct.price, status: cleanProduct.status, isComingSoon: cleanProduct.isComingSoon }
       );
 
       setIsSaving(false);
@@ -356,6 +459,50 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 </div>
               </div>
 
+              {/* COMING SOON CONFIGURATION */}
+              <div className="p-4 border border-black/[0.12] bg-neutral-50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-black cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.isComingSoon || formData.status === 'coming_soon')}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setFormData({
+                          ...formData,
+                          isComingSoon: checked,
+                          status: checked ? 'coming_soon' : (formData.status === 'coming_soon' ? 'live' : formData.status),
+                        });
+                      }}
+                      className="w-4 h-4 accent-black cursor-pointer"
+                    />
+                    <span>Mark as "Coming Soon" (Waitlist Mode)</span>
+                  </label>
+                  {(formData.isComingSoon || formData.status === 'coming_soon') && (
+                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-black text-white font-semibold">
+                      Coming Soon Active
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-black/60 font-sans leading-relaxed">
+                  When enabled, this piece displays an editorial "COMING SOON" tag on the catalogue and swaps the "Add to Bag" action for a priority waitlist registration form.
+                </p>
+                {(formData.isComingSoon || formData.status === 'coming_soon') && (
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                      Announcement / Arrival Notice (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.comingSoonNotice || ''}
+                      onChange={(e) => setFormData({ ...formData, comingSoonNotice: e.target.value })}
+                      placeholder="e.g. Arriving Autumn 2026 · Crafting in Helsinki"
+                      className="w-full px-3 py-2 text-xs border border-black/[0.2] bg-white focus:border-black focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
@@ -383,28 +530,166 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             </div>
           )}
 
-          {/* TAB 2: MEDIA & FOCAL POINT PICKER */}
+          {/* TAB 2: MEDIA, IMAGE URLS & POSITION ADJUSTMENT */}
           {activeTab === 'media' && (
             <div className="space-y-6">
-              <div className="p-4 border border-black/[0.08] bg-neutral-50/50">
-                <h4 className="text-xs font-semibold uppercase tracking-wider mb-1 text-black">
-                  Interactive Focal Point Picker
+              {/* Image URL Inputs */}
+              <div className="border border-black/[0.1] p-4 bg-neutral-50/50 space-y-4">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                  Product Image Management
                 </h4>
-                <p className="text-xs text-black/60 font-sans">
-                  Click on the visual below to set the optical anchor point. Renders adapt seamlessly to all aspect ratios (3:4, 4:5, 1:1, 16:9).
-                </p>
+
+                <div>
+                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                    Primary Image URL
+                  </label>
+                  <input
+                    type="text"
+                    value={primaryUrl}
+                    onChange={(e) => handleUpdateImageUrl(e.target.value)}
+                    placeholder="https://... or /src/assets/..."
+                    className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                    Hover / Secondary Image URL (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={hoverUrl}
+                    onChange={(e) => handleUpdateHoverUrl(e.target.value)}
+                    placeholder="https://... or /src/assets/..."
+                    className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                  />
+                </div>
+
+                {/* Studio Preset Images Quick Picker */}
+                <div>
+                  <span className="block text-[10px] uppercase tracking-wider text-black/50 mb-2">
+                    Studio Archive Presets (Click to apply):
+                  </span>
+                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+                    {[
+                      { label: 'Wool Coat', url: '/src/assets/images/wool_coat_model_1790736253323.jpg' },
+                      { label: 'Trench', url: '/src/assets/images/mens_trench_model_1790736267744.jpg' },
+                      { label: 'Knitwear', url: '/src/assets/images/knitwear_sweater_1790736282001.jpg' },
+                      { label: 'Leather Tote', url: '/src/assets/images/leather_bag_tote_1790736295648.jpg' },
+                      { label: 'Trousers', url: '/src/assets/images/tailored_trousers_1790736314928.jpg' },
+                      { label: 'White Horizon', url: '/src/assets/images/studio_fashion_white_bg_1790645923450.jpg' },
+                    ].map((preset) => (
+                      <button
+                        type="button"
+                        key={preset.label}
+                        onClick={() => handleUpdateImageUrl(preset.url)}
+                        className={`p-1 border text-left cursor-pointer transition-colors group ${
+                          primaryUrl === preset.url ? 'border-black bg-neutral-200' : 'border-black/15 bg-white hover:border-black'
+                        }`}
+                      >
+                        <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 mb-1">
+                          <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                        </div>
+                        <span className="text-[9px] block truncate font-mono text-black/70 group-hover:text-black">
+                          {preset.label}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Picture Best Position & Zoom Adjustment */}
+              <div className="p-4 border border-black/[0.08] bg-neutral-50/50 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                      Adjust Picture to Best Position & Scale
+                    </h4>
+                    <p className="text-xs text-black/60 font-sans mt-0.5">
+                      Click directly on the model image below, or adjust the precision sliders to position the crop.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      handleUpdateFocalX(50);
+                      handleUpdateFocalY(20);
+                      handleUpdateScale(1.05);
+                    }}
+                    className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black/20 hover:border-black bg-white cursor-pointer"
+                  >
+                    Reset Position
+                  </button>
+                </div>
+
+                {/* Precision Sliders */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                  <div>
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
+                      <span>Horizontal (X)</span>
+                      <span className="font-bold">{focalX}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={focalX}
+                      onChange={(e) => handleUpdateFocalX(Number(e.target.value))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
+                      <span>Vertical (Y)</span>
+                      <span className="font-bold">{focalY}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={focalY}
+                      onChange={(e) => handleUpdateFocalY(Number(e.target.value))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
+                      <span>Zoom / Scale</span>
+                      <span className="font-bold">{Number(focalScale).toFixed(2)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={1.0}
+                      max={1.5}
+                      step={0.01}
+                      value={focalScale}
+                      onChange={(e) => handleUpdateScale(parseFloat(e.target.value))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
+                  <span className="text-[10px] uppercase tracking-wider text-black/50 block mb-1">
+                    Interactive Anchor (Click to set focal position):
+                  </span>
                   <div
                     onClick={handleFocalPointClick}
                     className="relative w-full aspect-[3/4] border border-black/[0.12] overflow-hidden bg-black/5 cursor-crosshair group select-none"
                   >
                     <img
-                      src={activeImage?.url || PLACEHOLDER_IMG}
+                      src={primaryUrl}
                       alt="Focal source"
-                      className="w-full h-full object-cover pointer-events-none"
+                      style={{
+                        objectPosition: `${focalX}% ${focalY}%`,
+                        transform: `scale(${focalScale})`,
+                      }}
+                      className="w-full h-full object-cover pointer-events-none transition-all duration-150"
                     />
 
                     {/* Target crosshair */}
@@ -412,10 +697,10 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       style={{ left: `${focalX}%`, top: `${focalY}%` }}
                       className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                     >
-                      <div className="w-7 h-7 rounded-full border border-black/80 bg-white/40 flex items-center justify-center backdrop-blur-sm">
+                      <div className="w-7 h-7 rounded-full border border-black/80 bg-white/40 flex items-center justify-center backdrop-blur-sm shadow-md">
                         <div className="w-1.5 h-1.5 bg-black rounded-full" />
                       </div>
-                      <span className="absolute top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-1.5 py-0.5 whitespace-nowrap">
+                      <span className="absolute top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-1.5 py-0.5 whitespace-nowrap shadow-sm">
                         X:{focalX}% Y:{focalY}%
                       </span>
                     </div>
@@ -423,30 +708,36 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 </div>
 
                 <div className="lg:col-span-5 space-y-4">
-                  <div className="text-[10.5px] uppercase tracking-wider text-black/60">
-                    Live Aspect Ratio Previews:
+                  <div className="text-[10.5px] uppercase tracking-wider text-black/60 font-semibold">
+                    Live Storefront Previews:
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-black/50 block mb-1">3:4 Archive & PDP Packshot:</span>
-                    <div className="w-32 aspect-[3/4] border border-black/[0.1] overflow-hidden relative bg-black/5">
+                    <span className="text-[10px] text-black/50 block mb-1">3:4 Archive Dossier & Catalogue:</span>
+                    <div className="w-36 aspect-[3/4] border border-black/[0.12] overflow-hidden relative bg-black/5 shadow-xs">
                       <img
-                        src={activeImage?.url || PLACEHOLDER_IMG}
-                        style={{ objectPosition: `${focalX}% ${focalY}%` }}
-                        className="w-full h-full object-cover"
-                        alt="3:4"
+                        src={primaryUrl}
+                        style={{
+                          objectPosition: `${focalX}% ${focalY}%`,
+                          transform: `scale(${focalScale})`,
+                        }}
+                        className="w-full h-full object-cover transition-all duration-150"
+                        alt="3:4 Preview"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[10px] text-black/50 block mb-1">1:1 Square (Cart & Checkout):</span>
-                    <div className="w-24 aspect-square border border-black/[0.1] overflow-hidden relative bg-black/5">
+                    <span className="text-[10px] text-black/50 block mb-1">1:1 Square (Cart & Checkout Bag):</span>
+                    <div className="w-28 aspect-square border border-black/[0.12] overflow-hidden relative bg-black/5 shadow-xs">
                       <img
-                        src={activeImage?.url || PLACEHOLDER_IMG}
-                        style={{ objectPosition: `${focalX}% ${focalY}%` }}
-                        className="w-full h-full object-cover"
-                        alt="1:1"
+                        src={primaryUrl}
+                        style={{
+                          objectPosition: `${focalX}% ${focalY}%`,
+                          transform: `scale(${focalScale})`,
+                        }}
+                        className="w-full h-full object-cover transition-all duration-150"
+                        alt="1:1 Preview"
                       />
                     </div>
                   </div>
@@ -708,11 +999,19 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   Publishing Status
                 </label>
                 <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                  value={formData.isComingSoon || formData.status === 'coming_soon' ? 'coming_soon' : formData.status}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === 'coming_soon') {
+                      setFormData({ ...formData, status: 'coming_soon', isComingSoon: true });
+                    } else {
+                      setFormData({ ...formData, status: val as any, isComingSoon: false });
+                    }
+                  }}
                   className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black font-semibold cursor-pointer bg-white"
                 >
                   <option value="live">Live (Public in archive)</option>
+                  <option value="coming_soon">Coming Soon (Priority Waitlist Mode)</option>
                   <option value="draft">Draft (Restricted to Studio)</option>
                   <option value="scheduled">Scheduled Drop</option>
                   <option value="sold_out">Sold Out</option>

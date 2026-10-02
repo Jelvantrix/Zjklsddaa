@@ -264,22 +264,48 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
               </div>
             </div>
 
-            {/* Primary Buy CTA */}
+            {/* Primary Buy CTA or Coming Soon Waitlist */}
             <div>
-              <button
-                type="button"
-                onClick={handleAdd}
-                className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.22em] btn-primary font-medium flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {isAddedFeedback ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    <span>{t.pdp.addedToCart}</span>
-                  </>
-                ) : (
-                  <span>{t.pdp.addToCart}</span>
-                )}
-              </button>
+              {product.isComingSoon || product.status === 'coming_soon' ? (
+                <div className="space-y-3 p-4 border border-black bg-neutral-50/70 font-mono">
+                  <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-black font-semibold">
+                    <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                    <span>Coming Soon · Priority Accession</span>
+                  </div>
+                  {product.comingSoonNotice && (
+                    <p className="text-xs text-black/70 font-sans">
+                      {product.comingSoonNotice}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const email = window.prompt('Enter your email to receive priority drop notification:');
+                      if (email) {
+                        alert('You have been registered for private accession access.');
+                      }
+                    }}
+                    className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.22em] bg-black text-white hover:bg-neutral-800 font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
+                  >
+                    <span>Register for Accession Notice</span>
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleAdd}
+                  className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.22em] btn-primary font-medium flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {isAddedFeedback ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>{t.pdp.addedToCart}</span>
+                    </>
+                  ) : (
+                    <span>{t.pdp.addToCart}</span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* ACCORDION MODULES */}

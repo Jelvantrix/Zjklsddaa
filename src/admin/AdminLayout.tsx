@@ -25,6 +25,7 @@ import {
   Menu,
   X,
   Activity,
+  ThumbsUp,
 } from 'lucide-react';
 import { Product, Order, Customer, WaitlistEntry, Discount, AiInsight, DailyStat, AuditLog } from '../types';
 import { useAuth } from '../firebase/AuthContext';
@@ -52,6 +53,7 @@ import { AdminSettingsView } from './settings/AdminSettingsView';
 import { AdminSecurityGate } from './security/AdminSecurityGate';
 import { AdminSecurityView } from './security/AdminSecurityView';
 import { AdminSystemHealthView } from './health/AdminSystemHealthView';
+import { AdminSuggestionsView } from './suggestions/AdminSuggestionsView';
 import { useStorefrontData } from '../context/StorefrontDataContext';
 import {
   SEED_ORDERS,
@@ -271,6 +273,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'customers', label: 'Customers', icon: Users, badge: customers.length },
     { id: 'waitlist', label: 'Waitlists', icon: Clock, badge: 'VIP' },
     { id: 'discounts', label: 'Discounts', icon: Percent },
+    { id: 'suggestions', label: 'Client Suggestions & Votes', icon: ThumbsUp, highlight: true },
     { id: 'content', label: 'Hero Slides & CMS', icon: FileText, badge: content?.heroSlides?.length || 4 },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'advisor', label: 'AI Advisor', icon: Sparkles, highlight: true },
@@ -565,6 +568,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           {currentView === 'discounts' && (
             <AdminDiscountsView discounts={discounts} onRefresh={() => {}} />
           )}
+
+          {currentView === 'suggestions' && <AdminSuggestionsView />}
 
           {currentView === 'content' && (
             <AdminContentView content={content} onRefresh={() => {}} />

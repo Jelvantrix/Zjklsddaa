@@ -281,6 +281,38 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
     }
   };
 
+  // TOGGLE COMING SOON
+  const toggleComingSoon = async (cat: Category) => {
+    try {
+      const newStatus = !cat.isComingSoon;
+      let notice = cat.comingSoonNotice || 'Coming Soon · Handcrafted in Helsinki';
+      if (newStatus && !cat.comingSoonNotice) {
+        const entered = window.prompt(
+          `Enter Coming Soon announcement note for "${cat.name.en || cat.name.fi}":`,
+          'Coming Soon · Handcrafted in Helsinki'
+        );
+        if (entered !== null) {
+          notice = entered || 'Coming Soon';
+        }
+      }
+      await updateDoc(doc(db, 'categories', cat.id), {
+        isComingSoon: newStatus,
+        comingSoonNotice: notice,
+      });
+      await logAuditEvent(
+        adminProfile?.name || adminProfile?.email || 'admin',
+        'toggle_category_coming_soon',
+        cat.id,
+        { isComingSoon: newStatus, comingSoonNotice: notice }
+      );
+      onRefresh();
+      notify('success', `Category "${cat.name.en || cat.name.fi}" Coming Soon is now ${newStatus ? 'Active' : 'Off'}.`);
+    } catch (err: any) {
+      console.error('Failed toggling Coming Soon:', err);
+      notify('error', `Failed: ${err.message}`);
+    }
+  };
+
   // 5. DELETE CATEGORY
   const handleDeleteCategory = async (catId: string) => {
     setIsProcessing(true);
@@ -530,12 +562,36 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                         >
                           {parent.visible ? 'Live in Nav' : 'Hidden'}
                         </span>
+
+                        {parent.isComingSoon && (
+                          <span className="text-[10px] font-mono uppercase px-2 py-0.5 bg-black text-white font-semibold flex items-center gap-1">
+                            <span>⏳ Coming Soon</span>
+                            {parent.comingSoonNotice && (
+                              <span className="text-[9px] text-white/70 hidden lg:inline">
+                                · {parent.comingSoonNotice}
+                              </span>
+                            )}
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
 
                   {/* ACTION CONTROLS */}
-                  <div className="flex items-center gap-3 shrink-0 font-mono text-xs pt-1 sm:pt-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 font-mono text-xs pt-1 sm:pt-0">
+                    <button
+                      type="button"
+                      onClick={() => toggleComingSoon(parent)}
+                      className={`px-2 py-1 text-[10.5px] uppercase font-mono border transition-colors cursor-pointer ${
+                        parent.isComingSoon
+                          ? 'bg-black text-white border-black font-semibold'
+                          : 'border-dashed border-black/30 text-black/60 hover:border-black hover:text-black bg-white'
+                      }`}
+                      title={parent.comingSoonNotice || 'Toggle Coming Soon status on storefront'}
+                    >
+                      {parent.isComingSoon ? '⏳ Coming Soon (Active)' : '+ Coming Soon'}
+                    </button>
+
                     <button
                       type="button"
                       onClick={() => toggleVisibility(parent)}
@@ -681,11 +737,29 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                                     Hidden
                                   </span>
                                 )}
+                                {sub.isComingSoon && (
+                                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 bg-black text-white font-semibold">
+                                    Coming Soon
+                                  </span>
+                                )}
                               </div>
                             )}
                           </div>
 
-                          <div className="flex items-center gap-3 shrink-0 self-end sm:self-auto">
+                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto font-mono">
+                            <button
+                              type="button"
+                              onClick={() => toggleComingSoon(sub)}
+                              className={`px-1.5 py-0.5 text-[9.5px] uppercase font-mono border transition-colors cursor-pointer ${
+                                sub.isComingSoon
+                                  ? 'bg-black text-white border-black font-semibold'
+                                  : 'border-dashed border-black/30 text-black/50 hover:border-black hover:text-black bg-white'
+                              }`}
+                              title={sub.comingSoonNotice || 'Toggle Coming Soon on subcategory'}
+                            >
+                              {sub.isComingSoon ? '⏳ Coming Soon' : '+ Coming Soon'}
+                            </button>
+
                             <button
                               type="button"
                               onClick={() => toggleVisibility(sub)}

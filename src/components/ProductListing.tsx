@@ -157,6 +157,19 @@ export const ProductListing: React.FC<ProductListingProps> = ({
     onlyInStockFilter ? 'stock' : null,
   ].filter(Boolean).length;
 
+  // Find if current category has Coming Soon active
+  const currentCategoryObj = categories?.find(
+    (c) =>
+      c.slug === selectedCategory ||
+      c.id === selectedCategory ||
+      c.slug.toLowerCase() === selectedCategory.toLowerCase() ||
+      c.name.en?.toLowerCase() === selectedCategory.toLowerCase() ||
+      c.name.fi?.toLowerCase() === selectedCategory.toLowerCase()
+  );
+  const isCategoryComingSoon = currentCategoryObj?.isComingSoon;
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistDone, setWaitlistDone] = useState(false);
+
   return (
     <section id="archive" className="w-full bg-white text-black min-h-screen pt-16 sm:pt-20">
       {/* Editorial Archive Header */}
@@ -174,13 +187,20 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   : selectedCategory.toUpperCase()}
               </span>
             </div>
-            <h1 className="font-editorial text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight">
-              {selectedSubcategory && !selectedSubcategory.startsWith('All')
-                ? selectedSubcategory
-                : selectedCategory === 'all'
-                ? t.archive.title
-                : t.nav[selectedCategory as keyof typeof t.nav] || selectedCategory}
-            </h1>
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="font-editorial text-3xl sm:text-5xl md:text-6xl font-normal tracking-tight">
+                {selectedSubcategory && !selectedSubcategory.startsWith('All')
+                  ? selectedSubcategory
+                  : selectedCategory === 'all'
+                  ? t.archive.title
+                  : t.nav[selectedCategory as keyof typeof t.nav] || selectedCategory}
+              </h1>
+              {isCategoryComingSoon && (
+                <span className="px-2.5 py-1 text-xs font-mono uppercase bg-black text-white font-semibold tracking-wider">
+                  Coming Soon
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4">
@@ -190,6 +210,54 @@ export const ProductListing: React.FC<ProductListingProps> = ({
           </div>
         </div>
       </div>
+
+      {/* EDITORIAL COMING SOON DEPARTMENT BANNER */}
+      {isCategoryComingSoon && (
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 pt-6">
+          <div className="p-6 sm:p-8 border border-black bg-neutral-50/80 space-y-3 font-mono">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-black/60">
+              <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+              <span>ATELIER ANNOUNCEMENT · COMING SOON</span>
+            </div>
+            <h3 className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+              {currentCategoryObj?.comingSoonNotice || 'This department is currently undergoing initial crafting and sampling.'}
+            </h3>
+            <p className="text-xs sm:text-sm font-sans text-black/70 max-w-2xl leading-relaxed font-light">
+              Our Helsinki and Porto ateliers are hand-tailoring the inaugural release for this collection. Register below for early private accession access prior to public release.
+            </p>
+            {!waitlistDone ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (waitlistEmail.trim()) {
+                    setWaitlistDone(true);
+                  }
+                }}
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 max-w-md"
+              >
+                <input
+                  type="email"
+                  required
+                  value={waitlistEmail}
+                  onChange={(e) => setWaitlistEmail(e.target.value)}
+                  placeholder="Enter email for priority drop notice"
+                  className="px-3.5 py-2.5 text-xs font-mono border border-black/30 bg-white focus:border-black focus:outline-none flex-1"
+                />
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 bg-black text-white text-xs uppercase tracking-wider font-mono hover:bg-neutral-800 transition-colors cursor-pointer"
+                >
+                  Join Waitlist
+                </button>
+              </form>
+            ) : (
+              <div className="text-xs font-mono text-emerald-800 font-semibold pt-1">
+                ✓ Thank you. You are on the private register for this department.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* STICKY FILTER & CONTROLS BAR: Pure typographic controls, no boxes */}
       <div className="sticky top-16 sm:top-20 z-30 bg-white/95 backdrop-blur-md border-b border-black/10 py-3 sm:py-4 px-4 sm:px-6 md:px-10">
@@ -400,6 +468,13 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         imageClassName="transition-transform duration-700 group-hover:scale-105"
                       />
 
+                      {/* Coming Soon Tag if product is marked coming soon */}
+                      {(product.isComingSoon || product.status === 'coming_soon') && (
+                        <div className="absolute top-2.5 left-2.5 bg-black text-white px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest z-20 shadow-sm">
+                          Coming Soon
+                        </div>
+                      )}
+
                       {/* Wishlist Heart Button: pure icon without box */}
                       <button
                         type="button"
@@ -417,41 +492,53 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         />
                       </button>
 
-                      {/* Thin Quick-Add Size Strip sliding up on desktop hover: pure typography */}
-                      <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10">
-                        <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 mr-1">
-                          Size:
-                        </span>
-                        {product.sizes.map((sz) => (
-                          <button
-                            type="button"
-                            key={sz}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onQuickAdd(product, sz);
-                            }}
-                            className="text-[10.5px] font-mono text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer px-1 py-0.5"
-                          >
-                            {sz}
-                          </button>
-                        ))}
-                      </div>
+                      {/* Quick-Add Size Strip sliding up on desktop hover or Coming Soon Strip */}
+                      {(product.isComingSoon || product.status === 'coming_soon') ? (
+                        <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-black text-white translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10 text-[9.5px] font-mono uppercase tracking-wider">
+                          <span>Coming Soon · Waitlist</span>
+                        </div>
+                      ) : (
+                        <div className="hidden sm:flex absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-[cubic-bezier(0.16,1,0.3,1)] p-2.5 items-center justify-center gap-2 z-10">
+                          <span className="text-[9px] font-mono uppercase tracking-wider text-black/40 mr-1">
+                            Size:
+                          </span>
+                          {product.sizes.map((sz) => (
+                            <button
+                              type="button"
+                              key={sz}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onQuickAdd(product, sz);
+                              }}
+                              className="text-[10.5px] font-mono text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer px-1 py-0.5"
+                            >
+                              {sz}
+                            </button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {/* Mobile Tap-to-add size strip: pure text links */}
-                  <div className="sm:hidden flex flex-wrap gap-2 mt-2">
-                    {product.sizes.slice(0, 4).map((sz) => (
-                      <button
-                        type="button"
-                        key={sz}
-                        onClick={() => onQuickAdd(product, sz)}
-                        className="text-[10px] font-mono text-black/60 hover:text-black hover:underline underline-offset-2 cursor-pointer"
-                      >
-                        +{sz}
-                      </button>
-                    ))}
-                  </div>
+                  {/* Mobile size strip or Coming Soon notice */}
+                  {(product.isComingSoon || product.status === 'coming_soon') ? (
+                    <div className="sm:hidden mt-1.5 text-[9.5px] font-mono uppercase tracking-wider text-black/60">
+                      <span>Coming Soon</span>
+                    </div>
+                  ) : (
+                    <div className="sm:hidden flex flex-wrap gap-2 mt-2">
+                      {product.sizes.slice(0, 4).map((sz) => (
+                        <button
+                          type="button"
+                          key={sz}
+                          onClick={() => onQuickAdd(product, sz)}
+                          className="text-[10px] font-mono text-black/60 hover:text-black hover:underline underline-offset-2 cursor-pointer"
+                        >
+                          +{sz}
+                        </button>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Whisper-Thin Plate Metadata Beneath */}
                   <div className="pt-2 sm:pt-3">

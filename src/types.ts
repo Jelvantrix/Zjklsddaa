@@ -63,6 +63,8 @@ export interface Product {
   sizes: string[];
   stock: number;
   isLimited: boolean;
+  isComingSoon?: boolean;
+  comingSoonMessage?: string;
   limitedEdition?: {
     isLimited: boolean;
     editionSize?: number;
@@ -71,6 +73,9 @@ export interface Product {
   images?: ProductImage[];
   image?: string;
   hoverImage?: string;
+  imagePosition?: string;
+  hoverImagePosition?: string;
+  imageScale?: number;
   status?: ProductStatus;
   publishAt?: string | number; // ISO string or timestamp
   seo?: {
@@ -130,6 +135,8 @@ export interface Category {
   image?: string;
   order: number;
   visible: boolean;
+  isComingSoon?: boolean;
+  comingSoonNotice?: string;
 }
 
 export interface Collection {
@@ -267,13 +274,24 @@ export interface StoreContent {
   updatedAt?: string;
 }
 
+export interface SocialPlatformLink {
+  id: string;
+  name: string; // e.g. "Instagram", "Pinterest", "TikTok", "X", "YouTube", "Spotify"
+  url: string;
+  handle?: string;
+  enabled: boolean;
+}
+
 export interface StoreSettings {
   id: string;
   storeInfo: {
     name: string;
     email: string;
+    dispatchEmail?: string;
+    conciergeEmail?: string;
     address: string;
     currency: string;
+    platforms?: SocialPlatformLink[];
   };
   shippingRates: Array<{
     id: string;
@@ -430,12 +448,30 @@ export interface JournalArticle {
   cropPosition: string;
 }
 
+export interface CommunitySuggestion {
+  id: string;
+  title: string;
+  category: string;
+  desiredFabric: string;
+  description: string;
+  submittedBy?: string;
+  submitterEmail?: string;
+  votes: number;
+  votedUserIds?: string[];
+  status: 'under_review' | 'in_sampling' | 'commissioned' | 'declined';
+  createdAt: string;
+  updatedAt?: string;
+  curatorNotes?: string;
+}
+
 export type PageRoute =
   | { type: 'home' }
   | { type: 'archive'; category?: string; subcategory?: string }
   | { type: 'product'; productId: string }
   | { type: 'journal'; articleSlug?: string }
   | { type: 'lookbook' }
+  | { type: 'story' }
+  | { type: 'vote' }
   | { type: 'about'; slug: 'philosophy' | 'materials' | 'sustainability' | 'workshops' }
   | { type: 'service'; slug: 'contact' | 'shipping-returns' | 'tracking' | 'size-guide' }
   | { type: 'legal'; slug: 'terms' | 'privacy' | 'cookies' }

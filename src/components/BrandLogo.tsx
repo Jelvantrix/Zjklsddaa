@@ -35,10 +35,10 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <div
-      className={`inline-flex flex-col items-center justify-center select-none text-center transition-colors duration-300 ${
+      className={`inline-flex items-center justify-center select-none text-center transition-colors duration-300 ${
         invert ? 'text-white' : 'text-black'
       } ${className}`}
-      aria-label="ZEJESH CLOTHES"
+      aria-label="ZEJESH"
     >
       <span
         className={`uppercase font-semibold leading-none whitespace-nowrap pl-[0.22em] ${selectedSize.title}`}
@@ -48,15 +48,6 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
         }}
       >
         ZEJESH
-      </span>
-      <span
-        className={`uppercase font-normal leading-none whitespace-nowrap pl-[0.52em] opacity-95 ${selectedSize.sub}`}
-        style={{
-          fontFamily: '"Bodoni Moda", "Playfair Display", "Didot", Georgia, serif',
-          letterSpacing: '0.52em',
-        }}
-      >
-        CLOTHES
       </span>
     </div>
   );

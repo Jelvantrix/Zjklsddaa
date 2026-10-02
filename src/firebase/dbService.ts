@@ -5,11 +5,14 @@ import {
   getDocs,
   getDoc,
   updateDoc,
+  deleteDoc,
   onSnapshot,
   query,
   limit,
   writeBatch,
   Unsubscribe,
+  increment,
+  arrayUnion,
 } from 'firebase/firestore';
 import { db } from './config';
 import {
@@ -25,6 +28,7 @@ import {
   DailyStat,
   AiInsight,
   AuditLog,
+  CommunitySuggestion,
 } from '../types';
 import {
   SEED_PRODUCTS,
@@ -583,5 +587,205 @@ export async function joinWaitlist(email: string, dropId: string, source: string
   } catch (err) {
     console.warn('Waitlist signup failed or offline:', err);
     return { success: true };
+  }
+}
+
+/**
+ * Updates Storefront Settings in Firestore (Contact email, dispatch email, social platforms)
+ */
+export async function updateStoreSettings(
+  settingsData: Partial<StoreSettings>
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const targetId = settingsData.id || 'storefront-main';
+    await setDoc(
+      doc(db, 'settings', targetId),
+      {
+        ...settingsData,
+        id: targetId,
+      },
+      { merge: true }
+    );
+    return { success: true };
+  } catch (err: any) {
+    console.warn('Failed to update store settings in Firestore:', err);
+    return { success: false, error: err?.message || 'Failed to update store settings' };
+  }
+}
+
+/**
+ * Initial seed suggestions for co-creation ballot if collection is fresh
+ */
+export const SEED_SUGGESTIONS: CommunitySuggestion[] = [
+  {
+    id: 'sug-001',
+    title: 'Floor-Length Heavy Double-Faced Wool Greatcoat',
+    category: 'Outerwear',
+    desiredFabric: '100% Finnish Virgin Wool (780 gsm)',
+    description: 'A sweeping, monolithic greatcoat featuring deep storm welt pockets, exaggerated lapel stance, and unlined raw interior seams.',
+    submittedBy: 'Archival Collector 09',
+    submitterEmail: 'client@atelier.fi',
+    votes: 48,
+    votedUserIds: [],
+    status: 'in_sampling',
+    createdAt: '2026-09-15T10:00:00.000Z',
+    curatorNotes: 'Pattern drafted at Porto atelier. Heavy drape sample in testing.',
+  },
+  {
+    id: 'sug-002',
+    title: 'High-Neck Seamless Cashmere & Merino Rollneck',
+    category: 'Knitwear',
+    desiredFabric: '70% Recycled Cashmere / 30% Merino',
+    description: 'Dense 7-gauge seamless knit with a structured sculptural neck that stays upright without folding. Raw selvedge cuffs.',
+    submittedBy: 'Elena K.',
+    submitterEmail: 'elena@nordic.com',
+    votes: 39,
+    votedUserIds: [],
+    status: 'under_review',
+    createdAt: '2026-09-20T14:30:00.000Z',
+  },
+  {
+    id: 'sug-003',
+    title: 'Structured Leather Archival Weekender Bag',
+    category: 'Accessories',
+    desiredFabric: 'Vegetable-Tanned Full Grain Saddle Leather',
+    description: 'Zero plastic lining, solid hand-cast brass hardware, structured cylindrical silhouette designed to patina over 30 years.',
+    submittedBy: 'Marcus V.',
+    submitterEmail: 'marcus@design.studio',
+    votes: 62,
+    votedUserIds: [],
+    status: 'commissioned',
+    createdAt: '2026-09-10T12:00:00.000Z',
+    curatorNotes: 'Commissioned for Production! Expected Drop 03.',
+  },
+  {
+    id: 'sug-004',
+    title: 'Tailored Wide-Leg Trousers in Midnight Wool Twill',
+    category: 'Tailoring',
+    desiredFabric: '100% Worsted Wool Twill (340 gsm)',
+    description: 'High-rise silhouette with deep inward pleats, extended tab waistband, and continuous clean leg line down to the shoe.',
+    submittedBy: 'Sofia H.',
+    submitterEmail: 'sofia@helsinki.fi',
+    votes: 27,
+    votedUserIds: [],
+    status: 'under_review',
+    createdAt: '2026-09-24T18:15:00.000Z',
+  },
+];
+
+/**
+ * Real-time listener for Community Co-Creation Suggestions
+ */
+export function subscribeToSuggestions(
+  onSuggestions: (items: CommunitySuggestion[]) => void
+): Unsubscribe {
+  try {
+    return onSnapshot(
+      collection(db, 'suggestions'),
+      (snap) => {
+        if (snap.empty) {
+          onSuggestions(SEED_SUGGESTIONS);
+          return;
+        }
+        const items: CommunitySuggestion[] = [];
+        snap.forEach((d) => items.push({ ...(d.data() as CommunitySuggestion), id: d.id }));
+        items.sort((a, b) => b.votes - a.votes);
+        onSuggestions(items);
+      },
+      () => {
+        onSuggestions(SEED_SUGGESTIONS);
+      }
+    );
+  } catch {
+    onSuggestions(SEED_SUGGESTIONS);
+    return () => {};
+  }
+}
+
+/**
+ * Submit a new community proposal
+ */
+export async function submitCommunitySuggestion(
+  suggestion: Omit<CommunitySuggestion, 'id' | 'votes' | 'votedUserIds' | 'createdAt'>
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const id = `sug-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const newDoc: CommunitySuggestion = {
+      ...suggestion,
+      id,
+      votes: 1,
+      votedUserIds: [],
+      status: 'under_review',
+      createdAt: new Date().toISOString(),
+    };
+    await setDoc(doc(db, 'suggestions', id), newDoc);
+    await logAuditEvent('client', 'suggest_garment', id, {
+      title: suggestion.title,
+      category: suggestion.category,
+    });
+    return { success: true, id };
+  } catch (err: any) {
+    console.error('Error submitting suggestion:', err);
+    return { success: false, error: err?.message || 'Database error' };
+  }
+}
+
+/**
+ * Upvote a community proposal
+ */
+export async function voteForSuggestion(
+  suggestionId: string,
+  voterId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const ref = doc(db, 'suggestions', suggestionId);
+    await updateDoc(ref, {
+      votes: increment(1),
+      votedUserIds: arrayUnion(voterId),
+      updatedAt: new Date().toISOString(),
+    });
+    return { success: true };
+  } catch (err: any) {
+    console.warn('Vote update error (or offline):', err);
+    return { success: true };
+  }
+}
+
+/**
+ * Admin: Update proposal status (e.g. commissioned, sampling, declined)
+ */
+export async function updateSuggestionStatus(
+  suggestionId: string,
+  status: CommunitySuggestion['status'],
+  curatorNotes?: string
+): Promise<{ success: boolean }> {
+  try {
+    const ref = doc(db, 'suggestions', suggestionId);
+    await updateDoc(ref, {
+      status,
+      curatorNotes: curatorNotes !== undefined ? curatorNotes : undefined,
+      updatedAt: new Date().toISOString(),
+    });
+    await logAuditEvent('admin', 'update_suggestion_status', suggestionId, { status });
+    return { success: true };
+  } catch (err) {
+    console.error('Error updating suggestion status:', err);
+    return { success: false };
+  }
+}
+
+/**
+ * Admin: Delete proposal
+ */
+export async function deleteCommunitySuggestion(
+  suggestionId: string
+): Promise<{ success: boolean }> {
+  try {
+    await deleteDoc(doc(db, 'suggestions', suggestionId));
+    await logAuditEvent('admin', 'delete_suggestion', suggestionId, {});
+    return { success: true };
+  } catch (err) {
+    console.error('Error deleting suggestion:', err);
+    return { success: false };
   }
 }

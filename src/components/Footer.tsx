@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Language } from '../types';
+import { Language, StoreSettings } from '../types';
 import { translations } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
@@ -11,6 +11,7 @@ interface FooterProps {
   onSetLanguage: (lang: Language) => void;
   onSelectCategory: (cat: string, sub?: string) => void;
   onNavigatePage: (route: any) => void;
+  settings?: StoreSettings;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -18,6 +19,7 @@ export const Footer: React.FC<FooterProps> = ({
   onSetLanguage,
   onSelectCategory,
   onNavigatePage,
+  settings,
 }) => {
   const t = translations[language].footer;
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -188,6 +190,24 @@ export const Footer: React.FC<FooterProps> = ({
                 {t.workshops}
               </button>
             </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => onNavigatePage({ type: 'story' })}
+                className="hover:underline underline-offset-4 cursor-pointer text-left font-medium text-black"
+              >
+                The Zejesh Story
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                onClick={() => onNavigatePage({ type: 'vote' })}
+                className="hover:underline underline-offset-4 cursor-pointer text-left font-medium text-black"
+              >
+                Community Vote & Design
+              </button>
+            </li>
           </ul>
         </div>
 
@@ -272,17 +292,40 @@ export const Footer: React.FC<FooterProps> = ({
             </div>
           )}
 
-          {/* Social Links */}
+          {/* Social Links & Platforms */}
           <div className="pt-2 sm:pt-4 border-t border-black/10">
             <span className="text-[10px] font-mono tracking-wider uppercase text-black/40 block mb-1.5 sm:mb-2">
-              SOCIAL ARCHIVE
+              CONNECTED PLATFORMS
             </span>
-            <div className="flex items-center gap-3 sm:gap-4 text-xs font-mono">
-              <a href="#instagram" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>IG</a>
-              <span className="text-black/20">/</span>
-              <a href="#pinterest" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>PIN</a>
-              <span className="text-black/20">/</span>
-              <a href="#tiktok" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>TT</a>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs font-mono">
+              {settings?.storeInfo?.platforms && settings.storeInfo.platforms.filter((p) => p.enabled !== false).length > 0 ? (
+                settings.storeInfo.platforms
+                  .filter((p) => p.enabled !== false)
+                  .map((plat, pIdx, arr) => (
+                    <React.Fragment key={plat.id || plat.name}>
+                      <a
+                        href={plat.url || '#'}
+                        target={plat.url && plat.url.startsWith('http') ? '_blank' : undefined}
+                        rel="noopener noreferrer"
+                        className="hover:underline underline-offset-4 uppercase font-medium"
+                        onClick={(e) => {
+                          if (!plat.url || plat.url === '#') e.preventDefault();
+                        }}
+                      >
+                        {plat.handle ? `${plat.name} (${plat.handle})` : plat.name}
+                      </a>
+                      {pIdx < arr.length - 1 && <span className="text-black/20">/</span>}
+                    </React.Fragment>
+                  ))
+              ) : (
+                <>
+                  <a href="#instagram" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>IG</a>
+                  <span className="text-black/20">/</span>
+                  <a href="#pinterest" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>PIN</a>
+                  <span className="text-black/20">/</span>
+                  <a href="#tiktok" className="hover:underline underline-offset-4" onClick={(e) => e.preventDefault()}>TT</a>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -304,7 +347,7 @@ export const Footer: React.FC<FooterProps> = ({
 
         {/* Copyright */}
         <div className="text-[11px] sm:text-xs font-mono text-black/50 text-center md:text-right flex items-center justify-center md:justify-end">
-          <span>© 2026 ZEJESH CLOTHES. All rights reserved.</span>
+          <span>© 2026 ZEJESH. All rights reserved.</span>
         </div>
       </div>
     </footer>
