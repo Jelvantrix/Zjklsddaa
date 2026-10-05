@@ -171,7 +171,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
   const [waitlistDone, setWaitlistDone] = useState(false);
 
   return (
-    <section id="archive" className="w-full bg-white text-black min-h-screen pt-16 sm:pt-20">
+    <section id="archive" className="w-full bg-white text-black min-h-screen pt-24 sm:pt-32 lg:pt-36">
       {/* Editorial Archive Header */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 pt-10 sm:pt-16 pb-6 sm:pb-10 border-b border-black/10">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6">
@@ -196,8 +196,8 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   : t.nav[selectedCategory as keyof typeof t.nav] || selectedCategory}
               </h1>
               {isCategoryComingSoon && (
-                <span className="px-2.5 py-1 text-xs font-mono uppercase bg-black text-white font-semibold tracking-wider">
-                  Coming Soon
+                <span className="text-xs font-mono uppercase tracking-[0.2em] text-black/60 font-medium">
+                  · Coming Soon
                 </span>
               )}
             </div>
@@ -214,9 +214,9 @@ export const ProductListing: React.FC<ProductListingProps> = ({
       {/* EDITORIAL COMING SOON DEPARTMENT BANNER */}
       {isCategoryComingSoon && (
         <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 pt-6">
-          <div className="p-6 sm:p-8 border border-black bg-neutral-50/80 space-y-3 font-mono">
+          <div className="p-6 sm:p-8 border border-black/10 bg-neutral-50/80 space-y-3 font-mono">
             <div className="flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-black/60">
-              <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
               <span>ATELIER ANNOUNCEMENT · COMING SOON</span>
             </div>
             <h3 className="font-editorial text-2xl sm:text-3xl font-normal text-black">
@@ -233,7 +233,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                     setWaitlistDone(true);
                   }
                 }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 max-w-md"
+                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 max-w-md"
               >
                 <input
                   type="email"
@@ -241,13 +241,13 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   value={waitlistEmail}
                   onChange={(e) => setWaitlistEmail(e.target.value)}
                   placeholder="Enter email for priority drop notice"
-                  className="px-3.5 py-2.5 text-xs font-mono border border-black/30 bg-white focus:border-black focus:outline-none flex-1"
+                  className="py-2 px-1 text-xs font-mono border-b border-black/30 bg-transparent focus:border-black focus:outline-none flex-1"
                 />
                 <button
                   type="submit"
-                  className="px-5 py-2.5 bg-black text-white text-xs uppercase tracking-wider font-mono hover:bg-neutral-800 transition-colors cursor-pointer"
+                  className="py-2 text-xs uppercase tracking-[0.2em] font-mono text-black hover:opacity-60 underline underline-offset-4 cursor-pointer shrink-0 transition-opacity"
                 >
-                  Join Waitlist
+                  Join Waitlist →
                 </button>
               </form>
             ) : (
@@ -470,7 +470,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
 
                       {/* Coming Soon Tag if product is marked coming soon */}
                       {(product.isComingSoon || product.status === 'coming_soon') && (
-                        <div className="absolute top-2.5 left-2.5 bg-black text-white px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest z-20 shadow-sm">
+                        <div className="absolute top-2.5 left-2.5 bg-white/95 backdrop-blur-xs text-black px-2 py-0.5 text-[9px] font-mono uppercase tracking-widest z-20">
                           Coming Soon
                         </div>
                       )}
@@ -627,14 +627,14 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                   <span className="text-[10.5px] sm:text-[11px] font-mono tracking-[0.18em] uppercase text-black/50 block mb-2 sm:mb-3">
                     Department
                   </span>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-3 sm:gap-4">
                     <button
                       type="button"
                       onClick={() => onSelectCategory('all')}
-                      className={`py-1 px-2.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
+                      className={`py-1 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
                         selectedCategory === 'all'
-                          ? 'border-black bg-black text-white font-semibold'
-                          : 'border-black/15 text-black/70 hover:border-black'
+                          ? 'text-black font-semibold border-b border-black'
+                          : 'text-black/50 hover:text-black'
                       }`}
                     >
                       All Pieces
@@ -646,10 +646,10 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                           type="button"
                           key={cat.id}
                           onClick={() => onSelectCategory(cat.slug || cat.id)}
-                          className={`py-1 px-2.5 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer border ${
+                          className={`py-1 text-xs font-mono uppercase tracking-wider transition-colors cursor-pointer ${
                             selectedCategory === (cat.slug || cat.id)
-                              ? 'border-black bg-black text-white font-semibold'
-                              : 'border-black/15 text-black/70 hover:border-black'
+                              ? 'text-black font-semibold border-b border-black'
+                              : 'text-black/50 hover:text-black'
                           }`}
                         >
                           {cat.name.en || cat.name.fi}

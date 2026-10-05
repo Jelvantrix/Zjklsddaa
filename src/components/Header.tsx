@@ -144,7 +144,7 @@ export const Header: React.FC<HeaderProps> = ({
     return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
   }, [hoveredNav, categories]);
 
-  const isOverHeroAtTop = isHeroVisible && !isScrolled;
+  const isOverHeroAtTop = Boolean(isHeroVisible);
 
   return (
     <>
@@ -155,7 +155,7 @@ export const Header: React.FC<HeaderProps> = ({
         } ${
           isOverHeroAtTop
             ? 'bg-transparent text-black border-transparent shadow-none'
-            : 'bg-white/95 backdrop-blur-md text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.03)]'
+            : 'bg-white/70 backdrop-blur-md text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.03)]'
         }`}
       >
         {/* ROW 1: BRAND LOGO (ABSOLUTELY CENTERED) & UTILITY ACTIONS (BALANCED) */}
@@ -257,7 +257,7 @@ export const Header: React.FC<HeaderProps> = ({
           className={`hidden lg:block transition-colors duration-300 ${
             isOverHeroAtTop
               ? 'bg-transparent'
-              : 'bg-white/95 backdrop-blur-md'
+              : 'bg-white/70 backdrop-blur-md'
           }`}
         >
           <div className="max-w-[1720px] mx-auto px-6 md:px-10 h-11 flex items-center justify-center">

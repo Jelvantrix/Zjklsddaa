@@ -313,13 +313,13 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                 type="button"
                 onClick={handleStartGeneration}
                 disabled={isGenerating || !selectedImage}
-                className="w-full py-3.5 bg-black text-white text-xs uppercase tracking-[0.24em] font-medium hover:bg-neutral-800 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.24em] font-medium flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>
                   {isGenerating
                     ? 'Synthesizing Veo Video...'
-                    : 'Animate Image into Veo Video'}
+                    : 'Animate Image into Veo Video →'}
                 </span>
               </button>
 
@@ -416,11 +416,11 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
 
               {/* Action Buttons for Generated Video */}
               {generatedVideoUrl && (
-                <div className="pt-3 space-y-2">
+                <div className="pt-3 space-y-2 text-center">
                   <button
                     type="button"
                     onClick={handleApplyToHero}
-                    className="w-full py-2.5 border border-black text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2 text-xs uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 transition-opacity cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     {isHeroApplied ? <Check className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
                     <span>{isHeroApplied ? 'Applied to Storefront Hero!' : 'Set as Hero Video'}</span>
@@ -431,7 +431,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                     download={`zejesh-veo-${selectedAspect}.mp4`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2 bg-neutral-100 hover:bg-neutral-200 text-black text-[11px] uppercase tracking-wider transition-colors text-center block"
+                    className="w-full py-1 text-black/60 hover:text-black text-[11px] uppercase tracking-wider transition-colors text-center block underline underline-offset-2"
                   >
                     Download High-Res MP4
                   </a>

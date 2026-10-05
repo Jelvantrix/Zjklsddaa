@@ -42,7 +42,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render SITEMAP (Directory of 50+ pages)
   if (pageType === 'sitemap') {
     return (
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <div className="max-w-4xl mx-auto">
           <div className="pb-6 sm:pb-8 border-b border-black/10 mb-8 sm:mb-12">
             <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
@@ -174,7 +174,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render LOOKBOOK PAGE
   if (pageType === 'lookbook') {
     return (
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <div className="max-w-4xl mx-auto text-center mb-10 sm:mb-16">
           <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
             WINTER CAMPAIGN 2026
@@ -223,7 +223,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render GIFT CARDS PAGE
   if (pageType === 'gift-cards') {
     return (
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <div className="max-w-xl mx-auto border border-black p-6 sm:p-12">
           <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
             ARCHIVE GIFT CARD
@@ -241,16 +241,16 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                 <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-2">
                   Select Amount:
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-mono text-xs">
                   {[100, 150, 250, 500].map((amt) => (
                     <button
                       type="button"
                       key={amt}
                       onClick={() => setGiftAmount(amt)}
-                      className={`py-2.5 sm:py-3 border cursor-pointer ${
+                      className={`py-1 cursor-pointer transition-colors ${
                         giftAmount === amt
-                          ? 'border-black bg-black text-white font-medium'
-                          : 'border-black/20 hover:border-black'
+                          ? 'text-black font-semibold border-b border-black'
+                          : 'text-black/50 hover:text-black'
                       }`}
                     >
                       {amt} €
@@ -413,7 +413,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render WORKSHOPS
   if (slug === 'workshops') {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
           PRODUCTION
         </span>
@@ -430,7 +430,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render CONTACT & CUSTOMER SERVICE
   if (slug === 'contact') {
     return (
-      <div className="max-w-xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
           CLIENT CONCIERGE
         </span>
@@ -450,7 +450,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render SHIPPING & RETURNS
   if (slug === 'shipping-returns') {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
           DELIVERY CHARTER
         </span>
@@ -473,7 +473,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
 
   // Render TERMS, PRIVACY, COOKIES
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
       <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
         LEGAL & GOVERNANCE
       </span>

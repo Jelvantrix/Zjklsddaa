@@ -58,20 +58,20 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                className="w-full py-2 px-1 text-xs font-mono border-b border-black/25 focus:border-black focus:outline-none bg-transparent"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 bg-black text-white text-xs uppercase tracking-[0.18em] font-medium hover:bg-black/80 transition-colors cursor-pointer"
+              className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
             >
-              Send Access Key
+              Send Access Key →
             </button>
           </form>
         ) : (
           <div className="text-center py-6 space-y-3">
-            <div className="w-10 h-10 border border-black mx-auto flex items-center justify-center">
+            <div className="w-10 h-10 border border-black/20 mx-auto flex items-center justify-center">
               <Check className="w-5 h-5" />
             </div>
             <p className="text-xs font-sans text-black/80">
@@ -79,7 +79,7 @@ export const AccountModal: React.FC<AccountModalProps> = ({
             </p>
             <button
               onClick={onClose}
-              className="mt-4 px-6 py-2 border border-black text-xs uppercase tracking-wider hover:bg-black hover:text-white transition-colors cursor-pointer"
+              className="mt-4 text-xs font-mono uppercase tracking-[0.2em] text-black underline underline-offset-4 hover:opacity-60 transition-opacity cursor-pointer"
             >
               Close
             </button>

@@ -265,10 +265,10 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                                 e.stopPropagation();
                                 handleQuickAdd(product, sz);
                               }}
-                              className={`px-2 py-0.5 text-[10px] font-mono border cursor-pointer transition-colors ${
+                              className={`px-1.5 py-0.5 text-[10.5px] font-mono cursor-pointer transition-colors ${
                                 isAdded
-                                  ? 'bg-black text-white border-black font-semibold'
-                                  : 'border-black/[0.12] text-black/80 hover:border-black hover:text-black'
+                                  ? 'text-black font-bold underline underline-offset-4'
+                                  : 'text-black/60 hover:text-black hover:underline underline-offset-2'
                               }`}
                             >
                               {isAdded ? '✓' : sz}
@@ -380,7 +380,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           <button
             type="button"
             onClick={() => onSelectCategory('kokoelmat')}
-            className="px-6 py-3.5 bg-white text-black hover:bg-neutral-100 transition-colors text-xs font-mono uppercase tracking-[0.24em] cursor-pointer flex items-center gap-2"
+            className="text-white hover:opacity-75 transition-opacity text-xs font-mono uppercase tracking-[0.24em] cursor-pointer inline-flex items-center gap-2 underline underline-offset-8"
           >
             <span>View Complete Lookbook</span>
             <span>→</span>
@@ -402,20 +402,20 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
           </p>
 
           {!isSubscribed ? (
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-3 pt-3">
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row items-center gap-4 pt-3 max-w-md mx-auto">
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email..."
-                className="w-full sm:flex-1 py-3 px-3.5 border border-black/[0.15] text-xs font-mono placeholder:text-black/35 focus:outline-none focus:border-black bg-white"
+                className="w-full sm:flex-1 py-2 px-1 border-b border-black/25 text-xs font-mono placeholder:text-black/35 focus:outline-none focus:border-black bg-transparent"
               />
               <button
                 type="submit"
-                className="w-full sm:w-auto px-6 py-3 bg-black text-white text-xs font-mono uppercase tracking-[0.20em] hover:bg-black/85 transition-colors cursor-pointer"
+                className="py-2 text-xs font-mono uppercase tracking-[0.20em] text-black hover:opacity-60 underline underline-offset-8 transition-opacity cursor-pointer shrink-0"
               >
-                Subscribe
+                Subscribe →
               </button>
             </form>
           ) : (

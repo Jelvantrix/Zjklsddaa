@@ -21,6 +21,7 @@ import { CustomCursor } from './components/CustomCursor';
 import { Preloader } from './components/Preloader';
 import { StoryPage } from './components/StoryPage';
 import { CommunityVotePage } from './components/CommunityVotePage';
+import { LookbookView } from './components/LookbookView';
 import { AuthProvider } from './supabase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
@@ -117,23 +118,26 @@ function StorefrontApp() {
 
   const navigateTo = (newRoute: PageRoute, addToHistory = true) => {
     setRoute(newRoute);
+    setIsHeroVisible(true);
     if (addToHistory) {
       window.history.pushState({ route: newRoute }, '');
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   useEffect(() => {
     const handleScroll = () => {
-      if (route.type !== 'home') {
-        setIsHeroVisible(false);
-        return;
-      }
       const scrollPos = window.scrollY;
-      const heroHeight = window.innerHeight;
-      setIsHeroVisible(scrollPos < heroHeight - 80);
+      if (route.type === 'home') {
+        const heroHeight = window.innerHeight;
+        setIsHeroVisible(scrollPos < heroHeight - 80);
+      } else {
+        // Universal hero transparency on EVERY page at top
+        setIsHeroVisible(scrollPos < 70);
+      }
     };
 
+    handleScroll();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [route.type]);
@@ -263,7 +267,7 @@ function StorefrontApp() {
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
         onNavigateStory={() => navigateTo({ type: 'story' })}
         onNavigateVote={() => navigateTo({ type: 'vote' })}
-        isHeroVisible={route.type === 'home' && isHeroVisible}
+        isHeroVisible={isHeroVisible}
         currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
         currentRouteType={route.type}
         categories={categories}
@@ -337,9 +341,18 @@ function StorefrontApp() {
           />
         )}
 
-        {/* PAGES: DEDICATED STATIC & EDITORIAL PAGES (Lookbook, Gift Cards, Sitemap, About, Service, Legal) */}
-        {(route.type === 'lookbook' ||
-          route.type === 'gift-cards' ||
+        {/* PAGE: LOOKBOOK */}
+        {route.type === 'lookbook' && (
+          <LookbookView
+            products={products}
+            language={language}
+            onBackToHome={handleNavigateHome}
+            onSelectProduct={handleSelectProduct}
+          />
+        )}
+
+        {/* PAGES: DEDICATED STATIC & EDITORIAL PAGES (Gift Cards, Sitemap, About, Service, Legal) */}
+        {(route.type === 'gift-cards' ||
           route.type === 'sitemap' ||
           route.type === 'about' ||
           route.type === 'service' ||

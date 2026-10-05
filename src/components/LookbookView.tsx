@@ -32,31 +32,31 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
   const looks = (products && products.length > 0 ? products : []).slice(0, 16);
 
   return (
-    <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen pt-20 sm:pt-24 select-none font-mono">
+    <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen pt-24 sm:pt-32 lg:pt-40 select-none font-mono">
       {/* Top Bar with Navigation & Layout Switcher - Fully Responsive */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 sm:py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
         <button
           type="button"
           onClick={onBackToHome}
-          className="flex items-center gap-2 text-black/60 hover:text-black transition-colors cursor-pointer uppercase tracking-wider shrink-0"
+          className="group flex items-center gap-2 text-black/60 hover:text-black transition-colors cursor-pointer uppercase tracking-[0.2em] shrink-0"
         >
-          <ArrowLeft className="w-3.5 h-3.5" />
-          <span>Return Home</span>
+          <ArrowLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-1" />
+          <span className="underline underline-offset-4">Return Home</span>
         </button>
 
-        {/* Layout Switcher */}
-        <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
+        {/* Layout Switcher: Pure Unboxed Typography Tabs */}
+        <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 w-full sm:w-auto">
           <span className="text-[10px] text-black/40 uppercase tracking-widest hidden md:inline">
-            Viewing Mode:
+            Mode:
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-4 sm:gap-6">
             <button
               type="button"
               onClick={() => setLayoutMode('spread')}
-              className={`px-4 py-2 text-[10.5px] sm:text-[11px] uppercase tracking-wider cursor-pointer transition-colors ${
+              className={`py-1 text-[11px] sm:text-xs uppercase tracking-[0.2em] cursor-pointer transition-colors ${
                 layoutMode === 'spread'
-                  ? 'text-black font-semibold underline'
-                  : 'text-black/60 hover:text-black'
+                  ? 'text-black font-semibold underline underline-offset-8'
+                  : 'text-black/50 hover:text-black'
               }`}
             >
               Editorial Spread
@@ -64,10 +64,10 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
             <button
               type="button"
               onClick={() => setLayoutMode('grid')}
-              className={`px-4 py-2 text-[10.5px] sm:text-[11px] uppercase tracking-wider cursor-pointer transition-colors ${
+              className={`py-1 text-[11px] sm:text-xs uppercase tracking-[0.2em] cursor-pointer transition-colors ${
                 layoutMode === 'grid'
-                  ? 'text-black font-semibold underline'
-                  : 'text-black/60 hover:text-black'
+                  ? 'text-black font-semibold underline underline-offset-8'
+                  : 'text-black/50 hover:text-black'
               }`}
             >
               Look Grid
@@ -101,9 +101,9 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
           <button
             type="button"
             onClick={onBackToHome}
-            className="px-8 py-3 text-black text-xs uppercase tracking-widest font-mono cursor-pointer hover:text-black/70 transition-colors"
+            className="text-black text-xs uppercase tracking-[0.2em] font-mono cursor-pointer hover:opacity-60 underline underline-offset-8 transition-opacity"
           >
-            Explore Storefront
+            Explore Storefront →
           </button>
         </div>
       ) : layoutMode === 'spread' ? (
@@ -145,7 +145,7 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                     </div>
 
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
-                      <span className="text-black px-5 py-2.5 text-xs uppercase tracking-widest font-mono">
+                      <span className="text-black text-xs uppercase tracking-[0.2em] font-mono underline underline-offset-4">
                         Inspect Look →
                       </span>
                     </div>
@@ -199,9 +199,10 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectProduct(product)}
-                      className="w-full sm:w-auto px-8 py-3.5 bg-black text-white hover:bg-neutral-800 transition-colors text-xs uppercase tracking-[0.2em] font-mono cursor-pointer text-center"
+                      className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] font-mono text-black hover:opacity-60 transition-opacity underline underline-offset-8 cursor-pointer"
                     >
-                      View Piece Dossier
+                      <span>View Piece Dossier</span>
+                      <span aria-hidden="true">→</span>
                     </button>
                   </div>
                 </div>

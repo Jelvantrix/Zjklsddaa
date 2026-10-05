@@ -38,6 +38,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   const [zoomedImageIndex, setZoomedImageIndex] = useState<number | null>(null);
   const [activeMobileImageIdx, setActiveMobileImageIdx] = useState(0);
   const [isAddedFeedback, setIsAddedFeedback] = useState(false);
+  const [waitlistRegistered, setWaitlistRegistered] = useState(false);
 
   // Accordion state
   const [openAccordions, setOpenAccordions] = useState<{ [key: string]: boolean }>({
@@ -93,7 +94,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   };
 
   return (
-    <article className="w-full bg-white text-black min-h-screen pt-16 sm:pt-20 pb-28 md:pb-20">
+    <article className="w-full bg-white text-black min-h-screen pt-24 sm:pt-32 lg:pt-36 pb-28 md:pb-20">
       {/* Top Breadcrumb & Return line */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-3.5 sm:py-5 border-b border-black/10 flex items-center justify-between text-xs font-mono">
         <button
@@ -267,9 +268,9 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             {/* Primary Buy CTA or Coming Soon Waitlist */}
             <div>
               {product.isComingSoon || product.status === 'coming_soon' ? (
-                <div className="space-y-3 p-4 border border-black bg-neutral-50/70 font-mono">
+                <div className="space-y-3 pt-2 font-mono">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-black font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-black animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
                     <span>Coming Soon · Priority Accession</span>
                   </div>
                   {product.comingSoonNotice && (
@@ -277,18 +278,21 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                       {product.comingSoonNotice}
                     </p>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const email = window.prompt('Enter your email to receive priority drop notification:');
-                      if (email) {
-                        alert('You have been registered for private accession access.');
-                      }
-                    }}
-                    className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.22em] bg-black text-white hover:bg-neutral-800 font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
-                  >
-                    <span>Register for Accession Notice</span>
-                  </button>
+                  {waitlistRegistered ? (
+                    <p className="text-xs font-mono text-black flex items-center gap-1.5 py-2">
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Registered for Private Drop Accession Notice</span>
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setWaitlistRegistered(true)}
+                      className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.22em] btn-primary font-medium flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Join Priority Waitlist</span>
+                      <span aria-hidden="true">→</span>
+                    </button>
+                  )}
                 </div>
               ) : (
                 <button

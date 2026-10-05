@@ -145,9 +145,29 @@ npm start        # NODE_ENV=production — serves dist/ plus the /api routes
 missing the server logs a clear warning and serves `503` rather than failing
 obscurely.
 
-Environment defaults are fail-safe: with `NODE_ENV` unset, the server behaves
-in production mode — it serves the built assets and never returns a stack
-trace — instead of accidentally booting a Vite dev server.
+---
+
+## 6. Deploying to Vercel
+
+The application is pre-configured for 1-click deployment on **Vercel**:
+
+- **Framework Preset**: `Vite` (automatically detected via `vercel.json`)
+- **Build Command**: `npm run build`
+- **Output Directory**: `dist`
+- **Client-Side Routing**: SPA fallback to `/index.html` with immutable asset caching
+- **Serverless API**: `/api/index.ts` automatically serves all `/api/*` routes
+
+### Vercel Setup Steps:
+
+1. Import your Git repository into **Vercel** (`New Project`).
+2. Set the following **Environment Variables** in the Vercel Project Settings:
+   - `VITE_SUPABASE_URL`: Your Supabase Project URL (`https://xyz.supabase.co`)
+   - `VITE_SUPABASE_ANON_KEY`: Your Supabase public anon key
+   - `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (for serverless admin API)
+   - `GEMINI_API_KEY`: Google Gemini API key (for Veo video motion generation)
+3. Click **Deploy**. Vercel will build the frontend assets, set up the `/api` serverless handler, and deploy globally with edge CDN caching.
+
+---
 
 Verification status:
 

@@ -146,6 +146,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     } else if (item.key === 'lookbook') {
                       onNavigateLookbook();
                       onClose();
+                    } else if (item.key === 'story') {
+                      onNavigateStory();
+                      onClose();
+                    } else if (item.key === 'vote') {
+                      onNavigateVote();
+                      onClose();
                     } else {
                       onSelectCategory(item.categoryId);
                       onClose();
@@ -212,7 +218,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       {/* Bottom Atelier Info */}
       <div className="px-8 py-5 border-t border-black/10 flex items-center justify-between bg-white text-xs font-mono">
         <span className="text-[10px] text-black/60 tracking-widest uppercase">
-          ZEJESH CLOTHES
+          ZEJESH ATELIER
         </span>
         <span className="text-[10px] text-black/40 tracking-wider">
           HELSINKI · PORTO
