@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StoreContent, HeroSlide } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
+import { useAuth } from '../../supabase/AuthContext';
 import { useStorefrontData } from '../../context/StorefrontDataContext';
-import { updateStoreContent, logAuditEvent } from '../../firebase/dbService';
+import { updateStoreContent, logAuditEvent } from '../../supabase/dbService';
 import {
   HERO_SLIDES,
   PLACEHOLDER_VIDEO,

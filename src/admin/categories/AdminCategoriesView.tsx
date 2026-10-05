@@ -18,10 +18,9 @@ import {
   ExternalLink,
   Sparkles,
 } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminCategoriesViewProps {
   categories: Category[];
@@ -138,7 +137,8 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
         image: newCatImage.trim() || undefined,
       };
 
-      await setDoc(doc(db, 'categories', id), newCategory);
+      const { error } = await supabase.from('categories').upsert({ ...newCategory, id });
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
         'create_category',
@@ -191,7 +191,8 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
         visible: true,
       };
 
-      await setDoc(doc(db, 'categories', id), newSubcategory);
+      const { error } = await supabase.from('categories').upsert({ ...newSubcategory, id });
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
         'create_subcategory',
@@ -237,12 +238,16 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/(^-|-$)+/g, '');
 
-      await updateDoc(doc(db, 'categories', catId), {
-        'name.en': editNameEn.trim(),
-        'name.fi': editNameFi.trim() || editNameEn.trim(),
-        slug: cleanSlug,
-        order: Number(editOrder) || 1,
-      });
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          'name.en': editNameEn.trim(),
+          'name.fi': editNameFi.trim() || editNameEn.trim(),
+          slug: cleanSlug,
+          order: Number(editOrder) || 1,
+        })
+        .eq('id', catId);
+      if (error) throw error;
 
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
@@ -266,7 +271,8 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
   const toggleVisibility = async (cat: Category) => {
     try {
       const newVis = !cat.visible;
-      await updateDoc(doc(db, 'categories', cat.id), { visible: newVis });
+      const { error } = await supabase.from('categories').update({ visible: newVis }).eq('id', cat.id);
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
         'toggle_category_visibility',
@@ -295,10 +301,14 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
           notice = entered || 'Coming Soon';
         }
       }
-      await updateDoc(doc(db, 'categories', cat.id), {
-        isComingSoon: newStatus,
-        comingSoonNotice: notice,
-      });
+      const { error } = await supabase
+        .from('categories')
+        .update({
+          isComingSoon: newStatus,
+          comingSoonNotice: notice,
+        })
+        .eq('id', cat.id);
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
         'toggle_category_coming_soon',
@@ -320,10 +330,12 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
       // Also delete any child subcategories if deleting a parent
       const children = categories.filter((c) => c.parentId === catId);
       for (const child of children) {
-        await deleteDoc(doc(db, 'categories', child.id));
+        const { error: childError } = await supabase.from('categories').delete().eq('id', child.id);
+        if (childError) throw childError;
       }
 
-      await deleteDoc(doc(db, 'categories', catId));
+      const { error } = await supabase.from('categories').delete().eq('id', catId);
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || adminProfile?.email || 'admin',
         'delete_category',

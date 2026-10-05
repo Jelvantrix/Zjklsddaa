@@ -1,6 +1,12 @@
 export type Language = 'fi' | 'en' | 'sv';
 
-export type ProductStatus = 'draft' | 'scheduled' | 'live' | 'sold_out' | 'archived';
+export type ProductStatus =
+  | 'draft'
+  | 'scheduled'
+  | 'live'
+  | 'sold_out'
+  | 'coming_soon'
+  | 'archived';
 
 export interface ProductVariant {
   size: string;
@@ -65,6 +71,8 @@ export interface Product {
   isLimited: boolean;
   isComingSoon?: boolean;
   comingSoonMessage?: string;
+  /** Shown on the storefront while `status === 'coming_soon'`. */
+  comingSoonNotice?: string;
   limitedEdition?: {
     isLimited: boolean;
     editionSize?: number;
@@ -482,3 +490,296 @@ export type PageRoute =
   | { type: 'account' }
   | { type: 'sitemap' }
   | { type: 'admin'; subview?: string };
+
+// ==================== TARGETS & GOALS SYSTEM ====================
+
+export type GrowthCurve = 'geometric' | 'linear' | 's_curve' | 'step_ladder' | 'custom';
+
+export type TargetPeriod = 'yearly' | 'monthly' | 'weekly' | 'daily';
+
+export interface TargetMetric {
+  metricId: string;
+  name: string;
+  target: number;
+  actual: number;
+  pace: number; // projected at current rate
+  forecast: number; // predicted end-of-period
+  unit: string;
+}
+
+export interface MonthlyTarget {
+  month: number; // 1-12
+  year: number;
+  piecesTarget: number;
+  ordersTarget: number;
+  revenueTarget: number; // in minor units (cents)
+  sessionsTarget: number;
+  visitorsTarget: number;
+  conversionRateTarget: number; // decimal, e.g., 0.015 for 1.5%
+  aovTarget: number; // average order value in minor units
+  newCustomersTarget: number;
+  emailSubscribersTarget: number;
+  productsListedTarget: number;
+  contentPostsTarget: number;
+  adSpendTarget: number; // in minor units
+  roasTarget: number; // return on ad spend as multiplier
+  // Computed fields
+  piecesActual: number;
+  ordersActual: number;
+  revenueActual: number;
+  sessionsActual: number;
+  visitorsActual: number;
+  conversionRateActual: number;
+  aovActual: number;
+  newCustomersActual: number;
+  emailSubscribersActual: number;
+  productsListedActual: number;
+  contentPostsActual: number;
+  adSpendActual: number;
+  roasActual: number;
+  pace: 'ahead' | 'on_track' | 'behind';
+  gap: number; // pieces gap
+  dailyAverageNeeded: number;
+  isLocked: boolean; // T-012: lock past periods
+}
+
+export interface WeeklyTarget {
+  week: number; // 1-52
+  year: number;
+  startDate: string; // ISO date
+  endDate: string; // ISO date
+  piecesTarget: number;
+  piecesActual: number;
+  pace: 'ahead' | 'on_track' | 'behind';
+  gap: number;
+}
+
+export interface DailyTarget {
+  date: string; // YYYY-MM-DD
+  piecesTarget: number;
+  piecesActual: number;
+  sessionsTarget: number;
+  sessionsActual: number;
+  ordersTarget: number;
+  ordersActual: number;
+  revenueTarget: number; // minor units
+  revenueActual: number; // minor units
+  weekdayWeight: number; // 0.5-2.0 multiplier
+  isHoliday: boolean;
+  isDropDay: boolean;
+  dropBoost?: number; // additional pieces target for drop days
+  pace: 'ahead' | 'on_track' | 'behind';
+}
+
+export interface TargetPlan {
+  id: string;
+  name: string;
+  startMonth: number;
+  startYear: number;
+  endMonth: number;
+  endYear: number;
+  startPieces: number; // e.g., 13
+  endDailyPieces: number; // e.g., 12.9 per day
+  growthCurve: GrowthCurve;
+  growthRate: number; // calculated monthly growth factor
+  weekdayWeights: {
+    sunday: number;
+    monday: number;
+    tuesday: number;
+    wednesday: number;
+    thursday: number;
+    friday: number;
+    saturday: number;
+  };
+  yearlyTarget: {
+    pieces: number;
+    orders: number;
+    revenue: number; // minor units
+    sessions: number;
+    visitors: number;
+  };
+  monthlyTargets: MonthlyTarget[];
+  weeklyTargets: WeeklyTarget[];
+  dailyTargets: DailyTarget[];
+  catalogTarget: {
+    totalProductsByDate: string; // ISO date
+    targetCount: number;
+    currentCount: number;
+  };
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  version: number; // T-010: versioning
+  changeHistory: Array<{
+    version: number;
+    changedAt: string;
+    changedBy: string;
+    reason: string;
+    changes: Record<string, any>;
+  }>;
+}
+
+export interface MetricActual {
+  date: string; // YYYY-MM-DD
+  piecesSold: number;
+  orders: number;
+  revenue: number; // minor units
+  grossProfit: number; // minor units
+  sessions: number;
+  visitors: number;
+  conversionRate: number;
+  aov: number; // minor units
+  unitsPerOrder: number;
+  newCustomers: number;
+  returningCustomers: number;
+  repeatRate: number;
+  emailSubscribers: number;
+  waitlistSignups: number;
+  contentPostsPublished: number;
+  adSpend: number; // minor units
+  roas: number;
+  returns: number;
+  refunds: number; // minor units
+  stockSellThrough: number; // percentage
+  productsListed: number;
+  productsPhotographed: number;
+  isDemo: boolean; // T-xxx: demo mode flag
+}
+
+// ==================== DAILY COACH SYSTEM ====================
+
+export type TaskStatus = 'pending' | 'done' | 'skipped' | 'snoozed' | 'blocked';
+
+export type TaskFamily =
+  | 'catalog'
+  | 'traffic'
+  | 'conversion'
+  | 'operations'
+  | 'finance'
+  | 'content'
+  | 'marketing'
+  | 'customer_service';
+
+export interface CoachTask {
+  id: string;
+  date: string; // YYYY-MM-DD
+  title: string;
+  family: TaskFamily;
+  status: TaskStatus;
+  priority: 'high' | 'medium' | 'low';
+  reason: string;
+  expectedImpact: {
+    pieces?: number;
+    revenue?: number; // minor units
+    description: string;
+  };
+  effortMinutes: number;
+  deepLink?: {
+    type: 'product' | 'order' | 'customer' | 'campaign' | 'settings' | 'analytics';
+    targetId: string;
+  };
+  autoGenerated: boolean; // true if generated by rules engine
+  completedAt?: string;
+  skippedReason?: string;
+  snoozedUntil?: string;
+  blockedReason?: string;
+  assignedTo?: string; // user ID
+  position: number; // rank in daily list
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DailyCoachBrief {
+  date: string; // YYYY-MM-DD
+  target: {
+    pieces: number;
+    orders: number;
+    revenue: number; // minor units
+  };
+  actual: {
+    pieces: number;
+    orders: number;
+    revenue: number; // minor units
+  };
+  pace: 'ahead' | 'on_track' | 'behind';
+  gap: number; // pieces gap
+  probabilityOfHitting: number; // 0-100 percentage
+  tasks: CoachTask[];
+  totalEffortMinutes: number;
+  topPriorities: string[]; // task IDs
+  riskPanel: Array<{
+    type: 'stock_out' | 'late_shipment' | 'payment_failure' | 'site_error';
+    severity: 'high' | 'medium' | 'low';
+    message: string;
+    targetId?: string;
+  }>;
+  opportunityPanel: Array<{
+    type: 'trending_product' | 'rising_search' | 'returning_visitor';
+    message: string;
+    targetId?: string;
+  }>;
+  winsPanel: Array<{
+    type: 'first_sale' | 'milestone' | 'streak';
+    message: string;
+  }>;
+  dailyScore: number; // 0-100
+  streak: number; // consecutive days meeting target
+  carryOverCount: number;
+  generatedAt: string;
+}
+
+// ==================== REVERSE FUNNEL ====================
+
+export interface FunnelStep {
+  stepName: string;
+  rate: number; // conversion rate to next step
+  benchmark: number; // industry or historical benchmark
+  actual: number; // current actual rate
+  gap: number; // actual - benchmark
+}
+
+export interface ReverseFunnelCalculation {
+  targetPieces: number;
+  unitsPerOrder: number;
+  targetOrders: number;
+  conversionRate: number;
+  targetSessions: number;
+  visitorsPerSession: number;
+  targetVisitors: number;
+  channelBreakdown: Array<{
+    channel: string;
+    share: number; // percentage of traffic
+    requiredSessions: number;
+    requiredVisitors: number;
+  }>;
+  funnelSteps: FunnelStep[];
+  bottleneck: {
+    stepName: string;
+    gap: number;
+    impact: number; // pieces lost due to this bottleneck
+  };
+  sensitivityAnalysis: Array<{
+    metric: string;
+    currentValue: number;
+    improvedValue: number;
+    sessionsSaved: number;
+  }>;
+  generatedAt: string;
+}
+
+// ==================== AI ADVISOR ====================
+
+export interface AdvisorInsight extends AiInsight {
+  metricImpact?: {
+    metricId: string;
+    beforeValue: number;
+    expectedAfterValue: number;
+  };
+  learningFlag?: boolean; // track if this insight type historically moves numbers
+  experimentSuggested?: {
+    variantA: string;
+    variantB: string;
+    metric: string;
+    duration: string;
+  };
+}

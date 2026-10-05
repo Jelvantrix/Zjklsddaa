@@ -28,12 +28,12 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import { Product, Order, Customer, WaitlistEntry, Discount, AiInsight, DailyStat, AuditLog } from '../types';
-import { useAuth } from '../firebase/AuthContext';
+import { useAuth } from '../supabase/AuthContext';
 import {
   subscribeToOrders,
   subscribeToCustomers,
   subscribeToWaitlist,
-} from '../firebase/dbService';
+} from '../supabase/dbService';
 import { AdminCommandPalette } from './AdminCommandPalette';
 import { AdminNotificationsModal } from './AdminNotificationsModal';
 import { AdminProductsView } from './products/AdminProductsView';
@@ -62,7 +62,7 @@ import {
   SEED_DISCOUNTS,
   SEED_DAILY_STATS,
   SEED_INSIGHTS,
-} from '../firebase/seedData';
+} from '../data/seedData';
 
 interface AdminLayoutProps {
   onBackToStorefront: () => void;
@@ -73,26 +73,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onBackToStorefront,
   onViewProductInStore,
 }) => {
-  const { role, switchRole, adminProfile, isOwner } = useAuth();
+  const { role, adminProfile, isAdmin, isOwner, isEditor } = useAuth();
   const { products, collections, categories, content, settings, resetDemoData } = useStorefrontData();
 
   // Active Admin Subview
   const [currentView, setCurrentView] = useState<string>('products');
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
-  // Security & Terminal Gate State: locked by default until authorized credentials entered
-  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(() => {
-    const unlockedTimestamp = sessionStorage.getItem('zejesh_sec_unlocked_ts');
-    const authStatus = sessionStorage.getItem('zejesh_admin_session_auth');
-    if (unlockedTimestamp && authStatus === 'authenticated') {
-      return false; // valid active session
-    }
-    return true; // Enforce security gate login
-  });
+  // Security & Terminal Gate State.
+  // Locked by default. Authorisation comes from Supabase Auth + the
+  // `public.admins` row, NOT from anything writable in browser storage.
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(true);
 
-  const [masterPasskey, setMasterPasskey] = useState<string>(() => {
-    return localStorage.getItem('zejesh_studio_passkey') || 'ZEJESH-2026-STUDIO';
-  });
+  useEffect(() => {
+    // Locks the console the moment there is no authorised admin session
+    // (sign-in, sign-out, or an expired token).
+    setIsTerminalLocked(!isAdmin);
+  }, [isAdmin]);
 
   const [autoLockMinutes, setAutoLockMinutes] = useState<number>(() => {
     const saved = localStorage.getItem('zejesh_sec_autolock_mins');
@@ -123,22 +120,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
     },
   ]);
-
-  // Handle passkey update
-  const handleUpdatePasskey = (newKey: string) => {
-    setMasterPasskey(newKey);
-    localStorage.setItem('zejesh_studio_passkey', newKey);
-    setAuditLogs((prev) => [
-      {
-        id: `audit-${Date.now()}`,
-        who: adminProfile?.email || 'owner@zejesh.fi',
-        action: 'PASSKEY_ROTATED',
-        target: 'Studio Master Key',
-        at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-  };
 
   const handleUpdateAutoLock = (mins: number) => {
     setAutoLockMinutes(mins);
@@ -288,7 +269,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         isLocked={isTerminalLocked}
         onUnlock={handleUnlockTerminal}
         onExitToStore={onBackToStorefront}
-        masterPasskey={masterPasskey}
       />
 
       {/* TOP BAR: Refined Hairline Boundaries */}
@@ -360,18 +340,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <span className="hidden lg:inline text-[11px] uppercase tracking-wider">Lock</span>
           </button>
 
-          {/* Role Indicator & Switcher */}
+          {/* Role Indicator — read-only. The role is assigned in
+              `public.admins` and cannot be escalated from the client. */}
           <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-black/[0.08]">
             <span className="text-[11px] text-black/50">Role:</span>
-            <select
-              value={role || 'owner'}
-              onChange={(e) => switchRole(e.target.value as any)}
-              className="py-0.5 text-[11px] bg-transparent cursor-pointer font-medium uppercase focus:outline-none"
+            <span
+              className="py-0.5 px-1.5 text-[11px] font-medium uppercase border border-black/[0.08] bg-black/[0.03]"
+              title="Assigned by the owner in Admin → Security. Row level security enforces this server-side."
             >
-              <option value="owner">Owner (Full Admin)</option>
-              <option value="editor">Editor (Write Access)</option>
-              <option value="viewer">Viewer (Read Only)</option>
-            </select>
+              {role || 'viewer'}{isOwner ? ' (Full Admin)' : isEditor ? ' (Write Access)' : ' (Read Only)'}
+            </span>
           </div>
 
           {/* Back to storefront link */}
@@ -593,8 +571,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {currentView === 'security' && (
             <AdminSecurityView
-              masterPasskey={masterPasskey}
-              onUpdatePasskey={handleUpdatePasskey}
               autoLockMinutes={autoLockMinutes}
               onUpdateAutoLock={handleUpdateAutoLock}
               onLockTerminalNow={handleLockTerminalNow}

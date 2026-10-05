@@ -14,7 +14,9 @@ interface MobileMenuProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
-  onOpenJournal: () => void;
+  onNavigateStory: () => void;
+  onNavigateVote: () => void;
+  onNavigateJournal: () => void;
   categories?: Category[];
 }
 
@@ -27,7 +29,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
-  onOpenJournal,
+  onNavigateStory,
+  onNavigateVote,
+  onNavigateJournal,
   categories = [],
 }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -59,11 +63,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
         });
       });
 
-      // Exactly ONE collections button, followed by lookbook and journal
+      // Exactly ONE collections button, followed by lookbook, story, vote
       items.push(
         { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
         { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
-        { key: 'journal', label: t.nav.journal, subKey: null, categoryId: 'journal' }
+        { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
+        { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' }
       );
       return items;
     }
@@ -75,7 +80,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet', categoryId: 'asusteet' },
       { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
       { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
-      { key: 'journal', label: t.nav.journal, subKey: null, categoryId: 'journal' },
+      { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
+      { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' },
     ];
   }, [categories, t]);
 
@@ -135,7 +141,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                     if (item.subKey) {
                       setActiveCategory(item.subKey);
                     } else if (item.key === 'journal') {
-                      onOpenJournal();
+                      onNavigateJournal();
                       onClose();
                     } else if (item.key === 'lookbook') {
                       onNavigateLookbook();

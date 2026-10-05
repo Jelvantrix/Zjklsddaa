@@ -1,24 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, Mail, Key, AlertTriangle, ArrowLeft, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useAuth } from '../../supabase/AuthContext';
 
 interface AdminSecurityGateProps {
   isLocked: boolean;
   onUnlock: () => void;
   onExitToStore: () => void;
-  masterPasskey?: string;
 }
-
-const AUTHORIZED_ADMIN_EMAIL = 'huxaifa0fficial@gmail.com';
-const AUTHORIZED_ADMIN_PASS = 'JM#942JD{:"@(#JDdw3dad@(@NCVAUK8234-1';
 
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_SECONDS = 15 * 60; // 15 minutes lockout on brute-force
 
+/**
+ * Administrative sign-in gate.
+ *
+ * Authentication is performed by Supabase Auth (passwords are hashed
+ * server-side and never leave the database). This component only collects
+ * credentials and relays them — there is no client-side secret to extract
+ * from the bundle, and RLS independently rejects any unauthorised session.
+ */
 export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
   isLocked,
   onUnlock,
   onExitToStore,
 }) => {
+  const { signIn } = useAuth();
+
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -55,12 +62,12 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
 
   const isLockoutActive = lockoutUntil !== null && lockoutUntil > Date.now();
 
-  const handleVerify = (e?: React.FormEvent) => {
+  const handleVerify = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (isLockoutActive) return;
+    if (isLockoutActive || isAuthenticating) return;
 
     const trimmedEmail = emailInput.trim().toLowerCase();
-    const trimmedPass = passwordInput.trim();
+    const trimmedPass = passwordInput;
 
     if (!trimmedEmail || !trimmedPass) {
       setErrorMsg('Please enter both administrative email and password.');
@@ -70,21 +77,13 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
     setIsAuthenticating(true);
     setErrorMsg('');
 
-    // Verification with anti-timing attack delay
-    setTimeout(() => {
-      setIsAuthenticating(false);
-      const isEmailValid =
-        trimmedEmail === AUTHORIZED_ADMIN_EMAIL.toLowerCase() ||
-        trimmedEmail === 'almurtazascoutsdata@gmail.com';
-      const isPassValid = trimmedPass === AUTHORIZED_ADMIN_PASS;
+    try {
+      const result = await signIn(trimmedEmail, trimmedPass);
 
-      if (isEmailValid && isPassValid) {
+      if (result.success) {
         setFailedAttempts(0);
         localStorage.removeItem('zejesh_sec_failed_attempts');
         localStorage.removeItem('zejesh_sec_lockout_until');
-        sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
-        sessionStorage.setItem('zejesh_admin_session_auth', 'authenticated');
-        sessionStorage.setItem('zejesh_admin_session_email', trimmedEmail);
         setEmailInput('');
         setPasswordInput('');
         onUnlock();
@@ -100,11 +99,15 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
           setErrorMsg('Maximum unauthorized attempts exceeded. System quarantined for 15 minutes.');
         } else {
           setErrorMsg(
-            `Access Denied: Invalid email or password. (${MAX_FAILED_ATTEMPTS - nextAttempts} attempts remaining)`
+            `${result.error || 'Access Denied: Invalid email or password.'} (${MAX_FAILED_ATTEMPTS - nextAttempts} attempts remaining)`
           );
         }
       }
-    }, 450);
+    } catch {
+      setErrorMsg('Authentication service unavailable. Please try again.');
+    } finally {
+      setIsAuthenticating(false);
+    }
   };
 
   const formatSeconds = (sec: number) => {
@@ -136,8 +139,8 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
       {/* Center login authentication card */}
       <div className="max-w-md w-full mx-auto my-auto py-6 sm:py-8">
         <div className="border border-white/10 bg-neutral-900/80 p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative">
-          <div className="w-12 h-12 border border-white/20 mx-auto flex items-center justify-center mb-5 text-white bg-black/40">
-            <Lock className="w-5 h-5 stroke-[1.5]" />
+          <div className="w-12 h-12 border border-white/20 mx-auto flex items-center justify-center mb-5 text-black bg-white/95">
+            <Lock className="w-5 h-5 stroke-[1.5] text-black" />
           </div>
 
           <div className="text-center mb-6">
@@ -148,7 +151,7 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
               Studio Portal Access
             </h1>
             <p className="text-[11.5px] text-white/60 leading-relaxed font-sans">
-              Enter your master studio credentials to manage production catalog, orders, real-time inventory, and live client relations.
+              Sign in with your studio account to manage production catalog, orders, real-time inventory, and live client relations.
             </p>
           </div>
 
@@ -169,13 +172,14 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
             <form onSubmit={handleVerify} className="space-y-4">
               <div>
                 <label className="block text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1.5 flex items-center gap-1.5">
-                  <Mail className="w-3 h-3 text-white/40" />
+                  <Mail className="w-3.5 h-3.5 text-white/40" />
                   <span>Admin Email</span>
                 </label>
                 <input
                   type="email"
                   autoFocus
                   required
+                  autoComplete="username"
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="Enter administrator email..."
@@ -186,16 +190,17 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
 
               <div>
                 <label className="block text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1.5 flex items-center gap-1.5">
-                  <Key className="w-3 h-3 text-white/40" />
-                  <span>Master Password</span>
+                  <Key className="w-3.5 h-3.5 text-white/40" />
+                  <span>Password</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete="current-password"
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Enter production password..."
+                    placeholder="Enter your password..."
                     disabled={isAuthenticating}
                     className="w-full px-3.5 py-2.5 text-xs bg-black/80 border border-white/20 text-white placeholder-white/25 focus:border-white focus:outline-none pr-10 font-mono tracking-wider"
                   />
@@ -213,7 +218,7 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
 
               {errorMsg && (
                 <div className="p-3 text-xs text-rose-300 bg-rose-950/60 border border-rose-700/50 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5" />
                   <span className="leading-snug">{errorMsg}</span>
                 </div>
               )}
@@ -227,29 +232,10 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
                 <span>{isAuthenticating ? 'Authenticating System...' : 'Access Studio Console'}</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => {
-                  setEmailInput('huxaifa0fficial@gmail.com');
-                  setPasswordInput(AUTHORIZED_ADMIN_PASS);
-                  setFailedAttempts(0);
-                  localStorage.removeItem('zejesh_sec_failed_attempts');
-                  localStorage.removeItem('zejesh_sec_lockout_until');
-                  sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
-                  sessionStorage.setItem('zejesh_admin_session_auth', 'authenticated');
-                  sessionStorage.setItem('zejesh_admin_session_email', 'huxaifa0fficial@gmail.com');
-                  onUnlock();
-                }}
-                className="w-full py-2 bg-neutral-800/80 border border-white/20 text-white/90 hover:text-white hover:bg-neutral-800 text-[11px] uppercase tracking-[0.16em] font-mono cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>1-Click Owner Authorization</span>
-              </button>
-
               <div className="pt-2 text-center">
                 <span className="text-[10px] text-white/30 flex items-center justify-center gap-1.5">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-400" />
-                  <span>Encrypted Real-Time Production Environment</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Credentials verified server-side · sessions enforced by row level security</span>
                 </span>
               </div>
             </form>
@@ -258,17 +244,17 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
       </div>
 
       {/* Footer security badges */}
-      <div className="flex flex-wrap items-center justify-between text-[10.5px] text-white/40 border-t border-white/10 pt-4 gap-2 max-w-6xl w-full mx-auto">
+      <div className="flex flex-wrap items-center justify-between text-[10.5px] text-white/40 border-t border-white/10 pt-4 gap-4 max-w-6xl w-full mx-auto">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-            <span>AUTHENTICATION PROTOCOL: V2-PRODUCTION</span>
+            <span>AUTHENTICATION PROTOCOL: SUPABASE AUTH</span>
           </span>
           <span>·</span>
           <span>LOCATION: ARCHIVAL CORE</span>
         </div>
         <div>
-          <span>SESSION LOGS ACTIVATED</span>
+          <span>ROW LEVEL SECURITY ENFORCED</span>
         </div>
       </div>
     </div>

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Collection, Product } from '../../types';
 import { Layers, Clock, Users, ArrowUp, ArrowDown, Send, Check, Plus, AlertCircle } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminCollectionsViewProps {
   collections: Collection[];

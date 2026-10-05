@@ -7,14 +7,11 @@ import {
   subscribeToContent,
   subscribeToSettings,
   seedDatabase,
-} from '../firebase/dbService';
+} from '../supabase/dbService';
 import {
-  SEED_PRODUCTS,
-  SEED_CATEGORIES,
-  SEED_COLLECTIONS,
   SEED_CONTENT,
   SEED_SETTINGS,
-} from '../firebase/seedData';
+} from '../data/seedData';
 
 interface StorefrontDataContextType {
   products: Product[];
@@ -29,9 +26,9 @@ interface StorefrontDataContextType {
 }
 
 const StorefrontDataContext = createContext<StorefrontDataContextType>({
-  products: SEED_PRODUCTS.filter((p) => p.status === 'live'),
-  categories: SEED_CATEGORIES,
-  collections: SEED_COLLECTIONS,
+  products: [],
+  categories: [],
+  collections: [],
   content: SEED_CONTENT,
   settings: SEED_SETTINGS,
   loading: true,
@@ -42,25 +39,22 @@ const StorefrontDataContext = createContext<StorefrontDataContextType>({
 
 export const StorefrontDataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>(SEED_CATEGORIES);
-  const [collections, setCollections] = useState<Collection[]>(SEED_COLLECTIONS);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
   const [content, setContent] = useState<StoreContent>(SEED_CONTENT);
   const [settings, setSettings] = useState<StoreSettings>(SEED_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [isLiveFromFirestore, setIsLiveFromFirestore] = useState(false);
 
   useEffect(() => {
-    // 1. Initial background seed check
-    seedDatabase(false).catch(() => {});
-
-    // 2. Subscribe to real-time products
+    // 1. Subscribe to real-time products (no automatic seeding)
     const unsubProducts = subscribeToStorefrontProducts((liveProducts, isLive) => {
       setProducts(liveProducts);
       setIsLiveFromFirestore(isLive);
       setLoading(false);
     });
 
-    // 3. Subscribe to categories, collections, content, settings
+    // 2. Subscribe to categories, collections, content, settings
     const unsubCats = subscribeToCategories((cats) => setCategories(cats));
     const unsubCols = subscribeToCollections((cols) => setCollections(cols));
     const unsubContent = subscribeToContent((cnt) => setContent(cnt));
@@ -76,10 +70,9 @@ export const StorefrontDataProvider: React.FC<{ children: React.ReactNode }> = (
   }, []);
 
   const resetDemoData = async (): Promise<boolean> => {
-    setLoading(true);
-    const res = await seedDatabase(true);
+    // No longer auto-seeds data - admin must manually add products
     setLoading(false);
-    return res.success;
+    return false;
   };
 
   const updateStoreContentLocal = (updated: StoreContent) => {
@@ -89,7 +82,7 @@ export const StorefrontDataProvider: React.FC<{ children: React.ReactNode }> = (
   return (
     <StorefrontDataContext.Provider
       value={{
-        products: products.length > 0 ? products : SEED_PRODUCTS.filter((p) => p.status === 'live'),
+        products,
         categories,
         collections,
         content,

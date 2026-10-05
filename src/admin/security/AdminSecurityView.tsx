@@ -12,10 +12,9 @@ import {
   Fingerprint,
 } from 'lucide-react';
 import { AuditLog } from '../../types';
+import { useAuth } from '../../supabase/AuthContext';
 
 interface AdminSecurityViewProps {
-  masterPasskey: string;
-  onUpdatePasskey: (newPasskey: string) => void;
   autoLockMinutes: number;
   onUpdateAutoLock: (minutes: number) => void;
   onLockTerminalNow: () => void;
@@ -23,35 +22,47 @@ interface AdminSecurityViewProps {
 }
 
 export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
-  masterPasskey,
-  onUpdatePasskey,
   autoLockMinutes,
   onUpdateAutoLock,
   onLockTerminalNow,
   auditLogs,
 }) => {
-  const [newPasskey, setNewPasskey] = useState('');
-  const [confirmPasskey, setConfirmPasskey] = useState('');
+  const { changePassword, adminProfile } = useAuth();
+
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [passkeySuccess, setPasskeySuccess] = useState(false);
   const [passkeyError, setPasskeyError] = useState('');
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
   const [isIpEnforced, setIsIpEnforced] = useState(true);
   const [is2FaEnforced, setIs2FaEnforced] = useState(true);
 
-  const handleSavePasskey = (e: React.FormEvent) => {
+  const handleSavePasskey = async (e: React.FormEvent) => {
     e.preventDefault();
     setPasskeyError('');
-    if (newPasskey.length < 4) {
-      setPasskeyError('Passkey must be at least 4 characters or digits.');
+
+    if (newPassword.length < 8) {
+      setPasskeyError('Password must be at least 8 characters.');
       return;
     }
-    if (newPasskey !== confirmPasskey) {
-      setPasskeyError('Passkeys do not match.');
+    if (newPassword !== confirmPassword) {
+      setPasskeyError('Passwords do not match.');
       return;
     }
 
-    onUpdatePasskey(newPasskey);
-    setNewPasskey('');
-    setConfirmPasskey('');
+    setIsSavingPassword(true);
+    // Handed to Supabase Auth, which hashes it server-side. The plaintext is
+    // never stored or logged by this application.
+    const result = await changePassword(newPassword);
+    setIsSavingPassword(false);
+
+    if (!result.success) {
+      setPasskeyError(result.error || 'Unable to update password.');
+      return;
+    }
+
+    setNewPassword('');
+    setConfirmPassword('');
     setPasskeySuccess(true);
     setTimeout(() => setPasskeySuccess(false), 3000);
   };
@@ -122,41 +133,43 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
 
       {/* Security Policies & Controls */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Passkey Change Form */}
+        {/* Password Change Form */}
         <div className="p-5 border border-black/[0.08] bg-white space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-black/[0.08]">
             <Key className="w-4 h-4 text-black/70" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-black">
-              Studio Passkey Management
+              Account Password
             </h2>
           </div>
 
           <p className="text-[11px] text-black/60 font-sans leading-relaxed">
-            Update the master access key required to unlock this studio administration terminal.
-            The current active passkey is verified upon each session unlock.
+            Changes the password for <strong>{adminProfile?.email || 'your studio account'}</strong>.
+            Credentials are hashed server-side by Supabase Auth — this application never stores them.
           </p>
 
           <form onSubmit={handleSavePasskey} className="space-y-3">
             <div>
-              <label className="block text-[10px] uppercase text-black/50 mb-1">New Passkey / PIN</label>
+              <label className="block text-[10px] uppercase text-black/50 mb-1">New Password</label>
               <input
                 type="password"
                 required
-                value={newPasskey}
-                onChange={(e) => setNewPasskey(e.target.value)}
-                placeholder="Enter new passkey..."
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Minimum 8 characters"
                 className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-[10px] uppercase text-black/50 mb-1">Confirm New Passkey</label>
+              <label className="block text-[10px] uppercase text-black/50 mb-1">Confirm New Password</label>
               <input
                 type="password"
                 required
-                value={confirmPasskey}
-                onChange={(e) => setConfirmPasskey(e.target.value)}
-                placeholder="Repeat new passkey..."
+                autoComplete="new-password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Repeat new password"
                 className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
               />
             </div>
@@ -171,15 +184,16 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
             {passkeySuccess && (
               <div className="text-xs text-emerald-600 flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Studio Passkey updated successfully!</span>
+                <span>Password updated successfully!</span>
               </div>
             )}
 
             <button
               type="submit"
-              className="px-4 py-2 bg-black text-white text-xs uppercase tracking-wider hover:bg-black/85 transition-colors cursor-pointer"
+              disabled={isSavingPassword}
+              className="px-4 py-2 bg-black text-white text-xs uppercase tracking-wider hover:bg-black/85 transition-colors cursor-pointer disabled:opacity-50"
             >
-              Update Passkey
+              {isSavingPassword ? 'Updating...' : 'Update Password'}
             </button>
           </form>
         </div>

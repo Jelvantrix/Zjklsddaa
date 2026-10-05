@@ -5,8 +5,7 @@
  * Uses anonymous random visitorId and sessionId (no IP stored, no fingerprinting).
  */
 
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { supabase } from '../supabase/config';
 
 export type TrackingEventType =
   | 'page_view'
@@ -159,10 +158,13 @@ class BehaviorTracker {
     this.eventBuffer = [];
 
     try {
-      // Write each event to Firestore events collection
-      // For fast batching, write directly to Firestore
+      // Write each event to the Supabase `events` table.
+      // Fire-and-forget so tracking never interrupts the user experience.
       for (const evt of toFlush) {
-        setDoc(doc(db, 'events', evt.id), evt).catch(() => {});
+        supabase.from('events').insert(evt).then(
+          () => undefined,
+          () => undefined
+        );
       }
     } catch {
       // Fail silently to never interrupt user experience

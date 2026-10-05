@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Discount } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 import { Plus, Percent, Check, Trash2, X } from 'lucide-react';
 
 interface AdminDiscountsViewProps {
@@ -27,9 +26,13 @@ export const AdminDiscountsView: React.FC<AdminDiscountsViewProps> = ({ discount
   const handleToggleActive = async (discount: Discount) => {
     if (!isEditor) return;
     try {
-      await updateDoc(doc(db, 'discounts', discount.id), {
-        active: !discount.active,
-      });
+      const { error } = await supabase
+        .from('discounts')
+        .update({
+          active: !discount.active,
+        })
+        .eq('id', discount.id);
+      if (error) throw error;
       await logAuditEvent(adminProfile?.name || 'admin', 'toggle_discount', discount.code, {
         active: !discount.active,
       });
@@ -57,7 +60,8 @@ export const AdminDiscountsView: React.FC<AdminDiscountsViewProps> = ({ discount
         startAt: new Date().toISOString(),
       };
 
-      await setDoc(doc(db, 'discounts', id), newDiscount);
+      const { error } = await supabase.from('discounts').upsert({ ...newDiscount, id });
+      if (error) throw error;
       await logAuditEvent(adminProfile?.name || 'admin', 'create_discount', codeUpper, {
         value: newDiscount.value,
         type: newDiscount.type,

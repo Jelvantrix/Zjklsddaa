@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Product } from '../../types';
 import { Download, AlertCircle, Check, Search, ArrowUp, ArrowDown } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminInventoryViewProps {
   products: Product[];
@@ -61,15 +60,19 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
       const updatedVariants = variantsList.map((v) => (v.sku === sku ? { ...v, stock: newStock } : v));
       const totalStock = updatedVariants.reduce((a, b) => a + (Number(b.stock) || 0), 0);
 
-      await updateDoc(doc(db, 'products', productId), {
-        variants: updatedVariants,
-        stock: totalStock,
-        updatedAt: new Date().toISOString(),
-      });
+      await supabase
+        .from('products')
+        .update({
+          variants: updatedVariants,
+          stock: totalStock,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', productId);
 
       // Write immutable inventory log
       const logId = `inv-${Date.now()}-${sku}`;
-      await setDoc(doc(db, 'inventoryLog', logId), {
+      await supabase.from('inventoryLog').upsert({
+        id: logId,
         productId,
         sku,
         delta,

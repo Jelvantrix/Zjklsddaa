@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductVariant, Category, Collection } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { logAuditEvent } from '../../supabase/dbService';
+import { supabase } from '../../supabase/config';
 import {
   X,
   Save,
@@ -139,6 +138,36 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   const focalY = activeImage?.focalY ?? 18;
   const focalScale = (formData as any).imageScale ?? (formData.cropVariation?.onModel?.scale ?? 1.05);
 
+  /**
+   * Builds a *complete* `cropVariation`, preserving the existing packshot,
+   * detail crops and `onModel.aspectRatio`.
+   *
+   * The previous inline spreads dropped `packshot` (for records without saved
+   * crop data) and overwrote `onModel` without its `aspectRatio`, so every
+   * focal-point edit silently lost crop metadata.
+   */
+  const cropWithOnModel = (position: string, scale: number): Product['cropVariation'] => {
+    const base = formData.cropVariation;
+    const onModel = base?.onModel;
+    return {
+      packshot: base?.packshot || {
+        position: 'center center',
+        scale: 1,
+        aspectRatio: '3/4',
+      },
+      onModel: {
+        position,
+        scale,
+        aspectRatio: onModel?.aspectRatio || '3/4',
+        ...(onModel?.flipped !== undefined ? { flipped: onModel.flipped } : {}),
+      },
+      detail1: base?.detail1 || { position: 'center center', scale: 1.2 },
+      detail2: base?.detail2 || { position: 'center center', scale: 1.2 },
+      detail3: base?.detail3 || { position: 'center center', scale: 1.2 },
+      detail4: base?.detail4 || { position: 'center center', scale: 1.2 },
+    };
+  };
+
   const handleUpdateImageUrl = (url: string) => {
     const updatedImages = [...(formData.images || [])];
     if (updatedImages[0]) {
@@ -162,15 +191,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       ...formData,
       imagePosition: `${x}% ${focalY}%`,
       images: updatedImages,
-      cropVariation: {
-        ...(formData.cropVariation || {
-          detail1: { position: 'center center', scale: 1.2 },
-          detail2: { position: 'center center', scale: 1.2 },
-          detail3: { position: 'center center', scale: 1.2 },
-          detail4: { position: 'center center', scale: 1.2 },
-        }),
-        onModel: { position: `${x}% ${focalY}%`, scale: focalScale },
-      },
+      cropVariation: cropWithOnModel(`${x}% ${focalY}%`, focalScale),
     });
   };
 
@@ -183,15 +204,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       ...formData,
       imagePosition: `${focalX}% ${y}%`,
       images: updatedImages,
-      cropVariation: {
-        ...(formData.cropVariation || {
-          detail1: { position: 'center center', scale: 1.2 },
-          detail2: { position: 'center center', scale: 1.2 },
-          detail3: { position: 'center center', scale: 1.2 },
-          detail4: { position: 'center center', scale: 1.2 },
-        }),
-        onModel: { position: `${focalX}% ${y}%`, scale: focalScale },
-      },
+      cropVariation: cropWithOnModel(`${focalX}% ${y}%`, focalScale),
     });
   };
 
@@ -199,15 +212,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     setFormData({
       ...formData,
       imageScale: scale,
-      cropVariation: {
-        ...(formData.cropVariation || {
-          detail1: { position: 'center center', scale: 1.2 },
-          detail2: { position: 'center center', scale: 1.2 },
-          detail3: { position: 'center center', scale: 1.2 },
-          detail4: { position: 'center center', scale: 1.2 },
-        }),
-        onModel: { position: `${focalX}% ${focalY}%`, scale },
-      },
+      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, scale),
     });
   };
 
@@ -227,15 +232,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         ...formData,
         imagePosition: `${x}% ${y}%`,
         images: updatedImages,
-        cropVariation: {
-          ...(formData.cropVariation || {
-            detail1: { position: 'center center', scale: 1.2 },
-            detail2: { position: 'center center', scale: 1.2 },
-            detail3: { position: 'center center', scale: 1.2 },
-            detail4: { position: 'center center', scale: 1.2 },
-          }),
-          onModel: { position: `${x}% ${y}%`, scale: focalScale },
-        },
+        cropVariation: cropWithOnModel(`${x}% ${y}%`, focalScale),
       });
     }
   };
@@ -257,22 +254,15 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       hoverImage: hoverUrl || primaryUrl,
       imagePosition: `${focalX}% ${focalY}%`,
       imageScale: focalScale,
-      cropVariation: {
-        ...(formData.cropVariation || {
-          detail1: { position: 'center center', scale: 1.2 },
-          detail2: { position: 'center center', scale: 1.2 },
-          detail3: { position: 'center center', scale: 1.2 },
-          detail4: { position: 'center center', scale: 1.2 },
-        }),
-        onModel: { position: `${focalX}% ${focalY}%`, scale: focalScale },
-      },
+      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, focalScale),
       isComingSoon: Boolean(formData.isComingSoon || formData.status === 'coming_soon'),
       comingSoonNotice: formData.comingSoonNotice || '',
       updatedAt: new Date().toISOString(),
     };
 
     try {
-      await setDoc(doc(db, 'products', productId), cleanProduct, { merge: true });
+      const { error } = await supabase.from('products').upsert(cleanProduct);
+      if (error) throw error;
 
       // Log immutable audit entry
       await logAuditEvent(
@@ -292,7 +282,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       }, 700);
     } catch (err: any) {
       setIsSaving(false);
-      setSaveError(err.message || 'Error occurred while saving to Firestore.');
+      setSaveError(err.message || 'Error occurred while saving to Supabase.');
     }
   };
 

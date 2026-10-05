@@ -5,8 +5,7 @@
  * Anonymous visitorId and sessionId, no IP stored, no fingerprinting, honours Do Not Track.
  */
 
-import { collection, addDoc, doc, setDoc, getDoc, writeBatch } from 'firebase/firestore';
-import { db } from '../firebase/config';
+import { supabase } from '../supabase/config';
 import { TrackingEvent, TrackingEventType, DailyStat } from '../types';
 
 const CONSENT_STORAGE_KEY = 'zejesh_cookie_consent_v1';
@@ -221,15 +220,9 @@ class TrackingEngine {
     this.queue = [];
 
     try {
-      const batch = writeBatch(db);
-      const eventsCol = collection(db, 'events');
-
-      toSend.forEach((ev) => {
-        const ref = doc(eventsCol);
-        batch.set(ref, ev);
-      });
-
-      await batch.commit();
+      // Bulk insert the batch into the Supabase `events` table
+      const { error } = await supabase.from('events').insert(toSend);
+      if (error) throw error;
     } catch (err) {
       // In case of write failure or offline, keep small buffer without memory leak
       if (this.queue.length < 50) {

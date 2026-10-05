@@ -19,7 +19,9 @@ import { StaticPages } from './components/StaticPages';
 import { Footer } from './components/Footer';
 import { CustomCursor } from './components/CustomCursor';
 import { Preloader } from './components/Preloader';
-import { AuthProvider } from './firebase/AuthContext';
+import { StoryPage } from './components/StoryPage';
+import { CommunityVotePage } from './components/CommunityVotePage';
+import { AuthProvider } from './supabase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
 
@@ -70,15 +72,9 @@ function StorefrontApp() {
   const [quickLookProduct, setQuickLookProduct] = useState<Product | null>(null);
   const [journalArticleId, setJournalArticleId] = useState<string | null>(null);
 
-  // Cart & Wishlist State
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => [
-    {
-      product: products[0] || ARCHIVE_PRODUCTS[0],
-      size: 'M',
-      quantity: 1,
-    },
-  ]);
-  const [wishlistIds, setWishlistIds] = useState<string[]>(['ze-002', 'ze-004']);
+  // Cart & Wishlist State - Start empty (no seeded data)
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [wishlistIds, setWishlistIds] = useState<string[]>([]);
 
   // Hero visibility tracking for header transparency and blend mode
   const [isHeroVisible, setIsHeroVisible] = useState(true);
@@ -265,6 +261,8 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+        onNavigateStory={() => navigateTo({ type: 'story' })}
+        onNavigateVote={() => navigateTo({ type: 'vote' })}
         isHeroVisible={route.type === 'home' && isHeroVisible}
         currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
         currentRouteType={route.type}
@@ -363,6 +361,22 @@ function StorefrontApp() {
           />
         )}
 
+        {/* PAGE: STORY */}
+        {route.type === 'story' && (
+          <StoryPage
+            onBackToHome={handleNavigateHome}
+            onExploreArchive={() => navigateTo({ type: 'archive' })}
+          />
+        )}
+
+        {/* PAGE: COMMUNITY VOTE / SUGGESTIONS */}
+        {route.type === 'vote' && (
+          <CommunityVotePage
+            onBackToHome={handleNavigateHome}
+            onNavigateArchive={() => navigateTo({ type: 'archive' })}
+          />
+        )}
+
         {/* PAGE: JOURNAL & ESSAYS */}
         {route.type === 'journal' && (
           <div className="max-w-[1720px] mx-auto px-6 md:px-10 py-24 min-h-screen">
@@ -431,7 +445,9 @@ function StorefrontApp() {
         onNavigateHome={handleNavigateHome}
         onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
         onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onOpenJournal={() => navigateTo({ type: 'journal' })}
+        onNavigateStory={() => navigateTo({ type: 'story' })}
+        onNavigateVote={() => navigateTo({ type: 'vote' })}
+        onNavigateJournal={() => navigateTo({ type: 'journal' })}
         categories={categories}
       />
 

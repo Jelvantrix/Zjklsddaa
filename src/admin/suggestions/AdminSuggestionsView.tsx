@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { CommunitySuggestion } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { subscribeToSuggestions, logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { subscribeToSuggestions, logAuditEvent } from '../../supabase/dbService';
 import {
   ThumbsUp,
   Sparkles,
@@ -61,10 +60,14 @@ export const AdminSuggestionsView: React.FC = () => {
   const handleUpdateStatus = async (id: string, newStatus: CommunitySuggestion['status']) => {
     if (!isEditor) return;
     try {
-      await updateDoc(doc(db, 'suggestions', id), {
-        status: newStatus,
-        updatedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('suggestions')
+        .update({
+          status: newStatus,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', id);
+      if (error) throw error;
       await logAuditEvent(
         adminProfile?.name || 'admin',
         'update_suggestion_status',
@@ -81,10 +84,14 @@ export const AdminSuggestionsView: React.FC = () => {
   const handleSaveCuratorNotes = async (id: string) => {
     if (!isEditor) return;
     try {
-      await updateDoc(doc(db, 'suggestions', id), {
-        curatorNotes: curatorNotes.trim(),
-        updatedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('suggestions')
+        .update({
+          curatorNotes: curatorNotes.trim(),
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', id);
+      if (error) throw error;
       setEditingId(null);
       setStatusMsg('Curator notes saved.');
       setTimeout(() => setStatusMsg(null), 3500);
@@ -97,7 +104,8 @@ export const AdminSuggestionsView: React.FC = () => {
     if (!isOwner) return;
     if (!window.confirm('Delete this community suggestion permanently?')) return;
     try {
-      await deleteDoc(doc(db, 'suggestions', id));
+      const { error } = await supabase.from('suggestions').delete().eq('id', id);
+      if (error) throw error;
       await logAuditEvent(adminProfile?.name || 'admin', 'delete_suggestion', id);
       setStatusMsg('Suggestion deleted.');
       setTimeout(() => setStatusMsg(null), 3500);

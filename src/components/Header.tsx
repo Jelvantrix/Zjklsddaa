@@ -20,6 +20,8 @@ interface HeaderProps {
   onNavigateHome: () => void;
   onNavigateLookbook: () => void;
   onNavigateSitemap: () => void;
+  onNavigateStory: () => void;
+  onNavigateVote: () => void;
   isHeroVisible: boolean;
   currentCategory?: string;
   currentRouteType?: string;
@@ -40,6 +42,8 @@ export const Header: React.FC<HeaderProps> = ({
   onNavigateHome,
   onNavigateLookbook,
   onNavigateSitemap,
+  onNavigateStory,
+  onNavigateVote,
   isHeroVisible,
   currentCategory,
   currentRouteType,
@@ -100,10 +104,12 @@ export const Header: React.FC<HeaderProps> = ({
         });
       });
 
-      // Exactly ONE collections button, followed by lookbook
+      // Exactly ONE collections button, followed by lookbook, story, vote
       items.push(
         { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
-        { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' }
+        { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
+        { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
+        { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' }
       );
       return items;
     }
@@ -115,6 +121,8 @@ export const Header: React.FC<HeaderProps> = ({
       { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet', categoryId: 'asusteet' },
       { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
       { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
+      { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
+      { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' },
     ];
   }, [categories, t]);
 
@@ -260,6 +268,8 @@ export const Header: React.FC<HeaderProps> = ({
               {dynamicNavItems.map((item) => {
                 const isActive =
                   (item.key === 'lookbook' && currentRouteType === 'lookbook') ||
+                  (item.key === 'story' && currentRouteType === 'story') ||
+                  (item.key === 'vote' && currentRouteType === 'vote') ||
                   (currentRouteType === 'archive' &&
                     (currentCategory === item.categoryId || (item.key === 'uutuudet' && currentCategory === 'all')));
 
@@ -272,6 +282,10 @@ export const Header: React.FC<HeaderProps> = ({
                       setHoveredNav(null);
                       if (item.key === 'lookbook') {
                         onNavigateLookbook();
+                      } else if (item.key === 'story') {
+                        onNavigateStory();
+                      } else if (item.key === 'vote') {
+                        onNavigateVote();
                       } else {
                         onSelectCategory(item.categoryId);
                       }

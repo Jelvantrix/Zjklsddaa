@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { Order, OrderStatus } from '../../types';
 import { Search, Printer, FileText, CheckCircle, RefreshCw, Truck, ArrowRight, X, Clock, ShoppingBag, Plus } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent, createStoreOrder } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent, createStoreOrder } from '../../supabase/dbService';
 
 interface AdminOrdersViewProps {
   orders: Order[];
@@ -54,11 +53,15 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
 
       const updatedTimeline = [...(selectedOrder.timeline || []), newTimelineItem];
 
-      await updateDoc(doc(db, 'orders', selectedOrder.id), {
-        status: newStatus,
-        timeline: updatedTimeline,
-        updatedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          status: newStatus,
+          timeline: updatedTimeline,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', selectedOrder.id);
+      if (error) throw error;
 
       await logAuditEvent(adminProfile?.name || 'admin', 'update_order_status', selectedOrder.id, {
         previous: selectedOrder.status,
@@ -82,10 +85,14 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
   const handleSaveTracking = async () => {
     if (!isEditor || !selectedOrder || !trackingNumber.trim()) return;
     try {
-      await updateDoc(doc(db, 'orders', selectedOrder.id), {
-        tracking: trackingNumber,
-        updatedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          tracking: trackingNumber,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', selectedOrder.id);
+      if (error) throw error;
       setSelectedOrder({ ...selectedOrder, tracking: trackingNumber });
       setTrackingNumber('');
       onRefresh();
@@ -104,11 +111,15 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
         note: internalNote,
       };
       const updatedTimeline = [...(selectedOrder.timeline || []), newTimelineItem];
-      await updateDoc(doc(db, 'orders', selectedOrder.id), {
-        timeline: updatedTimeline,
-        notes: internalNote,
-        updatedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          timeline: updatedTimeline,
+          notes: internalNote,
+          updatedAt: new Date().toISOString(),
+        })
+        .eq('id', selectedOrder.id);
+      if (error) throw error;
       setSelectedOrder({ ...selectedOrder, timeline: updatedTimeline, notes: internalNote });
       setInternalNote('');
       onRefresh();

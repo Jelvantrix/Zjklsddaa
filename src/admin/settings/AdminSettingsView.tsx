@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { StoreSettings, AuditLog, SocialPlatformLink } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, setDoc, collection, getDocs, orderBy, limit, query } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 import { Save, RotateCcw, Download, Shield, User, Clock, AlertTriangle, Plus, Trash2, Mail, Globe, Check, ExternalLink } from 'lucide-react';
 
 interface AdminSettingsViewProps {
@@ -65,10 +64,13 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
     // Load recent audit logs
     const loadAuditLogs = async () => {
       try {
-        const q = query(collection(db, 'auditLog'), orderBy('at', 'desc'), limit(15));
-        const snap = await getDocs(q);
+        const { data: rows } = await supabase
+          .from('auditLog')
+          .select('*')
+          .order('at', { ascending: false })
+          .limit(15);
         const logs: AuditLog[] = [];
-        snap.forEach((d) => logs.push({ ...(d.data() as AuditLog), id: d.id }));
+        (rows || []).forEach((row) => logs.push({ ...(row as AuditLog), id: row.id }));
         setAuditLogs(logs);
       } catch (err) {
         console.warn('Audit logs load warning:', err);
@@ -97,20 +99,17 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
         },
       };
 
-      await setDoc(doc(db, 'settings', 'store'), updatedSettings, { merge: true });
+      await supabase.from('settings').upsert({ ...updatedSettings, id: 'global-settings' });
 
       // 3. Update admins document for owner
       try {
-        await setDoc(
-          doc(db, 'admins', 'admin-owner'),
-          {
-            email: ownerEmail.trim().toLowerCase(),
-            role: 'owner',
-            name: 'Huxaifa (Owner)',
-            updatedAt: new Date().toISOString(),
-          },
-          { merge: true }
-        );
+        await supabase.from('admins').upsert({
+          email: ownerEmail.trim().toLowerCase(),
+          role: 'owner',
+          name: 'Huxaifa (Owner)',
+          updatedAt: new Date().toISOString(),
+          id: 'admin-owner',
+        });
       } catch {}
 
       await logAuditEvent(adminProfile?.name || 'admin', 'update_store_settings', 'settings', {

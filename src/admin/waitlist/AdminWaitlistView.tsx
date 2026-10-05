@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { WaitlistEntry, Collection } from '../../types';
 import { Download, Send, Check, Mail, Clock } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminWaitlistViewProps {
   waitlist: WaitlistEntry[];
@@ -28,10 +27,14 @@ export const AdminWaitlistView: React.FC<AdminWaitlistViewProps> = ({ waitlist, 
     if (!isEditor) return;
     setInvitedMap((prev) => ({ ...prev, [entry.id]: true }));
     try {
-      await updateDoc(doc(db, 'waitlist', entry.id), {
-        invited: true,
-        invitedAt: new Date().toISOString(),
-      });
+      const { error } = await supabase
+        .from('waitlist')
+        .update({
+          invited: true,
+          invitedAt: new Date().toISOString(),
+        })
+        .eq('id', entry.id);
+      if (error) throw error;
       await logAuditEvent(adminProfile?.name || 'admin', 'invite_waitlist', entry.id, {
         email: entry.email,
         dropId: entry.dropId,

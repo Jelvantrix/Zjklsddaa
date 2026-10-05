@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Product, DailyStat, AiInsight } from '../../types';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, setDoc, collection } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 import { GoogleGenAI } from '@google/genai';
 import {
   Sparkles,
@@ -127,10 +126,13 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
   const handleMarkInsightDone = async (insightId: string) => {
     if (!isEditor) return;
     try {
-      await updateDoc(doc(db, 'insights', insightId), {
-        status: 'done',
-        resolvedAt: new Date().toISOString(),
-      });
+      await supabase
+        .from('insights')
+        .update({
+          status: 'done',
+          resolvedAt: new Date().toISOString(),
+        })
+        .eq('id', insightId);
       await logAuditEvent(adminProfile?.name || 'admin', 'mark_insight_done', insightId);
       onRefresh();
     } catch {
@@ -169,7 +171,7 @@ Strictly valid JSON only.`,
 
         for (const item of parsed) {
           const id = `ins-ai-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
-          await setDoc(doc(db, 'insights', id), {
+          await supabase.from('insights').upsert({
             ...item,
             id,
             status: 'new',

@@ -8,7 +8,7 @@ import {
 } from '../data/mockData';
 import { FashionImage } from './FashionImage';
 import { Check, ArrowRight } from 'lucide-react';
-import { joinWaitlist } from '../firebase/dbService';
+import { joinWaitlist } from '../supabase/dbService';
 
 interface HomeSectionsProps {
   language: Language;

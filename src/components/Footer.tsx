@@ -4,7 +4,7 @@ import { translations } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { ArrowRight, Check } from 'lucide-react';
-import { joinWaitlist } from '../firebase/dbService';
+import { joinWaitlist } from '../supabase/dbService';
 
 interface FooterProps {
   language: Language;

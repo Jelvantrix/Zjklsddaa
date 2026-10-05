@@ -4,7 +4,7 @@ import { translations, formatPrice } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
-import { createStoreOrder } from '../firebase/dbService';
+import { createStoreOrder } from '../supabase/dbService';
 
 interface CheckoutModalProps {
   isOpen: boolean;

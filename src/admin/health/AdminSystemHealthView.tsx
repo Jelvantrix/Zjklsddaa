@@ -15,9 +15,8 @@ import {
   Server,
   Zap,
 } from 'lucide-react';
-import { collection, doc, setDoc, getDoc, getDocs, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../../firebase/config';
-import { useAuth } from '../../firebase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { useAuth } from '../../supabase/AuthContext';
 
 export const AdminSystemHealthView: React.FC = () => {
   const { user, adminProfile, role, isOwner } = useAuth();
@@ -63,28 +62,57 @@ export const AdminSystemHealthView: React.FC = () => {
   useEffect(() => {
     let unsubscribe: () => void = () => {};
     try {
-      const q = query(collection(db, 'events'), orderBy('timestamp', 'desc'), limit(50));
-      unsubscribe = onSnapshot(
-        q,
-        (snap) => {
-          setTotalEventsCount((prev) => Math.max(prev, snap.size));
-          if (!snap.empty) {
-            const newest = snap.docs[0].data();
-            if (newest.timestamp) {
-              setLastEventRawTs(newest.timestamp);
-              setLastEventTime(new Date(newest.timestamp).toLocaleTimeString());
-            }
-
-            // Calculate events in the last 60 seconds
-            const oneMinAgo = Date.now() - 60000;
-            const recentCount = snap.docs.filter((d) => (d.data().timestamp || 0) >= oneMinAgo).length;
-            setEventsPerMinute(recentCount);
+      const processEventRows = (rows: Array<{ timestamp?: number }>) => {
+        setTotalEventsCount((prev) => Math.max(prev, rows.length));
+        if (rows.length > 0) {
+          const newest = rows[0];
+          if (newest.timestamp) {
+            setLastEventRawTs(newest.timestamp);
+            setLastEventTime(new Date(newest.timestamp).toLocaleTimeString());
           }
-        },
-        (err) => {
-          console.warn('Events listener note:', err);
+
+          // Calculate events in the last 60 seconds
+          const oneMinAgo = Date.now() - 60000;
+          const recentCount = rows.filter((d) => (d.timestamp || 0) >= oneMinAgo).length;
+          setEventsPerMinute(recentCount);
         }
-      );
+      };
+
+      const channel = supabase
+        .channel('admin-health-events-channel')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'events' },
+          async () => {
+            try {
+              const { data: rows } = await supabase
+                .from('events')
+                .select('*')
+                .order('timestamp', { ascending: false })
+                .limit(50);
+              processEventRows(rows || []);
+            } catch (e) {
+              console.warn('Events listener note:', e);
+            }
+          }
+        )
+        .subscribe();
+
+      // Initial fetch (run async so the unsubscribe callback stays synchronous)
+      (async () => {
+        try {
+          const { data: rows } = await supabase
+            .from('events')
+            .select('*')
+            .order('timestamp', { ascending: false })
+            .limit(50);
+          processEventRows(rows || []);
+        } catch (e) {
+          console.warn('Events listener note:', e);
+        }
+      })();
+
+      unsubscribe = () => supabase.removeChannel(channel);
     } catch (e) {
       console.warn('Events listener error:', e);
     }
@@ -92,10 +120,13 @@ export const AdminSystemHealthView: React.FC = () => {
     // 2. Fetch last aggregation status from dailyStats
     const fetchLastAggregation = async () => {
       try {
-        const statsQ = query(collection(db, 'dailyStats'), orderBy('date', 'desc'), limit(1));
-        const snap = await getDocs(statsQ);
-        if (!snap.empty) {
-          const docData = snap.docs[0].data();
+        const { data: rows } = await supabase
+          .from('dailyStats')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(1);
+        if (rows && rows.length > 0) {
+          const docData = rows[0];
           setLastAggregation({
             date: docData.date || 'N/A',
             time: docData.calculatedAt ? new Date(docData.calculatedAt).toLocaleTimeString() : 'Recent',
@@ -165,9 +196,8 @@ export const AdminSystemHealthView: React.FC = () => {
     };
 
     try {
-      // 1. Write the document to Firestore
-      const testDocRef = doc(db, 'events', testId);
-      await setDoc(testDocRef, payload);
+      // 1. Write the document to Supabase
+      await supabase.from('events').upsert({ ...payload, id: testId });
 
       // Increment write counter
       setWritesToday((prev) => {
@@ -177,7 +207,7 @@ export const AdminSystemHealthView: React.FC = () => {
       });
 
       // 2. Read back the exact document to prove the write succeeded
-      const checkSnap = await getDoc(testDocRef);
+      const { data: checkData } = await supabase.from('events').select('*').eq('id', testId).maybeSingle();
 
       // Increment read counter
       setReadsToday((prev) => {
@@ -188,8 +218,8 @@ export const AdminSystemHealthView: React.FC = () => {
 
       const latency = Math.round(performance.now() - startTime);
 
-      if (checkSnap.exists()) {
-        const readData = checkSnap.data();
+      if (checkData) {
+        const readData = checkData;
         setTestResult({
           status: 'success',
           latencyMs: latency,
@@ -391,7 +421,7 @@ export const AdminSystemHealthView: React.FC = () => {
           <div className="flex items-center justify-between border-b border-black/[0.08] pb-3">
             <div className="flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-black" />
-              <h3 className="font-semibold uppercase tracking-wider text-xs">Firebase Authentication & Identity</h3>
+              <h3 className="font-semibold uppercase tracking-wider text-xs">Supabase Authentication & Identity</h3>
             </div>
             <span className="px-2 py-0.5 border border-emerald-500 text-emerald-700 bg-emerald-50 text-[10px] font-semibold">
               SECURE

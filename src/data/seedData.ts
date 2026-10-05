@@ -12,7 +12,8 @@ import {
   DailyStat,
   AiInsight,
 } from '../types';
-import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES, PLACEHOLDER_IMG, PLACEHOLDER_VIDEO, HERO_SLIDES } from '../data/mockData';
+import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES, PLACEHOLDER_IMG, PLACEHOLDER_VIDEO, HERO_SLIDES } from './mockData';
+import { seedTargetsSystem } from './targetsSeedData';
 
 // 1. Transform the 24 mock products into the full schema
 export const SEED_PRODUCTS: Product[] = ARCHIVE_PRODUCTS.map((p, idx) => {
@@ -415,28 +416,14 @@ export const SEED_SETTINGS: StoreSettings = {
   lowStockThreshold: 3,
 };
 
-// 10. Default Admin Users
+// 10. Default Admin Users (Only owner - clean slate)
 export const SEED_ADMINS: AdminUser[] = [
   {
     id: 'admin-owner',
-    uid: 'demo-owner',
-    email: 'owner@zejesh.fi',
-    name: 'Zejesh Studio Principal (Owner)',
+    uid: 'owner-huxaifa',
+    email: 'huxaifa0fficial@gmail.com',
+    name: 'Zejesh Studio Owner',
     role: 'owner',
-  },
-  {
-    id: 'admin-editor',
-    uid: 'demo-editor',
-    email: 'merchandiser@zejesh.fi',
-    name: 'Studio Merchandiser (Editor)',
-    role: 'editor',
-  },
-  {
-    id: 'admin-viewer',
-    uid: 'demo-viewer',
-    email: 'intern@zejesh.fi',
-    name: 'Archival Trainee (Viewer)',
-    role: 'viewer',
   },
 ];
 

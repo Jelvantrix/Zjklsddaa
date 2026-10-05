@@ -12,7 +12,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen pt-20 sm:pt-24 select-none">
       {/* Top Breadcrumb Header */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 border-b border-black/[0.06] flex items-center justify-between font-mono text-xs">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-6 flex items-center justify-between font-mono text-xs">
         <button
           type="button"
           onClick={onBackToHome}
@@ -43,20 +43,20 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
 
       {/* Large Featured Editorial Image */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-20 sm:mb-32">
-        <div className="aspect-[16/9] sm:aspect-[21/9] w-full border border-black/10 overflow-hidden bg-neutral-100 relative">
+        <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden bg-neutral-100 relative">
           <img
             src="/src/assets/images/hero_nordic_campaign_1790736679172.jpg"
             alt="Zejesh Campaign Still"
             className="w-full h-full object-cover object-[center_25%]"
           />
-          <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-white/90 backdrop-blur-xs px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest border border-black/10">
+          <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-white/90 backdrop-blur-xs px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest">
             Plate No. 00 · The Greatcoat in Obsidian Wool
           </div>
         </div>
       </div>
 
       {/* Chapter 01: The Northern Axis */}
-      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 border-t border-black/[0.08]">
+      <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-16 items-center">
           <div className="lg:col-span-5 space-y-6">
             <div className="flex items-center gap-2 text-[10.5px] font-mono uppercase tracking-[0.2em] text-black/50">
@@ -83,14 +83,14 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
 
           <div className="lg:col-span-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-neutral-100">
+              <div className="aspect-[3/4] overflow-hidden bg-neutral-100">
                 <img
                   src={PRODUCT_IMAGES.woolCoat}
                   alt="Helsinki Silhouette"
                   className="w-full h-full object-cover object-[center_20%]"
                 />
               </div>
-              <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-neutral-100 sm:translate-y-8">
+              <div className="aspect-[3/4] overflow-hidden bg-neutral-100 sm:translate-y-8">
                 <img
                   src={PRODUCT_IMAGES.mensTrench}
                   alt="Porto Tailoring"
@@ -103,7 +103,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
       </section>
 
       {/* Chapter 02: The Material Standard */}
-      <section className="bg-neutral-50/50 border-y border-black/[0.08] py-20 sm:py-32">
+      <section className="bg-neutral-50/50 py-20 sm:py-32">
         <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10">
           <div className="max-w-3xl mb-12 sm:mb-16 space-y-4">
             <div className="flex items-center gap-2 text-[10.5px] font-mono uppercase tracking-[0.2em] text-black/50">
@@ -119,7 +119,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 font-mono text-xs">
-            <div className="p-6 sm:p-8 bg-white border border-black/[0.08] space-y-3">
+            <div className="p-6 sm:p-8 bg-white space-y-3">
               <span className="text-[10px] text-black/40 uppercase tracking-widest block">STANDARD 01</span>
               <h3 className="font-editorial text-xl sm:text-2xl font-normal text-black">Unblended Virgin Wool</h3>
               <p className="text-[11.5px] font-sans text-black/60 leading-relaxed font-light">
@@ -127,7 +127,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
               </p>
             </div>
 
-            <div className="p-6 sm:p-8 bg-white border border-black/[0.08] space-y-3">
+            <div className="p-6 sm:p-8 bg-white space-y-3">
               <span className="text-[10px] text-black/40 uppercase tracking-widest block">STANDARD 02</span>
               <h3 className="font-editorial text-xl sm:text-2xl font-normal text-black">Natural Corozo Fasteners</h3>
               <p className="text-[11.5px] font-sans text-black/60 leading-relaxed font-light">
@@ -135,7 +135,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
               </p>
             </div>
 
-            <div className="p-6 sm:p-8 bg-white border border-black/[0.08] space-y-3">
+            <div className="p-6 sm:p-8 bg-white space-y-3">
               <span className="text-[10px] text-black/40 uppercase tracking-widest block">STANDARD 03</span>
               <h3 className="font-editorial text-xl sm:text-2xl font-normal text-black">Permanent Architecture</h3>
               <p className="text-[11.5px] font-sans text-black/60 leading-relaxed font-light">
@@ -167,7 +167,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
             <button
               type="button"
               onClick={onBackToHome}
-              className="px-8 py-3.5 border border-black/20 hover:border-black text-black transition-colors text-xs uppercase tracking-[0.2em] font-mono cursor-pointer"
+              className="px-8 py-3.5 text-black hover:text-black/70 transition-colors text-xs uppercase tracking-[0.2em] font-mono cursor-pointer underline underline-offset-4"
             >
               Return to Storefront
             </button>

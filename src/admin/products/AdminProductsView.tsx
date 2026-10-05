@@ -15,10 +15,9 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react';
-import { useAuth } from '../../firebase/AuthContext';
-import { doc, updateDoc, deleteDoc, writeBatch } from 'firebase/firestore';
-import { db } from '../../firebase/config';
-import { logAuditEvent } from '../../firebase/dbService';
+import { useAuth } from '../../supabase/AuthContext';
+import { supabase } from '../../supabase/config';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminProductsViewProps {
   products: Product[];
@@ -92,11 +91,12 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const handleBulkStatusChange = async (newStatus: ProductStatus) => {
     if (!isEditor) return;
     try {
-      const batch = writeBatch(db);
-      selectedIds.forEach((id) => {
-        batch.update(doc(db, 'products', id), { status: newStatus, updatedAt: new Date().toISOString() });
-      });
-      await batch.commit();
+      for (const id of selectedIds) {
+        await supabase
+          .from('products')
+          .update({ status: newStatus, updatedAt: new Date().toISOString() })
+          .eq('id', id);
+      }
       await logAuditEvent(adminProfile?.name || 'admin', 'bulk_status_change', 'products', {
         count: selectedIds.length,
         newStatus,
@@ -111,16 +111,17 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const handleBulkPriceAdjust = async () => {
     if (!isEditor) return;
     try {
-      const batch = writeBatch(db);
       const factor = 1 + bulkPricePercent / 100;
-      selectedIds.forEach((id) => {
+      for (const id of selectedIds) {
         const prod = products.find((p) => p.id === id);
         if (prod) {
           const newPrice = Math.round(prod.price * factor);
-          batch.update(doc(db, 'products', id), { price: newPrice, updatedAt: new Date().toISOString() });
+          await supabase
+            .from('products')
+            .update({ price: newPrice, updatedAt: new Date().toISOString() })
+            .eq('id', id);
         }
-      });
-      await batch.commit();
+      }
       await logAuditEvent(adminProfile?.name || 'admin', 'bulk_price_adjust', 'products', {
         count: selectedIds.length,
         percent: bulkPricePercent,
@@ -136,11 +137,9 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const handleBulkDelete = async () => {
     if (!isOwner) return;
     try {
-      const batch = writeBatch(db);
-      selectedIds.forEach((id) => {
-        batch.delete(doc(db, 'products', id));
-      });
-      await batch.commit();
+      for (const id of selectedIds) {
+        await supabase.from('products').delete().eq('id', id);
+      }
       await logAuditEvent(adminProfile?.name || 'admin', 'bulk_delete', 'products', { count: selectedIds.length });
       setDeleteConfirmOpen(false);
       setSelectedIds([]);

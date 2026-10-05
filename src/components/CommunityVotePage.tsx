@@ -4,7 +4,7 @@ import {
   subscribeToSuggestions,
   submitCommunitySuggestion,
   voteForSuggestion,
-} from '../firebase/dbService';
+} from '../supabase/dbService';
 import {
   ThumbsUp,
   Plus,
@@ -142,7 +142,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen pt-20 sm:pt-24 select-none font-mono">
       {/* Top Breadcrumb Header */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-5 border-b border-black/[0.06] flex items-center justify-between text-xs">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between text-xs">
         <button
           type="button"
           onClick={onBackToHome}
@@ -157,7 +157,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
       </div>
 
       {/* Main Hero Header */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-16 md:py-20 border-b border-black/[0.08]">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-12 sm:py-16 md:py-20">
         <div className="max-w-4xl space-y-4">
           <div className="flex items-center gap-2 text-[10.5px] uppercase tracking-[0.24em] text-black/50">
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
@@ -172,7 +172,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
         </div>
 
         {/* Live Metrics Ribbon & Action */}
-        <div className="mt-8 pt-8 border-t border-black/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+        <div className="mt-8 pt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="flex items-center gap-6 sm:gap-10 text-xs">
             <div>
               <span className="text-[10px] uppercase text-black/40 block">Proposals Registered</span>
@@ -202,17 +202,17 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
       </div>
 
       {/* Filter Selector Bar */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between border-b border-black/[0.06] text-xs">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-5 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2">
           {(['top', 'all', 'commissioned'] as const).map((filterKey) => (
             <button
               key={filterKey}
               type="button"
               onClick={() => setActiveFilter(filterKey)}
-              className={`px-3 py-1.5 uppercase tracking-wider text-[11px] cursor-pointer transition-colors border ${
+              className={`px-3 py-1.5 uppercase tracking-wider text-[11px] cursor-pointer transition-colors ${
                 activeFilter === filterKey
-                  ? 'border-black bg-black text-white font-semibold'
-                  : 'border-black/10 text-black/60 hover:border-black'
+                  ? 'text-black font-semibold underline'
+                  : 'text-black/60 hover:text-black'
               }`}
             >
               {filterKey === 'top' && 'Most Voted (Priority)'}
@@ -254,10 +254,10 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
               return (
                 <div
                   key={item.id}
-                  className={`p-6 sm:p-8 border transition-all duration-300 bg-white flex flex-col justify-between space-y-6 ${
+                  className={`p-6 sm:p-8 transition-all duration-300 bg-white flex flex-col justify-between space-y-6 ${
                     isCommissioned
-                      ? 'border-emerald-600/40 ring-1 ring-emerald-600/20 shadow-sm'
-                      : 'border-black/[0.1] hover:border-black'
+                      ? 'ring-1 ring-emerald-600/20 shadow-sm'
+                      : 'hover:shadow-sm'
                   }`}
                 >
                   <div className="space-y-4">
@@ -267,24 +267,24 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                         <span className="font-bold text-black text-xs">
                           #{idx + 1}
                         </span>
-                        <span className="px-2 py-0.5 border border-black/15 bg-black/[0.02] uppercase tracking-wider text-black/70">
+                        <span className="px-2 py-0.5 bg-black/[0.02] uppercase tracking-wider text-black/70">
                           {item.category}
                         </span>
                       </div>
 
                       {/* Status Badges */}
                       {isCommissioned ? (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-300 font-semibold uppercase text-[10px] tracking-wider">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 font-semibold uppercase text-[10px] tracking-wider">
                           <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                           <span>COMMISSIONED FOR PRODUCTION</span>
                         </span>
                       ) : isInSampling ? (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-300 font-semibold uppercase text-[10px] tracking-wider">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-amber-50 text-amber-800 font-semibold uppercase text-[10px] tracking-wider">
                           <Scissors className="w-3 h-3 text-amber-600" />
                           <span>PATTERN DRAFTING & SAMPLING</span>
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-neutral-50 text-black/60 border border-black/10 uppercase text-[10px] tracking-wider">
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-neutral-50 text-black/60 uppercase text-[10px] tracking-wider">
                           <Clock className="w-3 h-3 text-black/40" />
                           <span>UNDER BALLOT REVIEW</span>
                         </span>
@@ -297,7 +297,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                     </h3>
 
                     {/* Fabric specifications */}
-                    <div className="text-[11px] font-mono text-black/70 flex items-start gap-1.5 bg-black/[0.02] p-2.5 border border-black/[0.06]">
+                    <div className="text-[11px] font-mono text-black/70 flex items-start gap-1.5 bg-black/[0.02] p-2.5">
                       <span className="text-black/40 uppercase tracking-wider shrink-0 font-medium">Fabric:</span>
                       <span className="font-medium text-black">{item.desiredFabric}</span>
                     </div>
@@ -309,7 +309,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
 
                     {/* Atelier Curator Notes */}
                     {item.curatorNotes && (
-                      <div className="p-3 bg-neutral-50 border-l-2 border-black text-xs font-mono text-black/80 space-y-1">
+                      <div className="p-3 bg-neutral-50 text-xs font-mono text-black/80 space-y-1">
                         <span className="text-[9.5px] uppercase tracking-widest text-black/50 block font-bold">
                           ATELIER DISPATCH:
                         </span>
@@ -319,7 +319,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                   </div>
 
                   {/* Card Bottom: Submitter Info & Vote Button */}
-                  <div className="pt-4 border-t border-black/[0.08] flex items-center justify-between gap-4">
+                  <div className="pt-4 flex items-center justify-between gap-4">
                     <div className="text-[10px] text-black/40">
                       <span>Proposed by {item.submittedBy || 'Anonymous Patron'}</span>
                       <span className="mx-1.5">·</span>
@@ -330,10 +330,10 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                       type="button"
                       onClick={() => handleVote(item.id)}
                       disabled={hasVoted}
-                      className={`px-4 py-2 border text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-2 ${
+                      className={`px-4 py-2 text-xs uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-2 ${
                         hasVoted
-                          ? 'border-emerald-600 bg-emerald-50 text-emerald-900 font-semibold cursor-default'
-                          : 'border-black bg-white text-black hover:bg-black hover:text-white'
+                          ? 'bg-emerald-50 text-emerald-900 font-semibold cursor-default'
+                          : 'bg-black text-white hover:bg-neutral-800'
                       }`}
                     >
                       <ThumbsUp className={`w-3.5 h-3.5 ${hasVoted ? 'fill-emerald-800' : ''}`} />
@@ -351,8 +351,8 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
       {/* MODAL: PROPOSE A NEW GARMENT */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-lg bg-white border border-black p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto space-y-6">
-            <div className="flex items-start justify-between border-b border-black/10 pb-4">
+          <div className="w-full max-w-lg bg-white p-6 sm:p-8 shadow-2xl relative max-h-[92vh] overflow-y-auto space-y-6">
+            <div className="flex items-start justify-between pb-4">
               <div>
                 <span className="text-[10px] uppercase tracking-[0.25em] text-black/50 block mb-1">
                   ATELIER COMMISSION
@@ -384,7 +384,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
             ) : (
               <form onSubmit={handleSubmitProposal} className="space-y-4 text-xs font-mono">
                 {submitError && (
-                  <div className="p-2.5 bg-red-50 border border-red-200 text-red-800 text-[11px]">
+                  <div className="p-2.5 bg-red-50 text-red-800 text-[11px]">
                     {submitError}
                   </div>
                 )}
@@ -399,7 +399,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="e.g. Full-Length Raw Wool Trench, Seamless Knit Trousers"
-                    className="w-full px-3 py-2 border border-black/30 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                    className="w-full px-3 py-2 bg-neutral-50/50 focus:bg-white focus:outline-none text-xs text-black"
                   />
                 </div>
 
@@ -411,7 +411,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                      className="w-full px-3 py-2 bg-neutral-50/50 focus:bg-white focus:outline-none text-xs text-black"
                     >
                       <option value="Outerwear">Outerwear</option>
                       <option value="Knitwear">Knitwear</option>
@@ -430,7 +430,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                       value={desiredFabric}
                       onChange={(e) => setDesiredFabric(e.target.value)}
                       placeholder="e.g. 100% Virgin Wool (600 gsm)"
-                      className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                      className="w-full px-3 py-2 bg-neutral-50/50 focus:bg-white focus:outline-none text-xs text-black"
                     />
                   </div>
                 </div>
@@ -459,7 +459,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                       value={submitterName}
                       onChange={(e) => setSubmitterName(e.target.value)}
                       placeholder="e.g. Marcus / Collector"
-                      className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                      className="w-full px-3 py-2 bg-neutral-50/50 focus:bg-white focus:outline-none text-xs text-black"
                     />
                   </div>
 
@@ -472,7 +472,7 @@ export const CommunityVotePage: React.FC<CommunityVotePageProps> = ({
                       value={submitterEmail}
                       onChange={(e) => setSubmitterEmail(e.target.value)}
                       placeholder="name@example.com"
-                      className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                      className="w-full px-3 py-2 bg-neutral-50/50 focus:bg-white focus:outline-none text-xs text-black"
                     />
                   </div>
                 </div>
