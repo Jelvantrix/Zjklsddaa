@@ -5,6 +5,7 @@ import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
 import { createStoreOrder } from '../supabase/dbService';
+import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -22,6 +23,16 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   language,
 }) => {
   const t = translations[language].checkout;
+
+  // Body scroll lock on open
+  React.useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+    return () => unlockBodyScroll();
+  }, [isOpen]);
 
   // Steps: 1 = Toimitus, 2 = Maksu, 3 = Vahvistus
   const [step, setStep] = useState<1 | 2 | 3>(1);
@@ -114,7 +125,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[95] bg-white flex flex-col overflow-y-auto animate-fadeIn select-none">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Checkout"
+      className="fixed inset-0 z-[95] bg-white flex flex-col overflow-y-auto animate-fadeIn"
+      style={{
+        height: '100dvh',
+        minHeight: '100dvh',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
       {/* Checkout Minimal Top Header */}
       <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 border-b border-black/10 flex items-center justify-between">
         <BrandLogo size="sm" />
@@ -134,7 +156,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="p-1.5 text-black/50 hover:text-black transition-colors cursor-pointer"
+          className="min-h-[44px] min-w-[44px] -mr-2 p-2 flex items-center justify-center text-black/50 hover:text-black transition-colors cursor-pointer"
           aria-label="Close checkout"
         >
           <X className="w-5 h-5 stroke-[1.5]" />
@@ -167,7 +189,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                   />
                 </div>
 
@@ -181,7 +203,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                     />
                   </div>
                   <div>
@@ -193,7 +215,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                     />
                   </div>
                 </div>
@@ -207,7 +229,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                   />
                 </div>
 
@@ -221,7 +243,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                     />
                   </div>
                   <div>
@@ -233,7 +255,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                     />
                   </div>
                 </div>
@@ -247,7 +269,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
                   />
                 </div>
               </div>

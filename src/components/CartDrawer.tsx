@@ -3,6 +3,7 @@ import { CartItem, Language } from '../types';
 import { translations, formatPrice } from '../data/mockData';
 import { FashionImage } from './FashionImage';
 import { X, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
+import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -28,6 +29,15 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   const t = translations[language].cart;
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+    } else {
+      unlockBodyScroll();
+    }
+    return () => unlockBodyScroll();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 

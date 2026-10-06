@@ -25,6 +25,8 @@ import { LookbookView } from './components/LookbookView';
 import { AuthProvider } from './supabase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { forceUnlockBodyScroll } from './utils/scrollLock';
 
 export const ADMIN_SECRET_PATH = '/atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
 export const ADMIN_SECRET_HASH = '#atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
@@ -48,6 +50,89 @@ function isSecretAdminUrl(): boolean {
   );
 }
 
+function parseCurrentUrlToRoute(): PageRoute {
+  if (typeof window === 'undefined') return { type: 'home' };
+  if (isSecretAdminUrl()) return { type: 'admin' };
+
+  const pathname = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase().replace(/^#/, '');
+  const raw = hash || pathname.replace(/^\//, '');
+
+  if (!raw || raw === '') return { type: 'home' };
+  if (raw === 'story') return { type: 'story' };
+  if (raw === 'suggest' || raw === 'vote') return { type: 'vote' };
+  if (raw === 'lookbook') return { type: 'lookbook' };
+  if (raw === 'journal') return { type: 'journal' };
+  if (raw.startsWith('journal/')) {
+    return { type: 'journal', articleSlug: raw.replace('journal/', '') };
+  }
+  if (raw === 'sitemap') return { type: 'sitemap' };
+  if (raw === 'gift-cards') return { type: 'gift-cards' };
+  if (raw === 'archive') return { type: 'archive' };
+  if (raw.startsWith('archive/')) {
+    const parts = raw.replace('archive/', '').split('/');
+    return { type: 'archive', category: parts[0], subcategory: parts[1] };
+  }
+  if (raw.startsWith('category/')) {
+    const cat = raw.replace('category/', '');
+    return { type: 'archive', category: cat };
+  }
+  if (raw.startsWith('product/')) {
+    return { type: 'product', productId: raw.replace('product/', '') };
+  }
+  if (raw.startsWith('about/')) {
+    const s = raw.replace('about/', '');
+    if (s === 'philosophy' || s === 'materials' || s === 'sustainability' || s === 'workshops') {
+      return { type: 'about', slug: s };
+    }
+    return { type: 'about', slug: 'philosophy' };
+  }
+  if (raw.startsWith('service/')) {
+    const s = raw.replace('service/', '');
+    if (s === 'contact' || s === 'shipping-returns' || s === 'tracking' || s === 'size-guide') {
+      return { type: 'service', slug: s };
+    }
+    return { type: 'service', slug: 'contact' };
+  }
+  if (raw.startsWith('legal/')) {
+    const s = raw.replace('legal/', '');
+    if (s === 'terms' || s === 'privacy' || s === 'cookies') {
+      return { type: 'legal', slug: s };
+    }
+    return { type: 'legal', slug: 'terms' };
+  }
+  if (raw === 'cart') return { type: 'cart' };
+  if (raw === 'checkout') return { type: 'checkout' };
+  if (raw === 'wishlist') return { type: 'wishlist' };
+  if (raw === 'account') return { type: 'account' };
+
+  return { type: 'home' };
+}
+
+function getRouteUrl(r: PageRoute): string {
+  switch (r.type) {
+    case 'home': return '/';
+    case 'story': return '/story';
+    case 'vote': return '/suggest';
+    case 'lookbook': return '/lookbook';
+    case 'archive':
+      return r.category ? (r.subcategory ? `/archive/${r.category}/${r.subcategory}` : `/archive/${r.category}`) : '/archive';
+    case 'product': return `/product/${r.productId}`;
+    case 'journal': return r.articleSlug ? `/journal/${r.articleSlug}` : '/journal';
+    case 'sitemap': return '/sitemap';
+    case 'gift-cards': return '/gift-cards';
+    case 'about': return `/about/${r.slug}`;
+    case 'service': return `/service/${r.slug}`;
+    case 'legal': return `/legal/${r.slug}`;
+    case 'cart': return '/cart';
+    case 'checkout': return '/checkout';
+    case 'wishlist': return '/wishlist';
+    case 'account': return '/account';
+    case 'admin': return ADMIN_SECRET_PATH;
+    default: return '/';
+  }
+}
+
 function StorefrontApp() {
   const { products, categories, collections, content, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
   const [preloaderDone, setPreloaderDone] = useState(false);
@@ -56,20 +141,15 @@ function StorefrontApp() {
   const [language, setLanguage] = useState<Language>('en');
 
   // Multi-Page Route State (Supporting 50+ distinct page routes & long secret admin console)
-  const [route, setRoute] = useState<PageRoute>(() => {
-    if (isSecretAdminUrl()) {
-      return { type: 'admin' };
-    }
-    return { type: 'home' };
-  });
+  const [route, setRoute] = useState<PageRoute>(() => parseCurrentUrlToRoute());
 
   // Overlays and Modals State
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isWishlistOpen, setIsWishlistOpen] = useState(false);
-  const [isAccountOpen, setIsAccountOpen] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(route.type === 'cart');
+  const [isWishlistOpen, setIsWishlistOpen] = useState(route.type === 'wishlist');
+  const [isAccountOpen, setIsAccountOpen] = useState(route.type === 'account');
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(route.type === 'checkout');
   const [quickLookProduct, setQuickLookProduct] = useState<Product | null>(null);
   const [journalArticleId, setJournalArticleId] = useState<string | null>(null);
 
@@ -84,19 +164,17 @@ function StorefrontApp() {
   // Browser History & Hash integration
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
+      forceUnlockBodyScroll();
       if (e.state && e.state.route) {
         setRoute(e.state.route);
-      } else if (isSecretAdminUrl()) {
-        setRoute({ type: 'admin' });
       } else {
-        setRoute({ type: 'home' });
+        setRoute(parseCurrentUrlToRoute());
       }
     };
 
     const handleHashChange = () => {
-      if (isSecretAdminUrl()) {
-        setRoute({ type: 'admin' });
-      }
+      forceUnlockBodyScroll();
+      setRoute(parseCurrentUrlToRoute());
     };
 
     const checkDirectAdminAttempt = () => {
@@ -117,10 +195,19 @@ function StorefrontApp() {
   }, []);
 
   const navigateTo = (newRoute: PageRoute, addToHistory = true) => {
+    forceUnlockBodyScroll();
     setRoute(newRoute);
     setIsHeroVisible(true);
-    if (addToHistory) {
-      window.history.pushState({ route: newRoute }, '');
+    setIsMobileMenuOpen(false);
+
+    if (newRoute.type === 'cart') setIsCartOpen(true);
+    if (newRoute.type === 'checkout') setIsCheckoutOpen(true);
+    if (newRoute.type === 'wishlist') setIsWishlistOpen(true);
+    if (newRoute.type === 'account') setIsAccountOpen(true);
+
+    if (addToHistory && typeof window !== 'undefined') {
+      const url = getRouteUrl(newRoute);
+      window.history.pushState({ route: newRoute }, '', url);
     }
     window.scrollTo({ top: 0, behavior: 'instant' });
   };
@@ -251,33 +338,35 @@ function StorefrontApp() {
       <CustomCursor />
 
       {/* 3. FIXED HEADER with 1-Click Translation & Difference Blending */}
-      <Header
-        language={language}
-        onSetLanguage={(lang) => setLanguage(lang)}
-        cartCount={totalCartCount}
-        wishlistCount={wishlistIds.length}
-        onOpenCart={() => setIsCartOpen(true)}
-        onOpenWishlist={() => setIsWishlistOpen(true)}
-        onOpenSearch={() => setIsSearchOpen(true)}
-        onOpenAccount={() => setIsAccountOpen(true)}
-        onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
-        onSelectCategory={handleSelectCategory}
-        onNavigateHome={handleNavigateHome}
-        onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
-        onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateStory={() => navigateTo({ type: 'story' })}
-        onNavigateVote={() => navigateTo({ type: 'vote' })}
-        isHeroVisible={isHeroVisible}
-        currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
-        currentRouteType={route.type}
-        categories={categories}
-      />
+      <ErrorBoundary componentName="Header">
+        <Header
+          language={language}
+          onSetLanguage={(lang) => setLanguage(lang)}
+          cartCount={totalCartCount}
+          wishlistCount={wishlistIds.length}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+          onOpenAccount={() => setIsAccountOpen(true)}
+          onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+          onSelectCategory={handleSelectCategory}
+          onNavigateHome={handleNavigateHome}
+          onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
+          onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+          onNavigateStory={() => navigateTo({ type: 'story' })}
+          onNavigateVote={() => navigateTo({ type: 'vote' })}
+          isHeroVisible={isHeroVisible}
+          currentCategory={route.type === 'archive' ? (route.category || 'all') : undefined}
+          currentRouteType={route.type}
+          categories={categories}
+        />
+      </ErrorBoundary>
 
       {/* 4. MULTI-PAGE VIEW ROUTER (50+ Pages) */}
       <main>
         {/* PAGE: HOME */}
         {route.type === 'home' && (
-          <>
+          <ErrorBoundary componentName="HomeView">
             {/* Multi-Slide Hero: Video + Studio Photo on pure white background */}
             <HeroSection
               onScrollCueClick={handleScrollCue}
@@ -306,49 +395,80 @@ function StorefrontApp() {
                 }}
               />
             </div>
-          </>
+          </ErrorBoundary>
         )}
 
-        {/* PAGE: THE ARCHIVE & CATEGORIES (All Category & Subcategory Pages) */}
-        {route.type === 'archive' && (
-          <ProductListing
-            language={language}
-            selectedCategory={route.category || 'all'}
-            selectedSubcategory={route.subcategory}
-            onSelectCategory={handleSelectCategory}
-            onSelectProduct={handleSelectProduct}
-            onOpenQuickLook={(prod) => setQuickLookProduct(prod)}
-            onQuickAdd={handleQuickAdd}
-            onToggleWishlist={handleToggleWishlist}
-            wishlistIds={wishlistIds}
-            products={products}
-            categories={categories}
-            loading={productsLoading}
-            isLiveFromFirestore={isLiveFromFirestore}
-          />
+        {/* PAGE: THE ARCHIVE & CATEGORIES (All Category & Subcategory Pages, or as backdrop for overlay routes) */}
+        {(route.type === 'archive' ||
+          route.type === 'cart' ||
+          route.type === 'checkout' ||
+          route.type === 'wishlist' ||
+          route.type === 'account') && (
+          <ErrorBoundary componentName="ArchiveView">
+            <ProductListing
+              language={language}
+              selectedCategory={route.type === 'archive' ? (route.category || 'all') : 'all'}
+              selectedSubcategory={route.type === 'archive' ? route.subcategory : undefined}
+              onSelectCategory={handleSelectCategory}
+              onSelectProduct={handleSelectProduct}
+              onOpenQuickLook={(prod) => setQuickLookProduct(prod)}
+              onQuickAdd={handleQuickAdd}
+              onToggleWishlist={handleToggleWishlist}
+              wishlistIds={wishlistIds}
+              products={products}
+              categories={categories}
+              loading={productsLoading}
+              isLiveFromFirestore={isLiveFromFirestore}
+            />
+          </ErrorBoundary>
         )}
 
         {/* PAGE: DEDICATED INDIVIDUAL PRODUCT PAGE (24 distinct pages) */}
-        {route.type === 'product' && activeProduct && (
-          <ProductDetail
-            product={activeProduct}
-            language={language}
-            onBackToArchive={() => navigateTo({ type: 'archive', category: activeProduct.category })}
-            onAddToCart={handleAddToCart}
-            onSelectProduct={handleSelectProduct}
-            onToggleWishlist={handleToggleWishlist}
-            isWishlisted={wishlistIds.includes(activeProduct.id)}
-          />
+        {route.type === 'product' && (
+          <ErrorBoundary componentName="ProductDetailView">
+            {activeProduct ? (
+              <ProductDetail
+                product={activeProduct}
+                language={language}
+                onBackToArchive={() => navigateTo({ type: 'archive', category: activeProduct.category })}
+                onAddToCart={handleAddToCart}
+                onSelectProduct={handleSelectProduct}
+                onToggleWishlist={handleToggleWishlist}
+                isWishlisted={wishlistIds.includes(activeProduct.id)}
+              />
+            ) : (
+              <div className="max-w-[1720px] mx-auto px-6 py-32 text-center min-h-[60vh] flex flex-col items-center justify-center">
+                <span className="font-mono text-xs uppercase tracking-widest text-black/50 mb-2">
+                  PLATE NOT LOCATED
+                </span>
+                <h1 className="font-editorial text-3xl sm:text-4xl mb-4">
+                  Archival Piece Not Found
+                </h1>
+                <p className="text-xs font-sans text-black/60 max-w-sm mb-6">
+                  The requested plate is either undergoing accession revision or has been retired from active rotation.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => navigateTo({ type: 'archive' })}
+                  className="btn-primary text-xs uppercase tracking-[0.2em]"
+                >
+                  Return to Archive Catalogue →
+                </button>
+              </div>
+            )}
+          </ErrorBoundary>
         )}
 
         {/* PAGE: LOOKBOOK */}
         {route.type === 'lookbook' && (
-          <LookbookView
-            products={products}
-            language={language}
-            onBackToHome={handleNavigateHome}
-            onSelectProduct={handleSelectProduct}
-          />
+          <ErrorBoundary componentName="LookbookView">
+            <LookbookView
+              products={products}
+              language={language}
+              onBackToHome={handleNavigateHome}
+              onSelectProduct={handleSelectProduct}
+            />
+          </ErrorBoundary>
         )}
 
         {/* PAGES: DEDICATED STATIC & EDITORIAL PAGES (Gift Cards, Sitemap, About, Service, Legal) */}
@@ -357,164 +477,202 @@ function StorefrontApp() {
           route.type === 'about' ||
           route.type === 'service' ||
           route.type === 'legal') && (
-          <StaticPages
-            slug={
-              route.type === 'about'
-                ? route.slug
-                : route.type === 'service'
-                ? route.slug
-                : route.type === 'legal'
-                ? route.slug
-                : route.type
-            }
-            pageType={route.type}
-            language={language}
-            onNavigate={(r) => navigateTo(r)}
-            onSelectProduct={handleSelectProduct}
-          />
+          <ErrorBoundary componentName="StaticPageView">
+            <StaticPages
+              slug={
+                route.type === 'about'
+                  ? route.slug
+                  : route.type === 'service'
+                  ? route.slug
+                  : route.type === 'legal'
+                  ? route.slug
+                  : route.type
+              }
+              pageType={route.type}
+              language={language}
+              onNavigate={(r) => navigateTo(r)}
+              onSelectProduct={handleSelectProduct}
+            />
+          </ErrorBoundary>
         )}
 
         {/* PAGE: STORY */}
         {route.type === 'story' && (
-          <StoryPage
-            onBackToHome={handleNavigateHome}
-            onExploreArchive={() => navigateTo({ type: 'archive' })}
-          />
+          <ErrorBoundary componentName="StoryView">
+            <StoryPage
+              onBackToHome={handleNavigateHome}
+              onExploreArchive={() => navigateTo({ type: 'archive' })}
+            />
+          </ErrorBoundary>
         )}
 
         {/* PAGE: COMMUNITY VOTE / SUGGESTIONS */}
         {route.type === 'vote' && (
-          <CommunityVotePage
-            onBackToHome={handleNavigateHome}
-            onNavigateArchive={() => navigateTo({ type: 'archive' })}
-          />
+          <ErrorBoundary componentName="CommunityVoteView">
+            <CommunityVotePage
+              onBackToHome={handleNavigateHome}
+              onNavigateArchive={() => navigateTo({ type: 'archive' })}
+            />
+          </ErrorBoundary>
         )}
 
         {/* PAGE: JOURNAL & ESSAYS */}
         {route.type === 'journal' && (
-          <div className="max-w-[1720px] mx-auto px-6 md:px-10 py-24 min-h-screen">
-            <div className="max-w-4xl mx-auto text-center mb-16">
-              <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 block mb-2">
-                ATELIER MONOGRAPHS
-              </span>
-              <h1 className="font-editorial text-4xl sm:text-6xl font-normal mb-3 text-black">
-                Textile Studies & Archival Notes
-              </h1>
-              <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto font-light leading-relaxed">
-                Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.
-              </p>
-            </div>
+          <ErrorBoundary componentName="JournalView">
+            <div className="max-w-[1720px] mx-auto px-6 md:px-10 py-24 min-h-screen">
+              <div className="max-w-4xl mx-auto text-center mb-16">
+                <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 block mb-2">
+                  ATELIER MONOGRAPHS
+                </span>
+                <h1 className="font-editorial text-4xl sm:text-6xl font-normal mb-3 text-black">
+                  Textile Studies & Archival Notes
+                </h1>
+                <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto font-light leading-relaxed">
+                  Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.
+                </p>
+              </div>
 
-            <div className="max-w-4xl mx-auto space-y-8">
-              {JOURNAL_ARTICLES.map((article) => (
-                <article
-                  key={article.id}
-                  onClick={() => setJournalArticleId(article.id)}
-                  className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
-                >
-                  <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
-                    <span>{article.date}</span>
-                    <span>·</span>
-                    <span>ARCHIVE DOSSIER</span>
-                  </div>
-                  <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
-                    {article.title.en || article.title.fi}
-                  </h2>
-                  <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
-                    {article.subtitle.en || article.subtitle.fi}
-                  </p>
-                  <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
-                    Inspect Dossier →
-                  </span>
-                </article>
-              ))}
+              <div className="max-w-4xl mx-auto space-y-8">
+                {JOURNAL_ARTICLES.map((article) => (
+                  <article
+                    key={article.id}
+                    onClick={() => setJournalArticleId(article.id)}
+                    className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
+                  >
+                    <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
+                      <span>{article.date}</span>
+                      <span>·</span>
+                      <span>ARCHIVE DOSSIER</span>
+                    </div>
+                    <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
+                      {article.title.en || article.title.fi}
+                    </h2>
+                    <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
+                      {article.subtitle.en || article.subtitle.fi}
+                    </p>
+                    <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
+                      Inspect Dossier →
+                    </span>
+                  </article>
+                ))}
+              </div>
             </div>
-          </div>
+          </ErrorBoundary>
         )}
       </main>
 
       {/* 5. LARGE FOOTER with 1-Click Translation & 50+ Page Directory */}
-      <Footer
-        language={language}
-        onSetLanguage={(lang) => setLanguage(lang)}
-        onSelectCategory={handleSelectCategory}
-        onNavigatePage={(r) => navigateTo(r)}
-      />
+      <ErrorBoundary componentName="Footer">
+        <Footer
+          language={language}
+          onSetLanguage={(lang) => setLanguage(lang)}
+          onSelectCategory={handleSelectCategory}
+          onNavigatePage={(r) => navigateTo(r)}
+        />
+      </ErrorBoundary>
 
       {/* 6. MODALS & DRAWERS */}
-      <SearchModal
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        language={language}
-        onSelectProduct={handleSelectProduct}
-      />
+      <ErrorBoundary componentName="SearchModal">
+        <SearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          language={language}
+          onSelectProduct={handleSelectProduct}
+        />
+      </ErrorBoundary>
 
-      <MobileMenu
-        isOpen={isMobileMenuOpen}
-        onClose={() => setIsMobileMenuOpen(false)}
-        language={language}
-        onSetLanguage={(lang) => setLanguage(lang)}
-        onSelectCategory={handleSelectCategory}
-        onNavigateHome={handleNavigateHome}
-        onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
-        onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
-        onNavigateStory={() => navigateTo({ type: 'story' })}
-        onNavigateVote={() => navigateTo({ type: 'vote' })}
-        onNavigateJournal={() => navigateTo({ type: 'journal' })}
-        categories={categories}
-      />
+      <ErrorBoundary componentName="MobileMenu">
+        <MobileMenu
+          isOpen={isMobileMenuOpen}
+          onClose={() => setIsMobileMenuOpen(false)}
+          language={language}
+          onSetLanguage={(lang) => setLanguage(lang)}
+          onSelectCategory={handleSelectCategory}
+          onNavigateHome={handleNavigateHome}
+          onNavigateLookbook={() => navigateTo({ type: 'lookbook' })}
+          onNavigateSitemap={() => navigateTo({ type: 'sitemap' })}
+          onNavigateStory={() => navigateTo({ type: 'story' })}
+          onNavigateVote={() => navigateTo({ type: 'vote' })}
+          onNavigateJournal={() => navigateTo({ type: 'journal' })}
+          categories={categories}
+        />
+      </ErrorBoundary>
 
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={() => setIsCartOpen(false)}
-        items={cartItems}
-        onUpdateQuantity={handleUpdateQuantity}
-        onRemoveItem={handleRemoveFromCart}
-        onProceedToCheckout={() => setIsCheckoutOpen(true)}
-        onExploreArchive={() => navigateTo({ type: 'archive' })}
-        language={language}
-      />
+      <ErrorBoundary componentName="CartDrawer">
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => {
+            setIsCartOpen(false);
+            if (route.type === 'cart') navigateTo({ type: 'home' });
+          }}
+          items={cartItems}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveFromCart}
+          onProceedToCheckout={() => setIsCheckoutOpen(true)}
+          onExploreArchive={() => navigateTo({ type: 'archive' })}
+          language={language}
+        />
+      </ErrorBoundary>
 
-      <CheckoutModal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        items={cartItems}
-        onOrderSuccess={() => setCartItems([])}
-        language={language}
-      />
+      <ErrorBoundary componentName="CheckoutModal">
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => {
+            setIsCheckoutOpen(false);
+            if (route.type === 'checkout') navigateTo({ type: 'home' });
+          }}
+          items={cartItems}
+          onOrderSuccess={() => setCartItems([])}
+          language={language}
+        />
+      </ErrorBoundary>
 
-      <WishlistDrawer
-        isOpen={isWishlistOpen}
-        onClose={() => setIsWishlistOpen(false)}
-        wishlistIds={wishlistIds}
-        onRemoveWishlist={handleToggleWishlist}
-        onSelectProduct={handleSelectProduct}
-        onQuickAdd={handleQuickAdd}
-        language={language}
-      />
+      <ErrorBoundary componentName="WishlistDrawer">
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
+          onClose={() => {
+            setIsWishlistOpen(false);
+            if (route.type === 'wishlist') navigateTo({ type: 'home' });
+          }}
+          wishlistIds={wishlistIds}
+          onRemoveWishlist={handleToggleWishlist}
+          onSelectProduct={handleSelectProduct}
+          onQuickAdd={handleQuickAdd}
+          language={language}
+        />
+      </ErrorBoundary>
 
-      <AccountModal
-        isOpen={isAccountOpen}
-        onClose={() => setIsAccountOpen(false)}
-        language={language}
-      />
+      <ErrorBoundary componentName="AccountModal">
+        <AccountModal
+          isOpen={isAccountOpen}
+          onClose={() => {
+            setIsAccountOpen(false);
+            if (route.type === 'account') navigateTo({ type: 'home' });
+          }}
+          language={language}
+        />
+      </ErrorBoundary>
 
-      <QuickLookModal
-        product={quickLookProduct}
-        onClose={() => setQuickLookProduct(null)}
-        onSelectProduct={(p) => {
-          setQuickLookProduct(null);
-          handleSelectProduct(p);
-        }}
-        onQuickAdd={handleQuickAdd}
-        language={language}
-      />
+      <ErrorBoundary componentName="QuickLookModal">
+        <QuickLookModal
+          product={quickLookProduct}
+          onClose={() => setQuickLookProduct(null)}
+          onSelectProduct={(p) => {
+            setQuickLookProduct(null);
+            handleSelectProduct(p);
+          }}
+          onQuickAdd={handleQuickAdd}
+          language={language}
+        />
+      </ErrorBoundary>
 
-      <JournalModal
-        articleId={journalArticleId}
-        onClose={() => setJournalArticleId(null)}
-        language={language}
-      />
+      <ErrorBoundary componentName="JournalModal">
+        <JournalModal
+          articleId={journalArticleId}
+          onClose={() => setJournalArticleId(null)}
+          language={language}
+        />
+      </ErrorBoundary>
 
       <CookieBanner language={language} />
     </div>

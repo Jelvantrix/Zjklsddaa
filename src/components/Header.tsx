@@ -80,10 +80,20 @@ export const Header: React.FC<HeaderProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY, hoveredNav]);
 
+  const resolveCategoryTitle = (cat: Category | undefined): string => {
+    if (!cat) return '';
+    if (typeof cat.name === 'string') return cat.name;
+    if (cat.name && typeof cat.name === 'object') {
+      const localized = language === 'fi' ? cat.name.fi : cat.name.en;
+      return localized || cat.name.en || cat.name.fi || cat.slug || '';
+    }
+    return cat.slug || '';
+  };
+
   const dynamicNavItems = useMemo(() => {
-    if (categories && categories.length > 0) {
+    if (categories && Array.isArray(categories) && categories.length > 0) {
       const roots = categories
-        .filter((c) => !c.parentId && c.visible)
+        .filter((c) => Boolean(c && !c.parentId && c.visible))
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
       const items: Array<{ key: string; label: string; subKey: string | null; categoryId: string }> = [
@@ -91,16 +101,18 @@ export const Header: React.FC<HeaderProps> = ({
       ];
 
       roots.forEach((cat) => {
-        const catKey = cat.slug || cat.id;
+        if (!cat) return;
+        const catKey = cat.slug || cat.id || '';
         // Avoid duplicate collections entry if cat-kokoelmat exists in categories
         if (catKey === 'kokoelmat' || cat.id === 'cat-kokoelmat') {
           return;
         }
+        const resolved = resolveCategoryTitle(cat);
         items.push({
           key: catKey,
-          label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
-          subKey: cat.id,
-          categoryId: cat.slug || cat.id,
+          label: (resolved || catKey).toUpperCase(),
+          subKey: cat.id || catKey,
+          categoryId: cat.slug || cat.id || catKey,
         });
       });
 
@@ -124,25 +136,26 @@ export const Header: React.FC<HeaderProps> = ({
       { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
       { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' },
     ];
-  }, [categories, t]);
+  }, [categories, t, language]);
 
   const activeSubcategories = useMemo(() => {
     if (!hoveredNav) return [];
-    if (categories && categories.length > 0) {
-      const parent = categories.find((c) => c.id === hoveredNav || c.slug === hoveredNav);
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      const parent = categories.find((c) => Boolean(c && (c.id === hoveredNav || c.slug === hoveredNav)));
       if (parent) {
         return categories
-          .filter((c) => c.parentId === parent.id && c.visible)
+          .filter((c) => Boolean(c && c.parentId === parent.id && c.visible))
           .sort((a, b) => (a.order || 0) - (b.order || 0))
           .map((c) => ({
-            name: c.name.en || c.name.fi,
-            slug: c.slug,
-          }));
+            name: resolveCategoryTitle(c),
+            slug: c.slug || c.id || '',
+          }))
+          .filter((s) => Boolean(s.name));
       }
     }
     const mockSubs = SUB_CATEGORIES[hoveredNav as keyof typeof SUB_CATEGORIES] || [];
     return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
-  }, [hoveredNav, categories]);
+  }, [hoveredNav, categories, language]);
 
   const isOverHeroAtTop = Boolean(isHeroVisible);
 
@@ -157,16 +170,19 @@ export const Header: React.FC<HeaderProps> = ({
             ? 'bg-transparent text-black border-transparent shadow-none'
             : 'bg-white/70 backdrop-blur-md text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.03)]'
         }`}
+        style={{
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
       >
         {/* ROW 1: BRAND LOGO (ABSOLUTELY CENTERED) & UTILITY ACTIONS (BALANCED) */}
         <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 h-16 sm:h-20 flex items-center justify-between relative">
           {/* LEFT: Menu & Search */}
-          <div className="flex items-center justify-start gap-3 sm:gap-4 md:gap-6 z-20">
+          <div className="flex items-center justify-start gap-2 sm:gap-4 md:gap-6 z-20">
             {/* Mobile / Tablet Menu */}
             <button
               type="button"
               onClick={onOpenMobileMenu}
-              className="lg:hidden py-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="lg:hidden min-h-[44px] min-w-[44px] -ml-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label="Menu"
             >
               <Menu className="w-4 h-4 stroke-[1.5]" />
@@ -179,7 +195,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenSearch}
-              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0 group/search"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0 group/search"
               aria-label={t.nav.search}
             >
               <Search className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -194,7 +210,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="cursor-pointer group focus-visible:outline-none inline-flex items-center justify-center py-1"
+              className="cursor-pointer min-h-[44px] min-w-[44px] px-2 group focus-visible:outline-none inline-flex items-center justify-center py-1"
               aria-label="Back to home"
             >
               <BrandLogo size="md" invert={false} />
@@ -202,12 +218,12 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* RIGHT: Pure Typographic Actions */}
-          <div className="flex items-center justify-end gap-3 sm:gap-4 md:gap-6 z-20">
+          <div className="flex items-center justify-end gap-1.5 sm:gap-4 md:gap-6 z-20">
             {/* Wishlist Trigger */}
             <button
               type="button"
               onClick={onOpenWishlist}
-              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.wishlist}
             >
               <Heart className={`w-3.5 h-3.5 stroke-[1.5] ${wishlistCount > 0 ? 'fill-current' : ''}`} />
@@ -225,7 +241,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenAccount}
-              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden sm:flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden sm:flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.account}
             >
               <User className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -238,7 +254,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenCart}
-              className="py-1.5 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] -mr-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
               aria-label={t.nav.bag}
             >
               <ShoppingBag className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -260,9 +276,9 @@ export const Header: React.FC<HeaderProps> = ({
               : 'bg-white/70 backdrop-blur-md'
           }`}
         >
-          <div className="max-w-[1720px] mx-auto px-6 md:px-10 h-11 flex items-center justify-center">
+          <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 h-11 flex items-center justify-center">
             <nav
-              className="flex items-center justify-center gap-8 xl:gap-12 2xl:gap-16"
+              className="flex items-center justify-center gap-3.5 xl:gap-8 2xl:gap-12"
               aria-label="Main navigation"
             >
               {dynamicNavItems.map((item) => {
@@ -290,14 +306,14 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectCategory(item.categoryId);
                       }
                     }}
-                    className={`relative py-2.5 px-3 text-[12px] xl:text-[12.5px] uppercase tracking-[0.22em] xl:tracking-[0.24em] font-sans font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap group/link ${
+                    className={`relative py-2.5 px-2 xl:px-3 text-[11px] xl:text-[12.5px] uppercase tracking-[0.16em] xl:tracking-[0.24em] font-sans font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap group/link ${
                       isActive ? 'text-black' : 'text-black/75 hover:text-black'
                     }`}
                   >
                     <span>{item.label}</span>
                     {/* Animated Hairline Underline on Hover & Active State */}
                     <span
-                      className={`absolute bottom-0.5 left-3 right-3 h-[1px] bg-black transition-all duration-300 origin-center ${
+                      className={`absolute bottom-0.5 left-2 xl:left-3 right-2 xl:right-3 h-[1px] bg-black transition-all duration-300 origin-center ${
                         isActive
                           ? 'scale-x-100 opacity-100'
                           : 'scale-x-0 opacity-0 group-hover/link:scale-x-100 group-hover/link:opacity-100'

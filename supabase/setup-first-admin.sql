@@ -12,20 +12,20 @@
 --   1. Run 0001_init_schema.sql, then 0002_production_security.sql.
 --   2. Edit the three values in "STEP 1" below.
 --   3. Run this whole file once in the Supabase SQL Editor.
---   4. Sign in at /admin with those credentials.
+--   4. Sign in at your configured ADMIN_LOGIN_PATH with those credentials.
 --
 --   If you prefer the dashboard instead of Step 1, create the user under
---   Authentication -> Users -> "Add user" (tick "Auto Confirm"), then delete
---   Step 1 and only run Step 2 with the same email address.
+--   Authentication -> Users -> "Add user" (email: huxaifa0fficial@gmail.com,
+--   tick "Auto Confirm User"), then run Step 2.
 -- =============================================================================
 
 begin;
 
 do $$
 declare
-  v_email    text := 'you@example.com';          -- <- CHANGE ME
+  v_email    text := 'huxaifa0fficial@gmail.com';          -- Verified single-owner email
   v_password text := 'replace-with-a-long-password'; -- <- CHANGE ME (12+ chars)
-  v_name     text := 'Studio Owner';              -- <- CHANGE ME
+  v_name     text := 'Huxaifa (Owner)';              -- Owner name
   v_uid      uuid;
 begin
   ---------------------------------------------------------------- STEP 1 ----

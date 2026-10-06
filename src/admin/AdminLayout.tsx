@@ -73,7 +73,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onBackToStorefront,
   onViewProductInStore,
 }) => {
-  const { role, adminProfile, isAdmin, isOwner, isEditor } = useAuth();
+  const { role, adminProfile, isAdmin, isOwner, isEditor, signOut } = useAuth();
   const { products, collections, categories, content, settings, resetDemoData } = useStorefrontData();
 
   // Active Admin Subview
@@ -81,13 +81,12 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Security & Terminal Gate State.
-  // Locked by default. Authorisation comes from Supabase Auth + the
-  // `public.admins` row, NOT from anything writable in browser storage.
-  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(true);
+  // The layout is mounted only when verified as the owner in App.tsx.
+  // The terminal starts unlocked, with manual lock and inactivity timeout supported.
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(false);
 
   useEffect(() => {
     // Locks the console the moment there is no authorised admin session
-    // (sign-in, sign-out, or an expired token).
     setIsTerminalLocked(!isAdmin);
   }, [isAdmin]);
 
@@ -340,17 +339,28 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <span className="hidden lg:inline text-[11px] uppercase tracking-wider">Lock</span>
           </button>
 
-          {/* Role Indicator — read-only. The role is assigned in
-              `public.admins` and cannot be escalated from the client. */}
+          {/* Role Indicator — read-only. Enforced strictly by PostgreSQL RLS. */}
           <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-black/[0.08]">
             <span className="text-[11px] text-black/50">Role:</span>
             <span
               className="py-0.5 px-1.5 text-[11px] font-medium uppercase border border-black/[0.08] bg-black/[0.03]"
-              title="Assigned by the owner in Admin → Security. Row level security enforces this server-side."
+              title="Only huxaifa0fficial@gmail.com is permitted administrative authorization."
             >
-              {role || 'viewer'}{isOwner ? ' (Full Admin)' : isEditor ? ' (Write Access)' : ' (Read Only)'}
+              OWNER
             </span>
           </div>
+
+          {/* Sign Out Button */}
+          <button
+            type="button"
+            onClick={() => {
+              void signOut();
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-400 transition-colors cursor-pointer"
+            title="Sign Out of Studio Console"
+          >
+            <span className="text-[11px] uppercase tracking-wider">Sign Out</span>
+          </button>
 
           {/* Back to storefront link */}
           <button

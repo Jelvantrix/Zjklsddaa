@@ -489,6 +489,9 @@ export type PageRoute =
   | { type: 'wishlist' }
   | { type: 'account' }
   | { type: 'sitemap' }
+  | { type: 'admin-login' }
+  | { type: 'admin-console' }
+  | { type: 'not-found' }
   | { type: 'admin'; subview?: string };
 
 // ==================== TARGETS & GOALS SYSTEM ====================

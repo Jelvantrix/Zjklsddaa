@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Language, Category } from '../types';
 import { translations, SUB_CATEGORIES } from '../data/mockData';
 import { BrandLogo } from './BrandLogo';
-import { TranslationBar } from './TranslationBar';
-import { X, ChevronRight, ArrowLeft, Shield } from 'lucide-react';
+import { X, ChevronRight, ArrowLeft } from 'lucide-react';
+import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -24,7 +24,6 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   isOpen,
   onClose,
   language,
-  onSetLanguage,
   onSelectCategory,
   onNavigateHome,
   onNavigateLookbook,
@@ -35,110 +34,203 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   categories = [],
 }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const t = translations[language];
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  if (!isOpen) return null;
+  // Safe translations lookup with guaranteed fallback to English
+  const t = translations[language] || translations.en;
+
+  // Body scroll locking: lock on open, always unlock on unmount/close
+  useEffect(() => {
+    if (isOpen) {
+      lockBodyScroll();
+      // Reset sub-level view whenever newly opened
+      setActiveCategory(null);
+    } else {
+      unlockBodyScroll();
+    }
+
+    return () => {
+      unlockBodyScroll();
+    };
+  }, [isOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (activeCategory) {
+          setActiveCategory(null);
+        } else {
+          onClose();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, activeCategory, onClose]);
+
+  // Robust category title resolution that never throws even if data shape varies
+  const resolveCategoryTitle = (cat: Category | undefined): string => {
+    if (!cat) return '';
+    if (typeof cat.name === 'string') return cat.name;
+    if (cat.name && typeof cat.name === 'object') {
+      const localized = language === 'fi' ? cat.name.fi : cat.name.en;
+      return localized || cat.name.en || cat.name.fi || cat.slug || '';
+    }
+    return cat.slug || '';
+  };
 
   const dynamicItems = useMemo(() => {
-    if (categories && categories.length > 0) {
+    const navText = t?.nav || translations.en.nav;
+
+    if (categories && Array.isArray(categories) && categories.length > 0) {
       const roots = categories
-        .filter((c) => !c.parentId && c.visible)
+        .filter((c) => Boolean(c && !c.parentId && c.visible))
         .sort((a, b) => (a.order || 0) - (b.order || 0));
 
       const items: Array<{ key: string; label: string; subKey: string | null; categoryId: string }> = [
-        { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
+        { key: 'uutuudet', label: navText.new || 'New Arrivals', subKey: null, categoryId: 'all' },
       ];
 
       roots.forEach((cat) => {
-        const catKey = cat.slug || cat.id;
-        // Avoid duplicate collections entry if cat-kokoelmat exists in categories
+        if (!cat) return;
+        const catKey = cat.slug || cat.id || '';
+        // Deduplicate collections
         if (catKey === 'kokoelmat' || cat.id === 'cat-kokoelmat') {
           return;
         }
+        const resolved = resolveCategoryTitle(cat);
         items.push({
           key: catKey,
-          label: (cat.name.en || cat.name.fi || cat.slug).toUpperCase(),
-          subKey: cat.id,
-          categoryId: cat.slug || cat.id,
+          label: resolved ? resolved.toUpperCase() : catKey.toUpperCase(),
+          subKey: cat.id || catKey,
+          categoryId: cat.slug || cat.id || catKey,
         });
       });
 
-      // Exactly ONE collections button, followed by lookbook, story, vote
+      // Collections, Lookbook, Story, Suggest, Journal
       items.push(
-        { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
-        { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
-        { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
-        { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' }
+        { key: 'kokoelmat', label: (navText.collections || 'Collections').toUpperCase(), subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+        { key: 'lookbook', label: (navText.lookbook || 'Lookbook').toUpperCase(), subKey: null, categoryId: 'lookbook' },
+        { key: 'story', label: 'HOUSE STORY', subKey: null, categoryId: 'story' },
+        { key: 'vote', label: 'SUGGEST & VOTE', subKey: null, categoryId: 'vote' },
+        { key: 'journal', label: (navText.journal || 'Journal').toUpperCase(), subKey: null, categoryId: 'journal' }
       );
       return items;
     }
 
     return [
-      { key: 'uutuudet', label: t.nav.new, subKey: null, categoryId: 'all' },
-      { key: 'naiset', label: t.nav.women, subKey: 'naiset', categoryId: 'naiset' },
-      { key: 'miehet', label: t.nav.men, subKey: 'miehet', categoryId: 'miehet' },
-      { key: 'asusteet', label: t.nav.accessories, subKey: 'asusteet', categoryId: 'asusteet' },
-      { key: 'kokoelmat', label: t.nav.collections, subKey: 'kokoelmat', categoryId: 'kokoelmat' },
-      { key: 'lookbook', label: t.nav.lookbook, subKey: null, categoryId: 'lookbook' },
-      { key: 'story', label: 'STORY', subKey: null, categoryId: 'story' },
-      { key: 'vote', label: 'SUGGEST', subKey: null, categoryId: 'vote' },
+      { key: 'uutuudet', label: (navText.new || 'New Arrivals').toUpperCase(), subKey: null, categoryId: 'all' },
+      { key: 'naiset', label: (navText.women || 'Women').toUpperCase(), subKey: 'naiset', categoryId: 'naiset' },
+      { key: 'miehet', label: (navText.men || 'Men').toUpperCase(), subKey: 'miehet', categoryId: 'miehet' },
+      { key: 'asusteet', label: (navText.accessories || 'Accessories').toUpperCase(), subKey: 'asusteet', categoryId: 'asusteet' },
+      { key: 'kokoelmat', label: (navText.collections || 'Collections').toUpperCase(), subKey: 'kokoelmat', categoryId: 'kokoelmat' },
+      { key: 'lookbook', label: (navText.lookbook || 'Lookbook').toUpperCase(), subKey: null, categoryId: 'lookbook' },
+      { key: 'story', label: 'HOUSE STORY', subKey: null, categoryId: 'story' },
+      { key: 'vote', label: 'SUGGEST & VOTE', subKey: null, categoryId: 'vote' },
+      { key: 'journal', label: (navText.journal || 'Journal').toUpperCase(), subKey: null, categoryId: 'journal' },
     ];
-  }, [categories, t]);
+  }, [categories, t, language]);
 
   const activeSubcategories = useMemo(() => {
     if (!activeCategory) return [];
-    if (categories && categories.length > 0) {
-      const parent = categories.find((c) => c.id === activeCategory || c.slug === activeCategory);
+
+    if (categories && Array.isArray(categories) && categories.length > 0) {
+      const parent = categories.find((c) => Boolean(c && (c.id === activeCategory || c.slug === activeCategory)));
       if (parent) {
-        return categories
-          .filter((c) => c.parentId === parent.id && c.visible)
+        const subs = categories
+          .filter((c) => Boolean(c && c.parentId === parent.id && c.visible))
           .sort((a, b) => (a.order || 0) - (b.order || 0))
           .map((c) => ({
-            name: c.name.en || c.name.fi,
-            slug: c.slug,
-          }));
+            name: resolveCategoryTitle(c),
+            slug: c.slug || c.id || '',
+          }))
+          .filter((s) => Boolean(s.name));
+
+        if (subs.length > 0) return subs;
       }
     }
-    const mockSubs = SUB_CATEGORIES[activeCategory as keyof typeof SUB_CATEGORIES] || [];
+
+    const mockKey = (activeCategory || '').toLowerCase();
+    const mockSubs = SUB_CATEGORIES[mockKey as keyof typeof SUB_CATEGORIES] || [];
     return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
-  }, [activeCategory, categories]);
+  }, [activeCategory, categories, language]);
+
+  const activeParentItem = useMemo(() => {
+    if (!activeCategory) return null;
+    return dynamicItems.find((c) => c.subKey === activeCategory || c.key === activeCategory) || null;
+  }, [activeCategory, dynamicItems]);
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[95] bg-[#FFFFFF] flex flex-col justify-between overflow-y-auto animate-fadeIn">
+    <div
+      ref={menuRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Navigation Menu"
+      className="fixed inset-0 z-[95] bg-[#FFFFFF] text-[#000000] flex flex-col justify-between overflow-y-auto animate-fadeIn select-none"
+      style={{
+        height: '100dvh',
+        minHeight: '100dvh',
+        paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(1.25rem + env(safe-area-inset-bottom, 0px))',
+        paddingLeft: 'calc(1.5rem + env(safe-area-inset-left, 0px))',
+        paddingRight: 'calc(1.5rem + env(safe-area-inset-right, 0px))',
+      }}
+    >
       {/* Top Header inside Mobile Menu */}
-      <div className="px-6 py-6 border-b border-black/10 flex items-center justify-between">
+      <div className="w-full pb-5 border-b border-black/10 flex items-center justify-between shrink-0">
         {activeCategory ? (
           <button
+            type="button"
             onClick={() => setActiveCategory(null)}
-            className="flex items-center gap-1.5 text-xs font-mono tracking-wider uppercase text-black"
+            className="min-h-[44px] min-w-[44px] -ml-2 px-2 flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-black hover:opacity-60 transition-opacity cursor-pointer"
+            aria-label="Back to main categories"
           >
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
             <span>Back</span>
           </button>
         ) : (
-          <div onClick={onNavigateHome} className="cursor-pointer">
+          <button
+            type="button"
+            onClick={() => {
+              onNavigateHome();
+              onClose();
+            }}
+            className="cursor-pointer min-h-[44px] flex items-center -ml-1 text-left"
+            aria-label="Return home"
+          >
             <BrandLogo size="sm" />
-          </div>
+          </button>
         )}
 
         <button
+          type="button"
           onClick={onClose}
-          className="p-2 -mr-2 text-black"
-          aria-label={t.nav.close}
+          className="min-h-[44px] min-w-[44px] -mr-2 p-2 flex items-center justify-center text-black hover:opacity-60 transition-opacity cursor-pointer"
+          aria-label={t.nav?.close || 'Close navigation'}
         >
           <X className="w-6 h-6 stroke-[1.5]" />
         </button>
       </div>
 
       {/* Main Links Container */}
-      <div className="flex-1 px-8 py-8 flex flex-col justify-center">
+      <div className="flex-1 py-8 overflow-y-auto flex flex-col justify-start">
         {!activeCategory ? (
-          <nav className="flex flex-col space-y-5">
+          <nav className="flex flex-col space-y-2 sm:space-y-3" aria-label="Mobile main navigation">
             {dynamicItems.map((item) => (
-              <div key={item.key} className="flex items-center justify-between border-b border-black/10 pb-3">
+              <div
+                key={item.key}
+                className="flex items-center justify-between border-b border-black/[0.08] py-2 sm:py-3 transition-colors"
+              >
                 <button
+                  type="button"
                   onClick={() => {
-                    if (item.subKey) {
+                    if (item.subKey && activeSubcategories.length > 0) {
                       setActiveCategory(item.subKey);
                     } else if (item.key === 'journal') {
                       onNavigateJournal();
@@ -157,14 +249,16 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       onClose();
                     }
                   }}
-                  className="font-editorial text-3xl sm:text-4xl text-left tracking-wide font-normal hover:translate-x-2 transition-transform duration-300"
+                  className="font-editorial text-2xl xs:text-3xl sm:text-4xl text-left tracking-wide font-normal hover:translate-x-1.5 transition-transform duration-200 cursor-pointer flex-1 min-h-[44px] flex items-center pr-3"
                 >
                   {item.label}
                 </button>
                 {item.subKey && (
                   <button
+                    type="button"
                     onClick={() => setActiveCategory(item.subKey)}
-                    className="p-2 text-black/40 hover:text-black"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-black/40 hover:text-black cursor-pointer"
+                    aria-label={`View subcategories for ${item.label}`}
                   >
                     <ChevronRight className="w-5 h-5 stroke-[1.5]" />
                   </button>
@@ -172,41 +266,50 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             ))}
 
-            <div className="pt-4 flex items-center justify-between">
+            <div className="pt-6 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => {
                   onNavigateSitemap();
                   onClose();
                 }}
-                className="text-xs font-mono uppercase tracking-[0.2em] text-black underline underline-offset-4 cursor-pointer"
+                className="min-h-[44px] flex items-center text-xs font-mono uppercase tracking-[0.22em] text-black underline underline-offset-4 cursor-pointer hover:opacity-60 transition-opacity"
               >
-                {t.sitemap}
+                {t.sitemap || 'Site Directory (50+ Pages)'}
               </button>
             </div>
           </nav>
         ) : (
-          <div className="flex flex-col space-y-4 animate-slideIn">
-            <h3 className="font-editorial text-3xl mb-2 font-normal uppercase tracking-wide">
-              {dynamicItems.find((c) => c.subKey === activeCategory)?.label}
-            </h3>
+          <div className="flex flex-col space-y-3 animate-slideIn">
+            <div className="pb-2 border-b border-black/10 mb-2">
+              <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-black/40 block mb-1">
+                DEPARTMENT
+              </span>
+              <h3 className="font-editorial text-3xl font-normal uppercase tracking-wide">
+                {activeParentItem?.label || activeCategory.toUpperCase()}
+              </h3>
+            </div>
+
             <button
+              type="button"
               onClick={() => {
                 onSelectCategory(activeCategory);
                 onClose();
               }}
-              className="text-left text-sm font-sans font-medium uppercase tracking-[0.14em] py-2 border-b border-black/10"
+              className="text-left text-xs font-mono uppercase tracking-[0.2em] min-h-[48px] flex items-center py-2.5 border-b border-black/10 hover:opacity-60 cursor-pointer font-medium"
             >
-              View All
+              View All {activeParentItem?.label || ''} →
             </button>
+
             {activeSubcategories.map((sub) => (
               <button
+                type="button"
                 key={sub.slug}
                 onClick={() => {
                   onSelectCategory(activeCategory, sub.name);
                   onClose();
                 }}
-                className="text-left text-base font-sans text-black/80 hover:text-black py-1.5 tracking-wide border-b border-black/5"
+                className="text-left text-sm font-sans text-black/80 hover:text-black min-h-[48px] flex items-center py-2 tracking-wide border-b border-black/[0.05] cursor-pointer hover:translate-x-1 transition-transform"
               >
                 {sub.name}
               </button>
@@ -216,7 +319,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       </div>
 
       {/* Bottom Atelier Info */}
-      <div className="px-8 py-5 border-t border-black/10 flex items-center justify-between bg-white text-xs font-mono">
+      <div className="pt-4 border-t border-black/10 flex items-center justify-between bg-white text-xs font-mono shrink-0">
         <span className="text-[10px] text-black/60 tracking-widest uppercase">
           ZEJESH ATELIER
         </span>

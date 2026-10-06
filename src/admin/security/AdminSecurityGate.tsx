@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Lock, Mail, Key, AlertTriangle, ArrowLeft, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Lock, Mail, Key, AlertTriangle, ArrowLeft, Eye, EyeOff, CheckCircle2, Smartphone } from 'lucide-react';
 import { useAuth } from '../../supabase/AuthContext';
 
 interface AdminSecurityGateProps {
@@ -11,23 +11,17 @@ interface AdminSecurityGateProps {
 const MAX_FAILED_ATTEMPTS = 5;
 const LOCKOUT_DURATION_SECONDS = 15 * 60; // 15 minutes lockout on brute-force
 
-/**
- * Administrative sign-in gate.
- *
- * Authentication is performed by Supabase Auth (passwords are hashed
- * server-side and never leave the database). This component only collects
- * credentials and relays them — there is no client-side secret to extract
- * from the bundle, and RLS independently rejects any unauthorised session.
- */
 export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
   isLocked,
   onUnlock,
   onExitToStore,
 }) => {
-  const { signIn } = useAuth();
+  const { signIn, verifyMfaCode } = useAuth();
 
+  const [step, setStep] = useState<'password' | 'mfa'>('password');
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [failedAttempts, setFailedAttempts] = useState(() => {
@@ -70,7 +64,7 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
     const trimmedPass = passwordInput;
 
     if (!trimmedEmail || !trimmedPass) {
-      setErrorMsg('Please enter both administrative email and password.');
+      setErrorMsg('Invalid email or password.');
       return;
     }
 
@@ -84,9 +78,15 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
         setFailedAttempts(0);
         localStorage.removeItem('zejesh_sec_failed_attempts');
         localStorage.removeItem('zejesh_sec_lockout_until');
-        setEmailInput('');
-        setPasswordInput('');
-        onUnlock();
+
+        if (result.requiresMfa) {
+          setStep('mfa');
+          setErrorMsg('');
+        } else {
+          setEmailInput('');
+          setPasswordInput('');
+          onUnlock();
+        }
       } else {
         const nextAttempts = failedAttempts + 1;
         setFailedAttempts(nextAttempts);
@@ -98,13 +98,37 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
           localStorage.setItem('zejesh_sec_lockout_until', lockTime.toString());
           setErrorMsg('Maximum unauthorized attempts exceeded. System quarantined for 15 minutes.');
         } else {
-          setErrorMsg(
-            `${result.error || 'Access Denied: Invalid email or password.'} (${MAX_FAILED_ATTEMPTS - nextAttempts} attempts remaining)`
-          );
+          // Always generic error - never reveal if account exists or is admin
+          setErrorMsg('Invalid email or password.');
         }
       }
     } catch {
-      setErrorMsg('Authentication service unavailable. Please try again.');
+      setErrorMsg('Invalid email or password.');
+    } finally {
+      setIsAuthenticating(false);
+    }
+  };
+
+  const handleVerifyMfa = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (isAuthenticating || !mfaCode.trim()) return;
+
+    setIsAuthenticating(true);
+    setErrorMsg('');
+
+    try {
+      const result = await verifyMfaCode(mfaCode.trim());
+      if (result.success) {
+        setEmailInput('');
+        setPasswordInput('');
+        setMfaCode('');
+        setStep('password');
+        onUnlock();
+      } else {
+        setErrorMsg('Invalid verification code. Please try again.');
+      }
+    } catch {
+      setErrorMsg('Verification failed. Please try again.');
     } finally {
       setIsAuthenticating(false);
     }
@@ -140,7 +164,11 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
       <div className="max-w-md w-full mx-auto my-auto py-6 sm:py-8">
         <div className="border border-white/10 bg-neutral-900/80 p-6 sm:p-8 backdrop-blur-xl shadow-2xl relative">
           <div className="w-12 h-12 border border-white/20 mx-auto flex items-center justify-center mb-5 text-black bg-white/95">
-            <Lock className="w-5 h-5 stroke-[1.5] text-black" />
+            {step === 'mfa' ? (
+              <Smartphone className="w-5 h-5 stroke-[1.5] text-black" />
+            ) : (
+              <Lock className="w-5 h-5 stroke-[1.5] text-black" />
+            )}
           </div>
 
           <div className="text-center mb-6">
@@ -148,10 +176,12 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
               AUTHORIZED PERSONNEL ONLY
             </span>
             <h1 className="font-editorial text-2xl sm:text-3xl font-normal tracking-wide text-white mb-2">
-              Studio Portal Access
+              {step === 'mfa' ? 'Two-Factor Authentication' : 'Studio Portal Access'}
             </h1>
             <p className="text-[11.5px] text-white/60 leading-relaxed font-sans">
-              Sign in with your studio account to manage production catalog, orders, real-time inventory, and live client relations.
+              {step === 'mfa'
+                ? 'Enter the 6-digit code from your authenticator app to complete verification.'
+                : 'Sign in with your studio account to manage production catalog, orders, real-time inventory, and live client relations.'}
             </p>
           </div>
 
@@ -168,6 +198,57 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
                 {formatSeconds(remainingLockout)}
               </div>
             </div>
+          ) : step === 'mfa' ? (
+            <form onSubmit={handleVerifyMfa} className="space-y-4">
+              <div>
+                <label className="block text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1.5 flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-white/40" />
+                  <span>Authenticator Code (TOTP)</span>
+                </label>
+                <input
+                  type="text"
+                  autoFocus
+                  required
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="000000"
+                  disabled={isAuthenticating}
+                  className="w-full px-3.5 py-2.5 text-center text-lg tracking-[0.4em] bg-black/80 border border-white/20 text-white placeholder-white/20 focus:border-white focus:outline-none font-mono"
+                />
+              </div>
+
+              {errorMsg && (
+                <div className="p-3 text-xs text-rose-300 bg-rose-950/60 border border-rose-700/50 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
+                  <span className="leading-snug">{errorMsg}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={isAuthenticating || mfaCode.length !== 6}
+                className="w-full py-3 bg-white text-black text-xs uppercase tracking-[0.22em] font-medium hover:bg-neutral-200 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span>{isAuthenticating ? 'Verifying Code...' : 'Verify & Enter Console'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('password');
+                  setErrorMsg('');
+                  setMfaCode('');
+                }}
+                className="w-full text-center text-[11px] text-white/50 hover:text-white uppercase tracking-wider pt-2 cursor-pointer transition-colors"
+              >
+                ← Back to Password
+              </button>
+            </form>
           ) : (
             <form onSubmit={handleVerify} className="space-y-4">
               <div>
@@ -218,7 +299,7 @@ export const AdminSecurityGate: React.FC<AdminSecurityGateProps> = ({
 
               {errorMsg && (
                 <div className="p-3 text-xs text-rose-300 bg-rose-950/60 border border-rose-700/50 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5" />
+                  <AlertTriangle className="w-4 h-4 text-rose-400 mt-0.5 shrink-0" />
                   <span className="leading-snug">{errorMsg}</span>
                 </div>
               )}
