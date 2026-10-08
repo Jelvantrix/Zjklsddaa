@@ -59,12 +59,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
 
   // Diverse crops of the studio model photo on pure white background
   const galleryCrops = [
-    { pos: product.cropVariation.packshot.position, scale: product.cropVariation.packshot.scale, label: '01 · Full Silhouette' },
-    { pos: product.cropVariation.onModel.position, scale: product.cropVariation.onModel.scale, flipped: true, label: '02 · Atelier Model' },
-    { pos: product.cropVariation.detail1.position, scale: product.cropVariation.detail1.scale, label: '03 · Collar & Fastening' },
-    { pos: product.cropVariation.detail2.position, scale: product.cropVariation.detail2.scale, label: '04 · Weave Texture' },
-    { pos: product.cropVariation.detail3.position, scale: product.cropVariation.detail3.scale, label: '05 · Profile & Pockets' },
-    { pos: product.cropVariation.detail4.position, scale: product.cropVariation.detail4.scale, label: '06 · Hand-Finished Seams' },
+    { pos: product?.cropVariation?.packshot?.position || 'center 20%', scale: product?.cropVariation?.packshot?.scale || 1, label: '01 · Full Silhouette' },
+    { pos: product?.cropVariation?.onModel?.position || 'center 20%', scale: product?.cropVariation?.onModel?.scale || 1.05, flipped: true, label: '02 · Atelier Model' },
+    { pos: product?.cropVariation?.detail1?.position || 'center 15%', scale: product?.cropVariation?.detail1?.scale || 1.4, label: '03 · Collar & Fastening' },
+    { pos: product?.cropVariation?.detail2?.position || 'center 35%', scale: product?.cropVariation?.detail2?.scale || 1.6, label: '04 · Weave Texture' },
+    { pos: product?.cropVariation?.detail3?.position || 'center 50%', scale: product?.cropVariation?.detail3?.scale || 1.3, label: '05 · Profile & Pockets' },
+    { pos: product?.cropVariation?.detail4?.position || 'center 60%', scale: product?.cropVariation?.detail4?.scale || 1.5, label: '06 · Hand-Finished Seams' },
   ];
 
   // Recommendations

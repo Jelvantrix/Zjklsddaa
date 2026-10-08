@@ -47,9 +47,20 @@ export const ProductListing: React.FC<ProductListingProps> = ({
 }) => {
   const t = translations[language];
 
-  // Resolve source products: real-time Firestore list or fallback
+  // Resolve source products: real-time Firestore list blended with permanent baseline
+  // Guaranteeing that all categories, subcategories, and 24 archival slots remain populated
+  // no matter how many custom products exist or if all products are removed.
   const sourceProducts = useMemo(() => {
-    return products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
+    if (!products || products.length === 0) {
+      return ARCHIVE_PRODUCTS;
+    }
+    const combined = [...products];
+    for (const arch of ARCHIVE_PRODUCTS) {
+      if (!combined.some((p) => p.id === arch.id)) {
+        combined.push(arch);
+      }
+    }
+    return combined;
   }, [products]);
 
   // Density switch: 1, 2, or 4 columns

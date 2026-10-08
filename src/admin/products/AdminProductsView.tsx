@@ -37,7 +37,7 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   onDeleteProducts: propDeleteProducts,
 }) => {
   const { adminProfile } = useAuth();
-  const { deleteProduct: ctxDeleteProduct, deleteProducts: ctxDeleteProducts } = useStorefrontData();
+  const { deleteProduct: ctxDeleteProduct, deleteProducts: ctxDeleteProducts, resetDemoData } = useStorefrontData();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -235,14 +235,29 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onCreateProduct}
-          className="text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-2 text-black hover:opacity-60 transition-opacity cursor-pointer underline underline-offset-8 self-start sm:self-auto font-medium"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          <span>New Garment Record</span>
-        </button>
+        <div className="flex items-center gap-6 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={async () => {
+              await resetDemoData();
+              showNotification('Restored all 24 baseline archival garments into catalog.');
+              if (onRefresh) onRefresh();
+            }}
+            className="text-xs font-mono uppercase tracking-[0.18em] text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-8 font-normal"
+            title="Populate catalog with all 24 standard atelier garment plates"
+          >
+            <span>Restore Archival Collection (24)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onCreateProduct}
+            className="text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-2 text-black hover:opacity-60 transition-opacity cursor-pointer underline underline-offset-8 font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>New Garment Record</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter and Search Bar: Pure Borderless Underline Design */}
@@ -375,7 +390,7 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
             </tr>
           </thead>
           <tbody className="divide-y divide-black/5">
-            {filtered.map((prod) => {
+            {filtered.map((prod, idx) => {
               const isSelected = selectedIds.includes(prod.id);
               const totalStock = prod.variants ? prod.variants.reduce((a, v) => a + v.stock, 0) : (prod.stock || 0);
 
@@ -401,9 +416,18 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                     </button>
                   </td>
 
-                  {/* Plate Nº */}
+                  {/* Plate Nº & Home Slot */}
                   <td className="py-4 px-3 font-semibold text-black tracking-wider">
-                    {prod.nr || prod.plateNumber}
+                    <div>{prod.nr || prod.plateNumber}</div>
+                    {idx < 8 ? (
+                      <span className="text-[9px] uppercase tracking-wider text-black/50 block font-normal">
+                        Slot 0{idx + 1} (Home)
+                      </span>
+                    ) : (
+                      <span className="text-[9px] uppercase tracking-wider text-black/30 block font-normal">
+                        Catalogue
+                      </span>
+                    )}
                   </td>
 
                   {/* Visual Thumbnail */}
@@ -520,8 +544,33 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         </table>
 
         {filtered.length === 0 && (
-          <div className="py-16 text-center text-xs font-mono text-black/40 border-b border-black/10">
-            No products match the selected criteria or archive search.
+          <div className="py-16 text-center space-y-4 border-b border-black/10">
+            <p className="text-xs font-mono text-black/60">
+              No product records match active search or the catalog is currently clear.
+            </p>
+            <p className="text-[11.5px] font-sans text-black/50 max-w-lg mx-auto leading-relaxed">
+              <strong className="text-black font-medium">Storefront Structure Guaranteed:</strong> The public home page structure (all 8 Curated Rotation Slots, Seasonal Edit, and Lookbook) remains 100% active, populated, and fully functional using permanent baseline atelier pieces. Any custom garments you create or edit here will automatically fit into and replace these storefront slots.
+            </p>
+            <div className="pt-3 flex items-center justify-center gap-6">
+              <button
+                type="button"
+                onClick={onCreateProduct}
+                className="text-xs uppercase font-mono tracking-wider underline underline-offset-4 cursor-pointer hover:opacity-60 text-black font-medium"
+              >
+                + Add Garment to Slot 1
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  await resetDemoData();
+                  showNotification('Restored all 24 baseline archival garments into catalog.');
+                  if (onRefresh) onRefresh();
+                }}
+                className="text-xs uppercase font-mono tracking-wider underline underline-offset-4 cursor-pointer hover:opacity-60 text-black/70"
+              >
+                Restore 24 Archival Garments
+              </button>
+            </div>
           </div>
         )}
       </div>

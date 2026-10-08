@@ -57,18 +57,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[100svh] overflow-hidden bg-[#FFFFFF] select-none"
+      className="relative w-full h-[100svh] overflow-hidden bg-[#FFFFFF] select-none touch-pan-y"
+      style={{ touchAction: 'pan-y' }}
       aria-label="Hero Carousel"
     >
       {/* 
         Slide Track: Horizontal translation with smooth animation
-        (Swipe removed on mobile and tablet to preserve natural page scroll)
+        (Touch swipe is strictly disabled on mobile and tablet to preserve natural vertical page scrolling)
       */}
       <div
-        className="flex flex-row h-full w-full"
+        className="flex flex-row h-full w-full pointer-events-none"
         style={{
           transform: `translateX(-${currentIndex * 100}%)`,
           transition: 'transform 600ms cubic-bezier(0.16, 1, 0.3, 1)',
+          touchAction: 'pan-y',
         }}
       >
         {slides.map((slide) => {

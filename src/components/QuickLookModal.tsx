@@ -80,8 +80,8 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
               product={product}
               src={product.hoverImage || product.image}
               alt={product.name.en || product.name.fi}
-              position={product.cropVariation.onModel.position}
-              scale={product.cropVariation.onModel.scale}
+              position={product?.cropVariation?.onModel?.position || 'center 20%'}
+              scale={product?.cropVariation?.onModel?.scale || 1.05}
               aspectRatio="auto"
               className="w-full h-full"
             />

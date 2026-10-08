@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Language, Product } from '../types';
 import {
   translations,
@@ -32,7 +32,48 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
   wishlistIds,
   products,
 }) => {
-  const liveProducts = products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
+  // =========================================================================
+  // ARCHITECTURAL ROTATION SLOTS GUARANTEE
+  // =========================================================================
+  // The home page layout structure is permanent and immovable: exactly 8 curated
+  // garment slots in the 4-column showcase grid, plus the Women's and Men's
+  // Seasonal Edits. No matter if 0 products exist, 1 product exists, or 24 exist,
+  // custom/active products fit into slots 1..8 first, and any open slots are
+  // automatically guaranteed by the archival baseline blueprint pieces.
+  const rotationSlots = useMemo(() => {
+    const customList = Array.isArray(products) && products.length > 0 ? products : [];
+    const slots: Product[] = [];
+
+    for (let i = 0; i < 8; i++) {
+      if (customList[i]) {
+        slots.push(customList[i]);
+      } else {
+        const fallback = ARCHIVE_PRODUCTS[i] || ARCHIVE_PRODUCTS[0];
+        slots.push(fallback);
+      }
+    }
+    return slots;
+  }, [products]);
+
+  // Guaranteed safe Women's and Men's editorial highlights
+  const womenHighlight = useMemo(() => {
+    const list = Array.isArray(products) && products.length > 0 ? products : [];
+    return (
+      list.find((p) => p && p.category === 'naiset') ||
+      ARCHIVE_PRODUCTS.find((p) => p.category === 'naiset') ||
+      ARCHIVE_PRODUCTS[0]
+    );
+  }, [products]);
+
+  const menHighlight = useMemo(() => {
+    const list = Array.isArray(products) && products.length > 0 ? products : [];
+    return (
+      list.find((p) => p && p.category === 'miehet') ||
+      ARCHIVE_PRODUCTS.find((p) => p.category === 'miehet') ||
+      ARCHIVE_PRODUCTS[3] ||
+      ARCHIVE_PRODUCTS[0]
+    );
+  }, [products]);
 
   // Hover state for seamless packshot -> on-model crossfade
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
@@ -57,9 +98,6 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
       setIsSubscribed(true);
     }
   };
-
-  const womenHighlight = liveProducts.find((p) => p.category === 'naiset') || liveProducts[0];
-  const menHighlight = liveProducts.find((p) => p.category === 'miehet') || liveProducts[1];
 
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] selection:bg-black selection:text-white">
@@ -99,8 +137,8 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 product={womenHighlight}
                 src={womenHighlight.image}
                 alt="Women's Collection"
-                position={womenHighlight.cropVariation.onModel.position}
-                scale={womenHighlight.cropVariation.onModel.scale}
+                position={womenHighlight?.cropVariation?.onModel?.position || womenHighlight?.imagePosition || 'center 20%'}
+                scale={womenHighlight?.cropVariation?.onModel?.scale || womenHighlight?.imageScale || 1.04}
                 aspectRatio="auto"
                 className="w-full h-full"
                 imageClassName="group-hover:scale-[1.04] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -135,9 +173,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 product={menHighlight}
                 src={menHighlight.image}
                 alt="Men's Collection"
-                position={menHighlight.cropVariation.onModel.position}
-                scale={menHighlight.cropVariation.onModel.scale}
-                flipped={true}
+                position={menHighlight?.cropVariation?.onModel?.position || menHighlight?.imagePosition || 'center 20%'}
+                scale={menHighlight?.cropVariation?.onModel?.scale || menHighlight?.imageScale || 1.04}
+                flipped={menHighlight?.cropVariation?.onModel?.flipped || true}
                 aspectRatio="auto"
                 className="w-full h-full"
                 imageClassName="group-hover:scale-[1.04] transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -164,13 +202,13 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
         </div>
       </section>
 
-      {/* 3. THE BRAND STORE SHOWCASE: PURE HIGH-FASHION PRODUCT GRID */}
+      {/* 3. THE BRAND STORE SHOWCASE: PURE HIGH-FASHION PRODUCT GRID (8 FIXED SLOTS) */}
       <section className="w-full max-w-[1880px] mx-auto px-4 sm:px-8 lg:px-12 py-16 sm:py-24 border-b border-black/[0.08]">
         {/* Section Header */}
         <div className="flex items-baseline justify-between pb-6 sm:pb-8 border-b border-black/[0.08] mb-8 sm:mb-12">
           <div>
             <span className="text-[10px] font-mono tracking-[0.3em] uppercase text-black/50 block mb-1">
-              CURRENT PRESENTATION
+              CURRENT PRESENTATION · 8 ARCHIVAL SLOTS
             </span>
             <h2 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-black tracking-tight">
               Current Archival Rotation
@@ -182,17 +220,22 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
             onClick={() => onSelectCategory('all')}
             className="text-xs font-mono uppercase tracking-[0.22em] text-black hover:opacity-60 underline underline-offset-4 cursor-pointer transition-opacity"
           >
-            View All 24 Pieces →
+            View Complete Catalogue →
           </button>
         </div>
 
-        {/* 4-Column High-Fashion Grid */}
+        {/* 4-Column High-Fashion Grid (Guaranteed 8 Slots) */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 sm:gap-x-8 gap-y-12 sm:gap-y-16">
-          {liveProducts.slice(0, 8).map((product) => {
+          {rotationSlots.map((product, slotIndex) => {
             const isHovered = hoveredCardId === product.id;
+            const slotPlate = product.plateNumber || product.nr || `Nº 00${slotIndex + 1}`;
+            const productName = product.name?.[language] || product.name?.en || product.name?.fi || 'Archival Garment';
+            const productMaterial = product.material?.[language] || product.material?.en || product.material?.fi || 'Virgin Wool & Natural Fibers';
+            const sizes = product.sizes && product.sizes.length > 0 ? product.sizes : ['XS', 'S', 'M', 'L', 'XL'];
+
             return (
               <div
-                key={product.id}
+                key={`${product.id}-${slotIndex}`}
                 onMouseEnter={() => setHoveredCardId(product.id)}
                 onMouseLeave={() => setHoveredCardId(null)}
                 className="group flex flex-col justify-between"
@@ -200,7 +243,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                 <div>
                   {/* Card Header: Plate number & season */}
                   <div className="flex items-center justify-between text-[10px] font-mono tracking-wider text-black/45 pb-2">
-                    <span>{product.plateNumber}</span>
+                    <span>{slotPlate}</span>
                     <span className="uppercase text-black/50">
                       {product.collectionSeason === 'talvi' ? 'Winter 2026' : 'Essentials'}
                     </span>
@@ -220,9 +263,9 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                       <FashionImage
                         product={product}
                         src={product.image}
-                        alt={product.name[language]}
-                        position={product.cropVariation.packshot.position}
-                        scale={product.cropVariation.packshot.scale}
+                        alt={productName}
+                        position={product?.cropVariation?.packshot?.position || product?.imagePosition || 'center 25%'}
+                        scale={product?.cropVariation?.packshot?.scale || product?.imageScale || 1}
                         aspectRatio="auto"
                         className="w-full h-full"
                         imageClassName="group-hover:scale-105 transition-transform duration-[900ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
@@ -239,10 +282,10 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                         product={product}
                         src={product.hoverImage || product.image}
                         isHover={true}
-                        alt={`${product.name[language]} on model`}
-                        position={product.cropVariation.onModel.position}
-                        scale={product.cropVariation.onModel.scale}
-                        flipped={product.cropVariation.onModel.flipped}
+                        alt={`${productName} on model`}
+                        position={product?.cropVariation?.onModel?.position || product?.imagePosition || 'center 20%'}
+                        scale={product?.cropVariation?.onModel?.scale || product?.imageScale || 1.05}
+                        flipped={product?.cropVariation?.onModel?.flipped || false}
                         aspectRatio="auto"
                         className="w-full h-full"
                         imageClassName="scale-105"
@@ -255,7 +298,7 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                         Size:
                       </span>
                       <div className="flex gap-1.5">
-                        {product.sizes.map((sz) => {
+                        {sizes.map((sz) => {
                           const isAdded = addedFeedback === `${product.id}-${sz}`;
                           return (
                             <button
@@ -287,14 +330,14 @@ export const HomeSections: React.FC<HomeSectionsProps> = ({
                       onClick={() => onSelectProduct(product)}
                       className="font-editorial text-lg sm:text-xl font-normal text-black cursor-pointer hover:underline underline-offset-4 truncate"
                     >
-                      {product.name[language]}
+                      {productName}
                     </h3>
                     <span className="font-mono text-xs sm:text-sm text-black font-medium shrink-0">
-                      {formatPrice(product.price)}
+                      {formatPrice(product.price || 480)}
                     </span>
                   </div>
                   <p className="font-mono text-[10.5px] text-black/50 truncate">
-                    {product.material[language]}
+                    {productMaterial}
                   </p>
                 </div>
               </div>
