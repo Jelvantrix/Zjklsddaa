@@ -294,9 +294,9 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
             {/* Left Column: Order List */}
-            <div className="lg:col-span-5 border border-black/[0.08] bg-white divide-y divide-black/[0.06] overflow-y-auto max-h-[700px]">
+            <div className="lg:col-span-5 divide-y divide-black/10 overflow-y-auto max-h-[700px]">
               {filteredOrders.length === 0 ? (
                 <div className="p-8 text-center text-xs font-mono text-black/40">No orders match criteria.</div>
               ) : (
@@ -307,7 +307,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                       key={ord.id}
                       onClick={() => setSelectedOrder(ord)}
                       className={`p-4 transition-colors cursor-pointer text-xs font-mono ${
-                        isSelected ? 'bg-black/[0.03] border-l-2 border-black' : 'hover:bg-black/[0.015]'
+                        isSelected ? 'bg-black/[0.04]' : 'hover:bg-black/[0.015]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -335,7 +335,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
 
             {/* Right Column: Order Detail & Timeline */}
             {selectedOrder && (
-              <div className="lg:col-span-7 border border-black/[0.08] bg-white p-6 space-y-6 font-mono text-xs">
+              <div className="lg:col-span-7 space-y-6 font-mono text-xs">
                 {/* Order Header */}
                 <div className="flex items-start justify-between border-b border-black/[0.08] pb-4">
                   <div>
@@ -377,7 +377,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 </div>
 
                 {/* Tracking Number */}
-                <div className="p-4 border border-black/[0.08] bg-black/[0.01] space-y-2">
+                <div className="py-3 border-y border-black/10 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] uppercase text-black/60 tracking-wider flex items-center gap-1.5">
                       <Truck className="w-3.5 h-3.5" />
@@ -388,18 +388,18 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                     )}
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex gap-4">
                     <input
                       type="text"
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
                       placeholder={selectedOrder.tracking ? 'Update tracking code...' : 'Enter carrier tracking code...'}
-                      className="flex-1 px-3 py-1.5 border border-black/20 bg-white focus:border-black focus:outline-none"
+                      className="flex-1 py-1.5 bg-transparent border-0 border-b border-black/20 focus:border-black outline-none rounded-none text-xs"
                     />
                     <button
                       type="button"
                       onClick={handleSaveTracking}
-                      className="px-4 py-1.5 bg-black text-white text-[11px] uppercase tracking-wider hover:bg-neutral-800 cursor-pointer"
+                      className="py-1.5 px-4 bg-black text-white text-[11px] uppercase tracking-wider hover:bg-neutral-800 cursor-pointer"
                     >
                       Save
                     </button>
@@ -407,7 +407,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 </div>
 
                 {/* Customer and Shipping Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 border border-black/[0.08]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2">
                   <div>
                     <span className="text-[10px] uppercase text-black/40 block mb-1">Customer Info</span>
                     <div className="font-semibold text-black">{selectedOrder.customer.name}</div>
@@ -432,9 +432,9 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 </div>
 
                 {/* Items Table */}
-                <div>
+                <div className="space-y-2 pt-2">
                   <div className="text-[10px] uppercase text-black/50 tracking-wider mb-2">Order Line Items</div>
-                  <div className="border border-black/[0.08] divide-y divide-black/[0.06]">
+                  <div className="divide-y divide-black/10 border-y border-black/10">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="p-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">

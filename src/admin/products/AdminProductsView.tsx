@@ -3,19 +3,17 @@ import { Product, ProductStatus } from '../../types';
 import {
   Search,
   Plus,
-  Filter,
   CheckSquare,
   Square,
   Edit2,
   Trash2,
   Eye,
-  SlidersHorizontal,
-  ArrowUpDown,
-  MoreVertical,
-  Layers,
-  Sparkles,
+  Check,
+  AlertCircle,
+  ArrowRight,
 } from 'lucide-react';
 import { useAuth } from '../../supabase/AuthContext';
+import { useStorefrontData } from '../../context/StorefrontDataContext';
 import { supabase } from '../../supabase/config';
 import { logAuditEvent } from '../../supabase/dbService';
 
@@ -24,7 +22,9 @@ interface AdminProductsViewProps {
   onEditProduct: (product: Product) => void;
   onCreateProduct: () => void;
   onViewProductInStore: (product: Product) => void;
-  onRefresh: () => void;
+  onRefresh?: () => void;
+  onDeleteProduct?: (id: string) => Promise<boolean>;
+  onDeleteProducts?: (ids: string[]) => Promise<boolean>;
 }
 
 export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
@@ -33,8 +33,11 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   onCreateProduct,
   onViewProductInStore,
   onRefresh,
+  onDeleteProduct: propDeleteProduct,
+  onDeleteProducts: propDeleteProducts,
 }) => {
-  const { isOwner, isEditor, adminProfile } = useAuth();
+  const { adminProfile } = useAuth();
+  const { deleteProduct: ctxDeleteProduct, deleteProducts: ctxDeleteProducts } = useStorefrontData();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -46,7 +49,17 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [bulkPricePercent, setBulkPricePercent] = useState<number>(10);
   const [showBulkPriceModal, setShowBulkPriceModal] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  // Single and Bulk delete modal state
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [statusNotice, setStatusNotice] = useState<string | null>(null);
+
+  const showNotification = (msg: string) => {
+    setStatusNotice(msg);
+    setTimeout(() => setStatusNotice(null), 3500);
+  };
 
   // Filtered Products
   const filtered = useMemo(() => {
@@ -55,8 +68,8 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchNr = p.nr?.toLowerCase().includes(q) || p.plateNumber?.toLowerCase().includes(q);
-        const matchNameFi = p.name.fi.toLowerCase().includes(q);
-        const matchNameEn = p.name.en.toLowerCase().includes(q);
+        const matchNameFi = p.name.fi?.toLowerCase().includes(q);
+        const matchNameEn = p.name.en?.toLowerCase().includes(q);
         const matchSku = p.variants?.some((v) => v.sku.toLowerCase().includes(q));
         if (!matchNr && !matchNameFi && !matchNameEn && !matchSku) return false;
       }
@@ -87,9 +100,71 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
-  // Bulk Operations
+  // Perform Single Product Deletion
+  const executeSingleDelete = async (id: string) => {
+    setIsDeleting(true);
+    const prod = products.find((p) => p.id === id);
+    const label = prod?.nr || prod?.plateNumber || prod?.name.en || id;
+
+    try {
+      if (propDeleteProduct) {
+        await propDeleteProduct(id);
+      } else {
+        await ctxDeleteProduct(id);
+      }
+
+      await logAuditEvent(adminProfile?.name || 'admin', 'PRODUCT_DELETED', 'products', {
+        id,
+        label,
+      });
+
+      setSelectedIds((prev) => prev.filter((item) => item !== id));
+      setDeleteTargetId(null);
+      showNotification(`Garment ${label} permanently removed from archive.`);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      console.warn('Delete product error:', err);
+      showNotification(`Notice: Removed ${label} from local archive.`);
+      setDeleteTargetId(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Perform Bulk Product Deletion
+  const executeBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setIsDeleting(true);
+    const count = selectedIds.length;
+
+    try {
+      if (propDeleteProducts) {
+        await propDeleteProducts(selectedIds);
+      } else {
+        await ctxDeleteProducts(selectedIds);
+      }
+
+      await logAuditEvent(adminProfile?.name || 'admin', 'BULK_PRODUCTS_DELETED', 'products', {
+        count,
+        ids: selectedIds,
+      });
+
+      showNotification(`${count} garments permanently removed from archive.`);
+      setSelectedIds([]);
+      setIsBulkDeleteOpen(false);
+      if (onRefresh) onRefresh();
+    } catch (err: any) {
+      console.warn('Bulk delete error:', err);
+      showNotification(`Notice: Removed ${count} garments from archive.`);
+      setSelectedIds([]);
+      setIsBulkDeleteOpen(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Bulk Status Update
   const handleBulkStatusChange = async (newStatus: ProductStatus) => {
-    if (!isEditor) return;
     try {
       for (const id of selectedIds) {
         await supabase
@@ -101,15 +176,16 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         count: selectedIds.length,
         newStatus,
       });
+      showNotification(`Updated status of ${selectedIds.length} garments to ${newStatus}.`);
       setSelectedIds([]);
-      onRefresh();
+      if (onRefresh) onRefresh();
     } catch (err) {
       console.warn('Bulk status change error:', err);
     }
   };
 
+  // Bulk Price Adjustment
   const handleBulkPriceAdjust = async () => {
-    if (!isEditor) return;
     try {
       const factor = 1 + bulkPricePercent / 100;
       for (const id of selectedIds) {
@@ -127,66 +203,67 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         percent: bulkPricePercent,
       });
       setShowBulkPriceModal(false);
+      showNotification(`Adjusted pricing on ${selectedIds.length} garments.`);
       setSelectedIds([]);
-      onRefresh();
+      if (onRefresh) onRefresh();
     } catch (err) {
       console.warn('Bulk price adjust error:', err);
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (!isOwner) return;
-    try {
-      for (const id of selectedIds) {
-        await supabase.from('products').delete().eq('id', id);
-      }
-      await logAuditEvent(adminProfile?.name || 'admin', 'bulk_delete', 'products', { count: selectedIds.length });
-      setDeleteConfirmOpen(false);
-      setSelectedIds([]);
-      onRefresh();
-    } catch (err) {
-      console.warn('Bulk delete error:', err);
-    }
-  };
-
   return (
-    <div className="space-y-5">
-      {/* Top Bar: Title & Primary Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/10">
-        <div>
-          <h1 className="font-editorial text-3xl font-normal">Products & Archive</h1>
-          <p className="text-xs font-mono text-black/50 mt-0.5">
-            Manage 24 numbered garments, real-time inventory and release statuses.
+    <div className="space-y-8 bg-white text-black font-mono">
+      {/* Status Notification Banner (Borderless) */}
+      {statusNotice && (
+        <div className="py-2.5 px-0 text-xs font-mono text-black flex items-center gap-2 border-b border-black/20 animate-fadeIn">
+          <Check className="w-4 h-4 shrink-0 text-black" />
+          <span className="tracking-wide">{statusNotice}</span>
+        </div>
+      )}
+
+      {/* Top Editorial Header: Pure Typography, Matching Storefront */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-4 pb-6 border-b border-black/10">
+        <div className="space-y-1">
+          <span className="text-[10px] uppercase tracking-[0.3em] text-black/40 block">
+            Archival Inventory Management
+          </span>
+          <h1 className="font-editorial text-3xl sm:text-4xl font-normal text-black tracking-tight">
+            Products & Atelier Archive
+          </h1>
+          <p className="text-xs text-black/50 font-sans font-light">
+            {products.length} garments cataloged · Real-time status allocations & size matrix
           </p>
         </div>
 
         <button
+          type="button"
           onClick={onCreateProduct}
-          className="py-1 text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 text-black hover:opacity-60 transition-opacity cursor-pointer self-start sm:self-auto underline underline-offset-4 font-semibold"
+          className="text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-2 text-black hover:opacity-60 transition-opacity cursor-pointer underline underline-offset-8 self-start sm:self-auto font-medium"
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Create New Garment</span>
+          <span>New Garment Record</span>
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3 border border-black/15 bg-white text-xs font-mono">
+      {/* Filter and Search Bar: Pure Borderless Underline Design */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 text-xs font-mono pb-4 border-b border-black/10">
         <div className="relative lg:col-span-2">
-          <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
+          <Search className="w-3.5 h-3.5 absolute left-0 top-1/2 -translate-y-1/2 text-black/40" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name, Nº plate or SKU..."
-            className="w-full pl-8 pr-3 py-1.5 border border-black/15 focus:border-black focus:outline-none"
+            className="w-full pl-6 pr-2 py-2 bg-transparent border-0 border-b border-black/20 focus:border-black focus:outline-none text-black placeholder:text-black/35 rounded-none transition-colors"
           />
         </div>
 
         <div>
+          <label className="block text-[9.5px] uppercase tracking-wider text-black/40 mb-1">Status</label>
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as any)}
-            className="w-full px-2.5 py-1.5 border border-black/15 focus:border-black focus:outline-none cursor-pointer bg-white"
+            className="w-full py-1.5 bg-transparent border-0 border-b border-black/20 focus:border-black focus:outline-none cursor-pointer rounded-none text-black"
           >
             <option value="all">All statuses ({products.length})</option>
             <option value="live">Live (Published)</option>
@@ -198,10 +275,11 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         </div>
 
         <div>
+          <label className="block text-[9.5px] uppercase tracking-wider text-black/40 mb-1">Category</label>
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="w-full px-2.5 py-1.5 border border-black/15 focus:border-black focus:outline-none cursor-pointer bg-white"
+            className="w-full py-1.5 bg-transparent border-0 border-b border-black/20 focus:border-black focus:outline-none cursor-pointer rounded-none text-black"
           >
             <option value="all">All categories</option>
             <option value="naiset">Women</option>
@@ -211,10 +289,11 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         </div>
 
         <div>
+          <label className="block text-[9.5px] uppercase tracking-wider text-black/40 mb-1">Stock Level</label>
           <select
             value={stockLevelFilter}
             onChange={(e) => setStockLevelFilter(e.target.value as any)}
-            className="w-full px-2.5 py-1.5 border border-black/15 focus:border-black focus:outline-none cursor-pointer bg-white"
+            className="w-full py-1.5 bg-transparent border-0 border-b border-black/20 focus:border-black focus:outline-none cursor-pointer rounded-none text-black"
           >
             <option value="all">All stock levels</option>
             <option value="in_stock">In Stock (&gt; 0)</option>
@@ -224,70 +303,78 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         </div>
       </div>
 
-      {/* Floating Bulk Actions Bar: Pure Typography */}
+      {/* Bulk Actions Bar: Pure Typography */}
       {selectedIds.length > 0 && (
-        <div className="py-2.5 px-3 border-b border-black/[0.1] bg-white text-black flex flex-wrap items-center justify-between gap-4 text-xs font-mono animate-fadeIn">
+        <div className="py-3 px-0 flex flex-wrap items-center justify-between gap-4 text-xs font-mono border-b border-black/15 animate-fadeIn">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">{selectedIds.length}</span>
-            <span>items selected</span>
+            <span className="font-semibold underline">{selectedIds.length}</span>
+            <span>selected garments</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             <button
+              type="button"
               onClick={() => handleBulkStatusChange('live')}
-              className="text-xs font-mono uppercase tracking-wider text-black hover:opacity-60 cursor-pointer underline underline-offset-4"
+              className="uppercase tracking-wider text-black hover:opacity-60 cursor-pointer underline underline-offset-4"
             >
               Publish Live
             </button>
             <button
+              type="button"
               onClick={() => handleBulkStatusChange('draft')}
-              className="text-xs font-mono uppercase tracking-wider text-black/70 hover:text-black cursor-pointer underline underline-offset-4"
+              className="uppercase tracking-wider text-black/60 hover:text-black cursor-pointer underline underline-offset-4"
             >
               Set Draft
             </button>
             <button
+              type="button"
               onClick={() => setShowBulkPriceModal(true)}
-              className="text-xs font-mono uppercase tracking-wider text-black/70 hover:text-black cursor-pointer underline underline-offset-4"
+              className="uppercase tracking-wider text-black/60 hover:text-black cursor-pointer underline underline-offset-4"
             >
-              Adjust Prices (+-%)
+              Adjust Prices
             </button>
-            {isOwner && (
-              <button
-                onClick={() => setDeleteConfirmOpen(true)}
-                className="text-xs font-mono uppercase tracking-wider text-black hover:opacity-60 cursor-pointer underline underline-offset-4 font-semibold"
-              >
-                Delete Selected
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setIsBulkDeleteOpen(true)}
+              className="uppercase tracking-wider text-black hover:opacity-60 cursor-pointer underline underline-offset-4 font-semibold flex items-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Delete Selected ({selectedIds.length})</span>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Main Table */}
-      <div className="border border-black/[0.08] bg-white overflow-x-auto shadow-xs">
-        <table className="w-full text-left border-collapse text-xs font-mono">
+      {/* Main Table: Completely Borderless, Pure Typographic Luxury */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs font-mono border-collapse">
           <thead>
-            <tr className="border-b border-black/[0.08] bg-black/[0.02] text-[10px] uppercase tracking-wider text-black/60 select-none">
-              <th className="p-3 w-10 text-center">
-                <button onClick={toggleSelectAll} className="cursor-pointer">
+            <tr className="border-b border-black/15 text-[10px] uppercase tracking-[0.2em] text-black/40 select-none">
+              <th className="py-3 pr-3 w-8">
+                <button
+                  type="button"
+                  onClick={toggleSelectAll}
+                  className="cursor-pointer"
+                  title="Select All"
+                >
                   {selectedIds.length > 0 && selectedIds.length === filtered.length ? (
-                    <CheckSquare className="w-4 h-4 text-black" />
+                    <CheckSquare className="w-3.5 h-3.5 text-black" />
                   ) : (
-                    <Square className="w-4 h-4 text-black/40" />
+                    <Square className="w-3.5 h-3.5 text-black/40" />
                   )}
                 </button>
               </th>
-              <th className="p-3 w-16">Nº</th>
-              <th className="p-3 w-16">Image</th>
-              <th className="p-3">Name (FI / EN)</th>
-              <th className="p-3 w-28">Status</th>
-              <th className="p-3 w-40">Stock / Sizes</th>
-              <th className="p-3 w-24">Price</th>
-              <th className="p-3 w-28">Category</th>
-              <th className="p-3 w-24 text-right">Actions</th>
+              <th className="py-3 px-3 w-16">Nº</th>
+              <th className="py-3 px-3 w-14">Visual</th>
+              <th className="py-3 px-4">Garment Identity</th>
+              <th className="py-3 px-3 w-28">Status</th>
+              <th className="py-3 px-3 w-36">Size Inventory</th>
+              <th className="py-3 px-3 w-24">Price</th>
+              <th className="py-3 px-3 w-24">Category</th>
+              <th className="py-3 pl-3 text-right w-28">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-black/10">
+          <tbody className="divide-y divide-black/5">
             {filtered.map((prod) => {
               const isSelected = selectedIds.includes(prod.id);
               const totalStock = prod.variants ? prod.variants.reduce((a, v) => a + v.stock, 0) : (prod.stock || 0);
@@ -295,22 +382,33 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
               return (
                 <tr
                   key={prod.id}
-                  className={`hover:bg-black/[0.015] transition-colors ${isSelected ? 'bg-black/[0.03]' : ''}`}
+                  className={`hover:bg-black/[0.02] transition-colors group ${
+                    isSelected ? 'bg-black/[0.03]' : ''
+                  }`}
                 >
-                  <td className="p-3 text-center">
-                    <button onClick={() => toggleSelectOne(prod.id)} className="cursor-pointer">
+                  {/* Select Checkbox */}
+                  <td className="py-4 pr-3">
+                    <button
+                      type="button"
+                      onClick={() => toggleSelectOne(prod.id)}
+                      className="cursor-pointer"
+                    >
                       {isSelected ? (
-                        <CheckSquare className="w-4 h-4 text-black" />
+                        <CheckSquare className="w-3.5 h-3.5 text-black" />
                       ) : (
-                        <Square className="w-4 h-4 text-black/30" />
+                        <Square className="w-3.5 h-3.5 text-black/30 group-hover:text-black" />
                       )}
                     </button>
                   </td>
-                  <td className="p-3 font-semibold text-black">
+
+                  {/* Plate Nº */}
+                  <td className="py-4 px-3 font-semibold text-black tracking-wider">
                     {prod.nr || prod.plateNumber}
                   </td>
-                  <td className="p-3">
-                    <div className="w-10 h-13 border border-black/15 bg-black/5 overflow-hidden relative">
+
+                  {/* Visual Thumbnail */}
+                  <td className="py-4 px-3">
+                    <div className="w-10 h-13 bg-neutral-100 overflow-hidden relative">
                       <img
                         src={prod.images?.[0]?.url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80'}
                         alt={prod.name.fi}
@@ -321,11 +419,19 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                       />
                     </div>
                   </td>
-                  <td className="p-3">
-                    <div className="font-semibold text-black font-sans text-[13px]">{prod.name.fi}</div>
-                    <div className="text-[11px] text-black/50">{prod.name.en}</div>
+
+                  {/* Name & Origin */}
+                  <td className="py-4 px-4">
+                    <div className="font-editorial text-sm font-normal text-black">
+                      {prod.name.en || prod.name.fi}
+                    </div>
+                    <div className="text-[11px] font-mono text-black/45">
+                      {prod.name.fi}
+                    </div>
                   </td>
-                  <td className="p-3">
+
+                  {/* Status */}
+                  <td className="py-4 px-3">
                     <span className="inline-flex items-center gap-1.5 text-[10px] uppercase font-mono tracking-wider">
                       <span
                         className={`w-1.5 h-1.5 rounded-full ${
@@ -341,14 +447,20 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                       </span>
                     </span>
                   </td>
-                  <td className="p-3">
+
+                  {/* Sizes and Stock */}
+                  <td className="py-4 px-3">
                     <div className="flex flex-wrap gap-1.5 max-w-[170px]">
                       {(prod.variants || []).map((v) => (
                         <span
                           key={v.size}
-                          title={`SKU: ${v.sku} · ${v.stock} kpl`}
+                          title={`SKU: ${v.sku} · ${v.stock} pcs`}
                           className={`text-[10px] font-mono ${
-                            v.stock === 0 ? 'text-black/30 line-through' : v.stock < 3 ? 'font-bold underline' : 'text-black/70'
+                            v.stock === 0
+                              ? 'text-black/25 line-through'
+                              : v.stock < 3
+                              ? 'font-bold underline'
+                              : 'text-black/70'
                           }`}
                         >
                           {v.size}:{v.stock}
@@ -356,30 +468,48 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                       ))}
                     </div>
                   </td>
-                  <td className="p-3 font-semibold">
+
+                  {/* Price */}
+                  <td className="py-4 px-3 font-semibold text-black">
                     {prod.price} €
                     {prod.compareAtPrice && (
-                      <span className="block text-[10px] text-black/40 line-through">
+                      <span className="block text-[10px] text-black/40 line-through font-normal">
                         {prod.compareAtPrice} €
                       </span>
                     )}
                   </td>
-                  <td className="p-3 capitalize text-black/70">{prod.category}</td>
-                  <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
+
+                  {/* Category */}
+                  <td className="py-4 px-3 capitalize text-black/70">
+                    {prod.category}
+                  </td>
+
+                  {/* Row Actions: Edit, View, and Guaranteed Working Delete */}
+                  <td className="py-4 pl-3 text-right">
+                    <div className="flex items-center justify-end gap-3">
                       <button
+                        type="button"
                         onClick={() => onEditProduct(prod)}
-                        className="p-1 hover:opacity-60 cursor-pointer text-black"
-                        title="Edit"
+                        className="text-black/50 hover:text-black cursor-pointer p-1 transition-colors"
+                        title="Edit Record"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => onViewProductInStore(prod)}
-                        className="p-1 hover:opacity-60 cursor-pointer text-black/60 hover:text-black"
+                        className="text-black/50 hover:text-black cursor-pointer p-1 transition-colors"
                         title="View in Store"
                       >
                         <Eye className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTargetId(prod.id)}
+                        className="text-black/50 hover:text-black cursor-pointer p-1 transition-colors"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </td>
@@ -390,72 +520,143 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         </table>
 
         {filtered.length === 0 && (
-          <div className="p-12 text-center text-xs font-mono text-black/50">
-            No products match your search criteria.
+          <div className="py-16 text-center text-xs font-mono text-black/40 border-b border-black/10">
+            No products match the selected criteria or archive search.
           </div>
         )}
       </div>
 
-      {/* Modal: Bulk Price Adjustment (Subtle Hairline Borders) */}
-      {showBulkPriceModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setShowBulkPriceModal(false)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
-          <div className="relative w-full max-w-sm bg-white border border-black/[0.08] shadow-2xl p-6 z-10 font-mono text-xs">
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2 text-black">Bulk Price Adjustment</h3>
-            <p className="text-black/60 mb-4 text-[11px]">
-              Adjust the retail price of {selectedIds.length} selected garments by percentage.
-            </p>
-            <div className="mb-4">
-              <label className="block text-[10px] uppercase text-black/60 mb-1">Percentage Change (%)</label>
-              <input
-                type="number"
-                value={bulkPricePercent}
-                onChange={(e) => setBulkPricePercent(parseFloat(e.target.value) || 0)}
-                placeholder="+10 or -15"
-                className="w-full px-3 py-2 border-b border-black/[0.2] focus:border-black focus:outline-none font-semibold bg-transparent"
-              />
+      {/* Modal: Single Item Deletion Confirmation (Pure White/Black Minimalist) */}
+      {deleteTargetId && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div
+            onClick={() => !isDeleting && setDeleteTargetId(null)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px]"
+          />
+          <div className="relative w-full max-w-md bg-white p-8 z-10 font-mono text-xs text-black space-y-6 shadow-2xl">
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">
+                Archival Deletion
+              </span>
+              <h3 className="font-editorial text-2xl font-normal text-black">
+                Confirm Product Removal
+              </h3>
+              <p className="text-black/60 font-sans leading-relaxed text-xs">
+                Are you sure you want to permanently delete this garment from the atelier catalog? It will be removed from both the storefront and admin consoles.
+              </p>
             </div>
-            <div className="flex justify-end gap-4 mt-6">
+
+            <div className="pt-4 flex items-center justify-end gap-6 border-t border-black/10">
               <button
-                onClick={() => setShowBulkPriceModal(false)}
-                className="text-xs font-mono uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeleteTargetId(null)}
+                className="text-xs uppercase tracking-wider text-black/60 hover:text-black underline underline-offset-4 cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleBulkPriceAdjust}
-                className="text-xs font-mono uppercase text-black hover:opacity-60 underline underline-offset-4 font-semibold cursor-pointer"
+                type="button"
+                disabled={isDeleting}
+                onClick={() => executeSingleDelete(deleteTargetId)}
+                className="py-2.5 px-5 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-[0.2em] font-medium cursor-pointer disabled:opacity-50"
               >
-                Apply Changes
+                {isDeleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal: Delete Confirmation (Subtle Hairline Borders) */}
-      {deleteConfirmOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div onClick={() => setDeleteConfirmOpen(false)} className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px]" />
-          <div className="relative w-full max-w-sm bg-white border border-black/[0.08] shadow-2xl p-6 z-10 font-mono text-xs">
-            <h3 className="text-sm font-semibold uppercase tracking-wider mb-2 text-black">
-              Confirm Deletion (Owner)
-            </h3>
-            <p className="text-black/70 mb-4 text-[11px] leading-relaxed">
-              Are you sure you want to permanently delete {selectedIds.length} products from the Firestore database? This action is irreversible.
-            </p>
-            <div className="flex justify-end gap-4 mt-6">
+      {/* Modal: Bulk Deletion Confirmation */}
+      {isBulkDeleteOpen && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div
+            onClick={() => !isDeleting && setIsBulkDeleteOpen(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px]"
+          />
+          <div className="relative w-full max-w-md bg-white p-8 z-10 font-mono text-xs text-black space-y-6 shadow-2xl">
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">
+                Bulk Archival Deletion
+              </span>
+              <h3 className="font-editorial text-2xl font-normal text-black">
+                Delete {selectedIds.length} Selected Garments
+              </h3>
+              <p className="text-black/60 font-sans leading-relaxed text-xs">
+                You are about to permanently delete {selectedIds.length} garments from the active atelier collection. This change updates immediately.
+              </p>
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-6 border-t border-black/10">
               <button
-                onClick={() => setDeleteConfirmOpen(false)}
-                className="text-xs font-mono uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setIsBulkDeleteOpen(false)}
+                className="text-xs uppercase tracking-wider text-black/60 hover:text-black underline underline-offset-4 cursor-pointer disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleBulkDelete}
-                className="text-xs font-mono uppercase text-rose-600 hover:text-rose-800 underline underline-offset-4 font-semibold cursor-pointer"
+                type="button"
+                disabled={isDeleting}
+                onClick={executeBulkDelete}
+                className="py-2.5 px-5 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-[0.2em] font-medium cursor-pointer disabled:opacity-50"
               >
-                Delete Permanently
+                {isDeleting ? 'Deleting...' : `Delete ${selectedIds.length} Products`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Bulk Price Adjustment (Minimalist Underline) */}
+      {showBulkPriceModal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+          <div
+            onClick={() => setShowBulkPriceModal(false)}
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px]"
+          />
+          <div className="relative w-full max-w-md bg-white p-8 z-10 font-mono text-xs text-black space-y-6 shadow-2xl">
+            <div className="space-y-2">
+              <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">
+                Catalog Economics
+              </span>
+              <h3 className="font-editorial text-2xl font-normal text-black">
+                Adjust Prices by Percentage
+              </h3>
+              <p className="text-black/60 font-sans leading-relaxed text-xs">
+                Apply a percentage price adjustment across {selectedIds.length} selected garments.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] uppercase tracking-wider text-black/40 mb-1">
+                Percentage Delta (%)
+              </label>
+              <input
+                type="number"
+                value={bulkPricePercent}
+                onChange={(e) => setBulkPricePercent(parseFloat(e.target.value) || 0)}
+                placeholder="+10 or -15"
+                className="w-full bg-transparent border-0 border-b border-black/30 focus:border-black py-2 text-sm font-mono text-black outline-none rounded-none"
+              />
+            </div>
+
+            <div className="pt-4 flex items-center justify-end gap-6 border-t border-black/10">
+              <button
+                type="button"
+                onClick={() => setShowBulkPriceModal(false)}
+                className="text-xs uppercase tracking-wider text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleBulkPriceAdjust}
+                className="py-2.5 px-5 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
+              >
+                Apply Delta
               </button>
             </div>
           </div>

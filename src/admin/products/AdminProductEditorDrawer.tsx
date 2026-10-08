@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product, ProductVariant, Category, Collection } from '../../types';
 import { useAuth } from '../../supabase/AuthContext';
+import { useStorefrontData } from '../../context/StorefrontDataContext';
 import { logAuditEvent } from '../../supabase/dbService';
 import { supabase } from '../../supabase/config';
 import {
@@ -15,6 +16,7 @@ import {
   Sparkles,
   Check,
   AlertCircle,
+  Trash2,
 } from 'lucide-react';
 
 interface AdminProductEditorDrawerProps {
@@ -22,6 +24,7 @@ interface AdminProductEditorDrawerProps {
   product: Product | null;
   onClose: () => void;
   onSaveSuccess: (updatedProduct: Product) => void;
+  onDeleteProduct?: (id: string) => Promise<boolean>;
   categories?: Category[];
   collections?: Collection[];
 }
@@ -33,6 +36,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   product,
   onClose,
   onSaveSuccess,
+  onDeleteProduct,
   categories = [],
   collections = [],
 }) => {
@@ -237,12 +241,9 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     }
   };
 
-  const handleSave = async () => {
-    if (!isEditor) {
-      setSaveError('Permission Denied: Editor or Owner role required to save product records.');
-      return;
-    }
+  const { saveProduct, deleteProduct } = useStorefrontData();
 
+  const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
 
@@ -261,16 +262,18 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     };
 
     try {
-      const { error } = await supabase.from('products').upsert(cleanProduct);
-      if (error) throw error;
+      await saveProduct(cleanProduct);
 
-      // Log immutable audit entry
-      await logAuditEvent(
-        adminProfile?.email || 'studio-principal',
-        product ? 'PRODUCT_UPDATED' : 'PRODUCT_CREATED',
-        `Product: ${cleanProduct.name?.en || cleanProduct.plateNumber} (${cleanProduct.nr})`,
-        { price: cleanProduct.price, status: cleanProduct.status, isComingSoon: cleanProduct.isComingSoon }
-      );
+      try {
+        await logAuditEvent(
+          adminProfile?.email || 'studio-principal',
+          product ? 'PRODUCT_UPDATED' : 'PRODUCT_CREATED',
+          `Product: ${cleanProduct.name?.en || cleanProduct.plateNumber} (${cleanProduct.nr})`,
+          { price: cleanProduct.price, status: cleanProduct.status, isComingSoon: cleanProduct.isComingSoon }
+        );
+      } catch {
+        // Ignore audit log error
+      }
 
       setIsSaving(false);
       setSaveSuccess(true);
@@ -279,10 +282,27 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       setTimeout(() => {
         setSaveSuccess(false);
         onClose();
-      }, 700);
+      }, 500);
     } catch (err: any) {
       setIsSaving(false);
-      setSaveError(err.message || 'Error occurred while saving to Supabase.');
+      setSaveError(err.message || 'Error occurred while saving product.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!product) return;
+    if (!window.confirm(`Permanently remove ${product.nr || product.name?.en || 'this garment'} from archive?`)) {
+      return;
+    }
+    try {
+      if (onDeleteProduct) {
+        await onDeleteProduct(product.id);
+      } else {
+        await deleteProduct(product.id);
+      }
+      onClose();
+    } catch (err: any) {
+      setSaveError(err.message || 'Failed to delete product.');
     }
   };
 
@@ -295,9 +315,9 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       />
 
       {/* Slide-over Container */}
-      <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col z-10 animate-slideLeft border-l border-black/[0.08] select-none font-mono">
+      <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col z-10 animate-slideLeft border-l border-black/10 select-none font-mono">
         {/* Top Header */}
-        <div className="p-4 sm:p-6 border-b border-black/[0.08] flex items-center justify-between bg-white shrink-0">
+        <div className="p-4 sm:p-6 border-b border-black/10 flex items-center justify-between bg-white shrink-0">
           <div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-black/40">
               {product ? 'Edit Archival Item' : 'Create New Archival Item'}
@@ -308,13 +328,24 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           </div>
 
           <div className="flex items-center gap-4">
+            {product && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="text-xs uppercase tracking-wider text-black/50 hover:text-black underline underline-offset-4 cursor-pointer mr-2 flex items-center gap-1.5"
+                title="Delete this garment permanently"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete</span>
+              </button>
+            )}
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="py-1.5 px-3 bg-black text-white hover:bg-black/85 text-xs font-mono uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+              className="py-2 px-4 bg-black text-white hover:bg-neutral-800 text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <Save className="w-3.5 h-3.5" />
-              <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              <span>{isSaving ? 'Saving...' : 'Save Record'}</span>
             </button>
             <button
               onClick={onClose}

@@ -74,7 +74,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   onViewProductInStore,
 }) => {
   const { role, adminProfile, isAdmin, isOwner, isEditor, signOut } = useAuth();
-  const { products, collections, categories, content, settings, resetDemoData } = useStorefrontData();
+  const {
+    products,
+    collections,
+    categories,
+    content,
+    settings,
+    resetDemoData,
+    deleteProduct,
+    deleteProducts,
+    saveProduct,
+    refreshProducts,
+  } = useStorefrontData();
 
   // Active Admin Subview
   const [currentView, setCurrentView] = useState<string>('products');
@@ -271,14 +282,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         onExitToStore={onBackToStorefront}
       />
 
-      {/* TOP BAR: Refined Hairline Boundaries */}
-      <header className="h-14 border-b border-black/[0.08] bg-white px-3 sm:px-6 flex items-center justify-between z-20 shrink-0 sticky top-0 font-mono">
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* Mobile hamburger navigation trigger */}
+      {/* TOP BAR: Clean Minimalist Storefront Style (No Boxes/Borders) */}
+      <header className="h-16 border-b border-black/10 bg-white px-4 sm:px-8 flex items-center justify-between z-20 shrink-0 sticky top-0 font-mono">
+        <div className="flex items-center gap-4">
+          {/* Mobile navigation trigger */}
           <button
             type="button"
             onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-            className="p-1.5 text-black hover:opacity-60 md:hidden cursor-pointer"
+            className="p-1 text-black hover:opacity-60 md:hidden cursor-pointer"
             aria-label="Toggle admin navigation"
           >
             {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -286,33 +297,33 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1.5 text-black/50 hover:text-black cursor-pointer hidden md:block transition-colors"
+            className="p-1 text-black/40 hover:text-black cursor-pointer hidden md:block transition-colors"
             title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <span className="font-editorial text-lg tracking-wider font-semibold">ZEJESH</span>
-            <span className="text-[10px] tracking-[0.25em] uppercase text-black/50 pl-2 border-l border-black/[0.12] hidden xs:inline">
-              STUDIO ADMIN
+            <span className="text-[10px] tracking-[0.25em] uppercase text-black/40 pl-3 border-l border-black/15 hidden xs:inline">
+              ATELIER TERMINAL
             </span>
           </div>
 
-          {/* Visitors Now Pulsing Counter */}
-          <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/[0.08] text-xs">
+          {/* Visitors Counter */}
+          <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/15 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-            <span className="text-black/50">Live Visitors:</span>
-            <span className="font-medium text-black">{liveVisitors}</span>
+            <span className="text-black/40 uppercase tracking-wider text-[10px]">Live Session:</span>
+            <span className="font-medium text-black">{liveVisitors} Active</span>
           </div>
         </div>
 
-        {/* Global Search & Security Controls */}
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Global Search & Actions: Pure Typography, No Box Containers */}
+        <div className="flex items-center gap-5 sm:gap-6">
           <button
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-2 py-1 px-2.5 text-xs text-black/60 hover:text-black cursor-pointer transition-colors border border-black/[0.08] hover:border-black/[0.2]"
+            className="hidden sm:flex items-center gap-1.5 text-xs text-black/60 hover:text-black cursor-pointer transition-colors underline underline-offset-4"
           >
             <Search className="w-3.5 h-3.5 text-black/50" />
             <span>Search</span>
@@ -322,34 +333,23 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <button
             type="button"
             onClick={() => setIsNotificationsOpen(true)}
-            className="p-1.5 text-black hover:opacity-60 relative cursor-pointer"
+            className="p-1 text-black hover:opacity-60 relative cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-4 h-4 stroke-[1.5]" />
-            <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-black rounded-full" />
+            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-black rounded-full" />
           </button>
 
           {/* Lock Terminal Now Button */}
           <button
             type="button"
             onClick={handleLockTerminalNow}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-black/70 hover:text-black border border-black/[0.08] hover:border-black/[0.2] transition-colors cursor-pointer"
+            className="text-xs text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-4 flex items-center gap-1"
             title="Lock Studio Terminal"
           >
             <Lock className="w-3 h-3" />
-            <span className="hidden lg:inline text-[11px] uppercase tracking-wider">Lock</span>
+            <span className="hidden sm:inline">Lock</span>
           </button>
-
-          {/* Role Indicator — read-only. Enforced strictly by PostgreSQL RLS. */}
-          <div className="hidden lg:flex items-center gap-2 pl-2 border-l border-black/[0.08]">
-            <span className="text-[11px] text-black/50">Role:</span>
-            <span
-              className="py-0.5 px-1.5 text-[11px] font-medium uppercase border border-black/[0.08] bg-black/[0.03]"
-              title="Only huxaifa0fficial@gmail.com is permitted administrative authorization."
-            >
-              OWNER
-            </span>
-          </div>
 
           {/* Sign Out Button */}
           <button
@@ -357,17 +357,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             onClick={() => {
               void signOut();
             }}
-            className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-rose-600 hover:text-rose-700 border border-rose-200 hover:border-rose-400 transition-colors cursor-pointer"
+            className="text-xs text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-4"
             title="Sign Out of Studio Console"
           >
-            <span className="text-[11px] uppercase tracking-wider">Sign Out</span>
+            <span>Sign Out</span>
           </button>
 
           {/* Back to storefront link */}
           <button
             type="button"
             onClick={onBackToStorefront}
-            className="py-1 px-1 text-xs uppercase tracking-wider text-black hover:opacity-60 transition-opacity flex items-center gap-1.5 cursor-pointer underline underline-offset-4"
+            className="text-xs uppercase tracking-wider text-black hover:opacity-60 transition-opacity flex items-center gap-1.5 cursor-pointer underline underline-offset-4 font-semibold"
           >
             <span>Storefront</span>
             <ExternalLink className="w-3 h-3" />
@@ -447,13 +447,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           </div>
         )}
 
-        {/* Desktop Left Sidebar: Hairline Minimal Divider */}
+        {/* Desktop Left Sidebar: Pure Typography (No Box Borders/Backgrounds) */}
         <aside
           className={`${
-            isSidebarCollapsed ? 'w-16' : 'w-60'
-          } border-r border-black/[0.08] bg-white transition-all duration-300 hidden md:flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar font-mono`}
+            isSidebarCollapsed ? 'w-16' : 'w-64'
+          } border-r border-black/10 bg-white transition-all duration-300 hidden md:flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar font-mono`}
         >
-          <div className="p-3 space-y-0.5">
+          <div className="p-4 space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.id;
@@ -463,21 +463,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   key={item.id}
                   onClick={() => setCurrentView(item.id)}
                   title={item.label}
-                  className={`w-full relative flex items-center gap-3 px-3 py-2 text-xs transition-colors cursor-pointer ${
+                  className={`w-full flex items-center gap-3 px-2 py-2 text-xs transition-colors cursor-pointer text-left ${
                     isActive
-                      ? 'text-black font-semibold bg-neutral-50/80'
-                      : 'text-black/60 hover:text-black hover:bg-neutral-50/40'
+                      ? 'text-black font-semibold underline underline-offset-8'
+                      : 'text-black/40 hover:text-black'
                   }`}
                 >
-                  {isActive && (
-                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-4 bg-black" />
-                  )}
-                  <Icon className="w-4 h-4 shrink-0" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   {!isSidebarCollapsed && (
-                    <span className="flex-1 text-left truncate">{item.label}</span>
+                    <span className="flex-1 truncate uppercase tracking-wider text-[11px]">{item.label}</span>
                   )}
-                  {!isSidebarCollapsed && item.badge && (
-                    <span className="text-[10px] text-black/50">
+                  {!isSidebarCollapsed && item.badge !== undefined && (
+                    <span className="text-[10px] text-black/35 font-normal">
                       ({item.badge})
                     </span>
                   )}
@@ -488,19 +485,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           {/* Bottom user badge & Level 4 Clearance */}
           {!isSidebarCollapsed && (
-            <div className="p-3 border-t border-black/[0.08] text-xs">
-              <div className="flex items-center gap-2 mb-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="font-semibold text-black uppercase tracking-wider">{adminProfile?.role || role}</span>
+            <div className="p-4 border-t border-black/10 text-xs space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-black" />
+                <span className="font-semibold text-black uppercase tracking-wider text-[11px]">{adminProfile?.role || role || 'OWNER'}</span>
               </div>
-              <div className="text-[11px] text-black/50 truncate">{adminProfile?.email || 'owner@zejesh.fi'}</div>
-              <div className="text-[9px] uppercase tracking-wider text-black/40 mt-1">Level 4 Auth Active</div>
+              <div className="text-[10.5px] text-black/50 truncate font-mono">{adminProfile?.email || 'huxaifa0fficial@gmail.com'}</div>
             </div>
           )}
         </aside>
 
         {/* Main Stage */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-white">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 lg:p-12 bg-white">
           {currentView === 'dashboard' && (
             <AdminAnalyticsView products={products} dailyStats={realDailyStats} orders={orders} />
           )}
@@ -517,7 +513,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 setIsEditorDrawerOpen(true);
               }}
               onViewProductInStore={onViewProductInStore}
-              onRefresh={() => {}}
+              onRefresh={refreshProducts}
+              onDeleteProduct={deleteProduct}
+              onDeleteProducts={deleteProducts}
             />
           )}
 
@@ -626,7 +624,10 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         isOpen={isEditorDrawerOpen}
         product={editingProduct}
         onClose={() => setIsEditorDrawerOpen(false)}
-        onSaveSuccess={(updated) => {}}
+        onSaveSuccess={(updated) => {
+          void saveProduct(updated);
+        }}
+        onDeleteProduct={deleteProduct}
         categories={categories}
         collections={collections}
       />
