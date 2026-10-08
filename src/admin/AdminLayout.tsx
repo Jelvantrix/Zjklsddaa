@@ -81,14 +81,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Security & Terminal Gate State.
-  // The layout is mounted only when verified as the owner in App.tsx.
-  // The terminal starts unlocked, with manual lock and inactivity timeout supported.
-  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(false);
-
-  useEffect(() => {
-    // Locks the console the moment there is no authorised admin session
-    setIsTerminalLocked(!isAdmin);
-  }, [isAdmin]);
+  // When arriving from storefront as huxaifa0fficial@gmail.com, terminal gate requires entering terminal keys.
+  const [isTerminalLocked, setIsTerminalLocked] = useState<boolean>(() => {
+    const unlockedTs = sessionStorage.getItem('zejesh_sec_unlocked_ts');
+    if (unlockedTs) {
+      const elapsed = (Date.now() - parseInt(unlockedTs, 10)) / 1000 / 60;
+      if (elapsed < 15) return false;
+    }
+    return true; // Requires key entry on terminal access
+  });
 
   const [autoLockMinutes, setAutoLockMinutes] = useState<number>(() => {
     const saved = localStorage.getItem('zejesh_sec_autolock_mins');

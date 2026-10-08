@@ -5,6 +5,7 @@ import { BrandLogo } from './BrandLogo';
 import { FashionImage } from './FashionImage';
 import { TranslationBar } from './TranslationBar';
 import { Search, Heart, User, ShoppingBag, Menu } from 'lucide-react';
+import { useAuth } from '../supabase/AuthContext';
 
 interface HeaderProps {
   language: Language;
@@ -54,6 +55,7 @@ export const Header: React.FC<HeaderProps> = ({
   const [isHidden, setIsHidden] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  const { user, isAdmin } = useAuth();
   const t = translations[language];
 
   // Scroll detection: hide on scroll-down, show on scroll-up
@@ -182,26 +184,21 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onOpenMobileMenu}
-              className="lg:hidden min-h-[44px] min-w-[44px] -ml-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="lg:hidden min-h-[44px] min-w-[44px] -ml-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center justify-center shrink-0"
               aria-label="Menu"
             >
               <Menu className="w-4 h-4 stroke-[1.5]" />
-              <span className="text-[11px] uppercase tracking-[0.20em] font-sans font-medium hidden xs:inline">
-                Menu
-              </span>
             </button>
 
             {/* Search: Available on Phone, Tablet and Desktop */}
             <button
               type="button"
               onClick={onOpenSearch}
-              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0 group/search"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center justify-center shrink-0 group/search"
               aria-label={t.nav.search}
+              title={t.nav.search}
             >
-              <Search className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span className="hidden sm:inline text-[11px] md:text-[11.5px] uppercase tracking-[0.20em] font-sans font-medium">
-                {t.nav.search}
-              </span>
+              <Search className="w-4 h-4 stroke-[1.5]" />
             </button>
           </div>
 
@@ -217,53 +214,52 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </div>
 
-          {/* RIGHT: Pure Typographic Actions */}
-          <div className="flex items-center justify-end gap-1.5 sm:gap-4 md:gap-6 z-20">
-            {/* Wishlist Trigger */}
+          {/* RIGHT: Pure Icons Only (Wishlist, Account, Bag) without accompanying text */}
+          <div className="flex items-center justify-end gap-1 sm:gap-2 md:gap-3 z-20">
+            {/* Wishlist Trigger: Pure Icon */}
             <button
               type="button"
               onClick={onOpenWishlist}
-              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer relative flex items-center justify-center shrink-0"
               aria-label={t.nav.wishlist}
+              title={t.nav.wishlist}
             >
-              <Heart className={`w-3.5 h-3.5 stroke-[1.5] ${wishlistCount > 0 ? 'fill-current' : ''}`} />
-              <span className="hidden md:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
-                {t.nav.wishlist}
-              </span>
+              <Heart className={`w-4 h-4 stroke-[1.5] ${wishlistCount > 0 ? 'fill-current' : ''}`} />
               {wishlistCount > 0 && (
-                <span className="text-[10px] font-mono leading-none">
-                  ({wishlistCount})
+                <span className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full bg-black text-white text-[8px] font-mono font-medium flex items-center justify-center leading-none">
+                  {wishlistCount}
                 </span>
               )}
             </button>
 
-            {/* Account (Tablet & Desktop) */}
+            {/* Account (Tablet & Desktop): Pure Icon */}
             <button
               type="button"
               onClick={onOpenAccount}
-              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer hidden sm:flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer relative flex items-center justify-center shrink-0"
               aria-label={t.nav.account}
+              title={user ? (isAdmin ? 'Admin' : 'Account') : t.nav.account}
             >
-              <User className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span className="hidden xl:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
-                {t.nav.account}
-              </span>
+              <User className="w-4 h-4 stroke-[1.5]" />
+              {user && (
+                <span className={`absolute bottom-2 right-1.5 w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-black border border-white animate-pulse' : 'bg-emerald-600'}`} />
+              )}
             </button>
 
-            {/* Shopping Bag */}
+            {/* Shopping Bag: Pure Icon */}
             <button
               type="button"
               onClick={onOpenCart}
-              className="min-h-[44px] min-w-[44px] -mr-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer flex items-center gap-1.5 shrink-0"
+              className="min-h-[44px] min-w-[44px] -mr-2 px-2 text-inherit hover:opacity-60 transition-opacity cursor-pointer relative flex items-center justify-center shrink-0"
               aria-label={t.nav.bag}
+              title={t.nav.bag}
             >
-              <ShoppingBag className="w-3.5 h-3.5 stroke-[1.5]" />
-              <span className="hidden md:inline text-[11px] uppercase tracking-[0.18em] font-sans font-medium">
-                {t.nav.bag}
-              </span>
-              <span className="text-[11px] font-mono leading-none font-medium">
-                ({cartCount})
-              </span>
+              <ShoppingBag className="w-4 h-4 stroke-[1.5]" />
+              {cartCount > 0 && (
+                <span className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full bg-black text-white text-[8px] font-mono font-medium flex items-center justify-center leading-none">
+                  {cartCount}
+                </span>
+              )}
             </button>
           </div>
         </div>

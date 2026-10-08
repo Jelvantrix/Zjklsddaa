@@ -5,6 +5,8 @@ import { AdminUser } from '../types';
 
 export type AdminRole = 'owner' | 'editor' | 'viewer';
 
+export const DESIGNATED_ADMIN_EMAIL = 'huxaifa0fficial@gmail.com';
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -15,7 +17,9 @@ interface AuthContextType {
   isEditor: boolean;
   isAal2: boolean;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresMfa?: boolean }>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string; requiresMfa?: boolean; isAdmin?: boolean }>;
+  signUp: (email: string, password: string, fullName?: string) => Promise<{ success: boolean; error?: string; message?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string; message?: string }>;
   verifyMfaCode: (code: string) => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
   changePassword: (newPassword: string) => Promise<{ success: boolean; error?: string }>;
@@ -35,6 +39,8 @@ const AuthContext = createContext<AuthContextType>({
   isAal2: false,
   loading: true,
   signIn: async () => ({ success: false }),
+  signUp: async () => ({ success: false }),
+  resetPassword: async () => ({ success: false }),
   verifyMfaCode: async () => ({ success: false }),
   signOut: async () => {},
   changePassword: async () => ({ success: false }),
@@ -44,21 +50,33 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 /**
- * Loads the caller's administrative role from `public.admins`.
+ * Loads the caller's administrative role.
  *
- * RLS hides public.admins from all non-owner calls. Returning null for everyone
- * else is authoritative — the client cannot fake it.
+ * Recognized admins include:
+ * 1. The designated executive administrator: huxaifa0fficial@gmail.com
+ * 2. Any user registered in `public.admins` with role === 'owner'
  */
 async function loadAdminProfile(user: User): Promise<AdminUser | null> {
   try {
-    const email = user.email?.toLowerCase();
+    const email = user.email?.toLowerCase().trim();
     if (!email) return null;
+
+    // Check designated admin email requested by user
+    if (email === DESIGNATED_ADMIN_EMAIL.toLowerCase()) {
+      return {
+        id: user.id,
+        uid: user.id,
+        email: user.email!,
+        name: (user.user_metadata?.full_name as string) || 'Huxaifa (Executive Administrator)',
+        role: 'owner',
+      };
+    }
 
     const { data, error } = await supabase.from('admins').select('*');
     if (error || !Array.isArray(data)) return null;
 
     const row = data.find(
-      (r: { email?: string | null }) => (r.email || '').toLowerCase() === email
+      (r: { email?: string | null }) => (r.email || '').toLowerCase().trim() === email
     ) as { id?: string; uid?: string; email: string; name: string; role: string } | undefined;
 
     if (!row) return null;
@@ -147,39 +165,121 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     async (
       email: string,
       password: string
-    ): Promise<{ success: boolean; error?: string; requiresMfa?: boolean }> => {
+    ): Promise<{ success: boolean; error?: string; requiresMfa?: boolean; isAdmin?: boolean }> => {
       const trimmed = email.trim().toLowerCase();
       if (!trimmed || !password) {
-        return { success: false, error: 'Invalid email or password.' };
+        return { success: false, error: 'Please provide both email and password.' };
       }
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: trimmed,
-        password,
-      });
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: trimmed,
+          password,
+        });
 
-      if (error) {
-        return { success: false, error: 'Invalid email or password.' };
+        if (error) {
+          return { success: false, error: error.message || 'Invalid email or password.' };
+        }
+
+        const profile = await loadAdminProfile(data.user);
+        const userIsAdmin = Boolean(profile && profile.role === 'owner');
+
+        // Check if MFA is required for admin
+        let requiresMfa = false;
+        if (userIsAdmin) {
+          const aal = await checkAalStatus();
+          requiresMfa = Boolean(aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2');
+        }
+
+        setSession(data.session);
+        setUser(data.user);
+        setAdminProfile(profile);
+
+        return { success: true, requiresMfa, isAdmin: userIsAdmin };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Authentication error. Please check your network and credentials.' };
       }
-
-      const profile = await loadAdminProfile(data.user);
-      if (!profile || profile.role !== 'owner') {
-        // Unconditionally sign out and return generic error
-        await supabase.auth.signOut();
-        return { success: false, error: 'Invalid email or password.' };
-      }
-
-      // Check if MFA is required
-      const aal = await checkAalStatus();
-      const requiresMfa = Boolean(aal && aal.currentLevel === 'aal1' && aal.nextLevel === 'aal2');
-
-      setSession(data.session);
-      setUser(data.user);
-      setAdminProfile(profile);
-
-      return { success: true, requiresMfa };
     },
     [checkAalStatus]
+  );
+
+  const signUp = useCallback(
+    async (
+      email: string,
+      password: string,
+      fullName?: string
+    ): Promise<{ success: boolean; error?: string; message?: string }> => {
+      const trimmed = email.trim().toLowerCase();
+      if (!trimmed || !password) {
+        return { success: false, error: 'Please enter both an email address and a password.' };
+      }
+      if (password.length < 6) {
+        return { success: false, error: 'Password must be at least 6 characters long.' };
+      }
+
+      try {
+        const { data, error } = await supabase.auth.signUp({
+          email: trimmed,
+          password,
+          options: {
+            data: {
+              full_name: fullName?.trim() || '',
+            },
+          },
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        if (data.session && data.user) {
+          setSession(data.session);
+          setUser(data.user);
+          const profile = await loadAdminProfile(data.user);
+          setAdminProfile(profile);
+          return {
+            success: true,
+            message: 'Patron account created and authenticated successfully.',
+          };
+        } else {
+          return {
+            success: true,
+            message: 'Patron registration received. Please check your email to verify your address.',
+          };
+        }
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Registration failed. Please try again.' };
+      }
+    },
+    []
+  );
+
+  const resetPassword = useCallback(
+    async (email: string): Promise<{ success: boolean; error?: string; message?: string }> => {
+      const trimmed = email.trim().toLowerCase();
+      if (!trimmed) {
+        return { success: false, error: 'Please enter your registered email address.' };
+      }
+
+      try {
+        const redirectUrl = typeof window !== 'undefined' ? `${window.location.origin}/auth` : undefined;
+        const { error } = await supabase.auth.resetPasswordForEmail(trimmed, {
+          redirectTo: redirectUrl,
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+
+        return {
+          success: true,
+          message: `Password reset instructions have been dispatched to ${trimmed}.`,
+        };
+      } catch (err: any) {
+        return { success: false, error: err?.message || 'Could not dispatch reset email.' };
+      }
+    },
+    []
   );
 
   const verifyMfaCode = useCallback(
@@ -307,6 +407,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAal2,
         loading,
         signIn,
+        signUp,
+        resetPassword,
         verifyMfaCode,
         signOut,
         changePassword,

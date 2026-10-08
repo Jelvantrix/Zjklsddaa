@@ -195,14 +195,15 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                 <button
                   type="button"
                   onClick={() => onToggleWishlist(product.id)}
-                  className="flex items-center gap-1.5 text-xs font-mono text-black/60 hover:text-black cursor-pointer"
+                  className="p-2 text-black/60 hover:text-black cursor-pointer transition-colors flex items-center justify-center"
+                  aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                  title={isWishlisted ? 'Saved' : 'Add to Wishlist'}
                 >
                   <Heart
                     className={`w-4 h-4 stroke-[1.5] ${
                       isWishlisted ? 'fill-black text-black' : ''
                     }`}
                   />
-                  <span>{isWishlisted ? 'Saved' : t.nav.wishlist}</span>
                 </button>
               </div>
 

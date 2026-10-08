@@ -17,6 +17,7 @@ interface MobileMenuProps {
   onNavigateStory: () => void;
   onNavigateVote: () => void;
   onNavigateJournal: () => void;
+  onNavigateAccount?: () => void;
   categories?: Category[];
 }
 
@@ -31,6 +32,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
   onNavigateStory,
   onNavigateVote,
   onNavigateJournal,
+  onNavigateAccount,
   categories = [],
 }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -266,14 +268,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             ))}
 
-            <div className="pt-6 flex items-center justify-between">
+            <div className="pt-6 border-t border-black/10 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onNavigateAccount) onNavigateAccount();
+                  onClose();
+                }}
+                className="min-h-[44px] flex items-center justify-between text-xs font-mono uppercase tracking-[0.22em] text-black hover:opacity-60 transition-opacity cursor-pointer"
+              >
+                <span>Patron Account & Portal</span>
+                <ChevronRight className="w-4 h-4 text-black/40" />
+              </button>
               <button
                 type="button"
                 onClick={() => {
                   onNavigateSitemap();
                   onClose();
                 }}
-                className="min-h-[44px] flex items-center text-xs font-mono uppercase tracking-[0.22em] text-black underline underline-offset-4 cursor-pointer hover:opacity-60 transition-opacity"
+                className="min-h-[44px] flex items-center text-xs font-mono uppercase tracking-[0.22em] text-black/60 underline underline-offset-4 cursor-pointer hover:opacity-60 transition-opacity"
               >
                 {t.sitemap || 'Site Directory (50+ Pages)'}
               </button>

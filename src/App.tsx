@@ -22,31 +22,35 @@ import { Preloader } from './components/Preloader';
 import { StoryPage } from './components/StoryPage';
 import { CommunityVotePage } from './components/CommunityVotePage';
 import { LookbookView } from './components/LookbookView';
-import { AuthProvider } from './supabase/AuthContext';
+import { AuthProvider, useAuth, DESIGNATED_ADMIN_EMAIL } from './supabase/AuthContext';
 import { StorefrontDataProvider, useStorefrontData } from './context/StorefrontDataContext';
 import { AdminLayout } from './admin/AdminLayout';
+import { AdminRestrictedGate } from './admin/security/AdminRestrictedGate';
+import { AuthPage } from './components/AuthPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { forceUnlockBodyScroll } from './utils/scrollLock';
 
-export const ADMIN_SECRET_PATH = '/atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
-export const ADMIN_SECRET_HASH = '#atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
+export const ADMIN_SECRET_PATH = '/admin';
+export const ADMIN_SECRET_HASH = '#admin';
+export const ADMIN_LONG_VAULT_PATH = '/atelier-security-vault-huxaifa-official-jm942jd-enterprise-management-terminal-8492048102-restricted-console';
 
 function isSecretAdminUrl(): boolean {
   if (typeof window === 'undefined') return false;
-  const path = window.location.pathname;
-  const hash = window.location.hash;
-
-  // Reject basic /admin access attempts as requested by user
-  if (path === '/admin' || path === '/admin/' || hash === '#admin') {
-    return false;
-  }
+  const path = window.location.pathname.toLowerCase();
+  const hash = window.location.hash.toLowerCase();
 
   return (
-    path === ADMIN_SECRET_PATH ||
-    path === `${ADMIN_SECRET_PATH}/` ||
-    hash === ADMIN_SECRET_HASH ||
-    hash === `#${ADMIN_SECRET_PATH}` ||
-    path.startsWith(ADMIN_SECRET_PATH)
+    path === '/admin' ||
+    path === '/admin/' ||
+    hash === '#admin' ||
+    path === '/admin-console' ||
+    hash === '#admin-console' ||
+    path === '/terminal' ||
+    hash === '#terminal' ||
+    path === ADMIN_LONG_VAULT_PATH ||
+    path === `${ADMIN_LONG_VAULT_PATH}/` ||
+    hash === `#${ADMIN_LONG_VAULT_PATH}` ||
+    path.startsWith(ADMIN_LONG_VAULT_PATH)
   );
 }
 
@@ -104,7 +108,10 @@ function parseCurrentUrlToRoute(): PageRoute {
   if (raw === 'cart') return { type: 'cart' };
   if (raw === 'checkout') return { type: 'checkout' };
   if (raw === 'wishlist') return { type: 'wishlist' };
-  if (raw === 'account') return { type: 'account' };
+  if (raw === 'account' || raw === 'auth' || raw === 'login' || raw === 'signin') return { type: 'auth', mode: 'signin' };
+  if (raw === 'signup' || raw === 'register') return { type: 'auth', mode: 'signup' };
+  if (raw === 'forgot' || raw === 'forgot-password' || raw === 'recover') return { type: 'auth', mode: 'forgot' };
+  if (raw === 'admin-console' || raw === 'terminal') return { type: 'admin' };
 
   return { type: 'home' };
 }
@@ -127,7 +134,8 @@ function getRouteUrl(r: PageRoute): string {
     case 'cart': return '/cart';
     case 'checkout': return '/checkout';
     case 'wishlist': return '/wishlist';
-    case 'account': return '/account';
+    case 'account': return '/auth';
+    case 'auth': return '/auth';
     case 'admin': return ADMIN_SECRET_PATH;
     default: return '/';
   }
@@ -135,7 +143,17 @@ function getRouteUrl(r: PageRoute): string {
 
 function StorefrontApp() {
   const { products, categories, collections, content, loading: productsLoading, isLiveFromFirestore } = useStorefrontData();
+  const { user, isAdmin, isOwner } = useAuth();
   const [preloaderDone, setPreloaderDone] = useState(false);
+
+  // Check if current authenticated user is the designated admin (huxaifa0fficial@gmail.com)
+  const isDesignatedAdminLoggedIn = Boolean(
+    user && (
+      (user.email && user.email.toLowerCase().trim() === DESIGNATED_ADMIN_EMAIL.toLowerCase()) ||
+      isAdmin ||
+      isOwner
+    )
+  );
 
   // Pure English language (all other languages removed)
   const [language, setLanguage] = useState<Language>('en');
@@ -314,18 +332,67 @@ function StorefrontApp() {
         ARCHIVE_PRODUCTS[0]
       : null;
 
-  // Render Admin Layout if route is admin
+  // Enforce Administrator Access: link only opens if signed in with huxaifa0fficial@gmail.com
   if (route.type === 'admin') {
+    if (!isDesignatedAdminLoggedIn) {
+      return (
+        <AdminRestrictedGate
+          onGoToAuth={() => navigateTo({ type: 'auth', mode: 'signin' })}
+          onBackToStorefront={() => {
+            if (window.location.hash.includes('admin') || window.location.pathname.includes('admin')) {
+              window.history.pushState(null, '', '/');
+            }
+            navigateTo({ type: 'home' });
+          }}
+        />
+      );
+    }
+
     return (
       <AdminLayout
         onBackToStorefront={() => {
-          if (window.location.hash === ADMIN_SECRET_HASH || window.location.pathname.startsWith(ADMIN_SECRET_PATH)) {
-            window.history.pushState(null, '', '/');
-          }
+          window.history.pushState(null, '', '/');
           navigateTo({ type: 'home' });
         }}
         onViewProductInStore={(p) => navigateTo({ type: 'product', productId: p.id })}
       />
+    );
+  }
+
+  // Dedicated Auth & Patron Portal View (Standalone, without storefront category header & footer)
+  if (route.type === 'auth') {
+    return (
+      <ErrorBoundary componentName="AuthView">
+        <AuthPage
+          initialMode={route.mode ? route.mode : 'signin'}
+          onNavigateHome={handleNavigateHome}
+          onNavigateAdmin={() => navigateTo({ type: 'admin' })}
+          onOpenCart={() => setIsCartOpen(true)}
+          onOpenWishlist={() => setIsWishlistOpen(true)}
+          onNavigateArchive={() => navigateTo({ type: 'archive' })}
+          cartCount={totalCartCount}
+          wishlistCount={wishlistIds.length}
+        />
+        <CartDrawer
+          isOpen={isCartOpen}
+          onClose={() => setIsCartOpen(false)}
+          items={cartItems}
+          onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveFromCart}
+          onProceedToCheckout={() => setIsCheckoutOpen(true)}
+          onExploreArchive={() => navigateTo({ type: 'archive' })}
+          language={language}
+        />
+        <WishlistDrawer
+          isOpen={isWishlistOpen}
+          onClose={() => setIsWishlistOpen(false)}
+          wishlistIds={wishlistIds}
+          onRemoveWishlist={handleToggleWishlist}
+          onSelectProduct={handleSelectProduct}
+          onQuickAdd={handleQuickAdd}
+          language={language}
+        />
+      </ErrorBoundary>
     );
   }
 
@@ -347,7 +414,7 @@ function StorefrontApp() {
           onOpenCart={() => setIsCartOpen(true)}
           onOpenWishlist={() => setIsWishlistOpen(true)}
           onOpenSearch={() => setIsSearchOpen(true)}
-          onOpenAccount={() => setIsAccountOpen(true)}
+          onOpenAccount={() => navigateTo({ type: 'auth', mode: 'signin' })}
           onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
           onSelectCategory={handleSelectCategory}
           onNavigateHome={handleNavigateHome}
@@ -402,8 +469,7 @@ function StorefrontApp() {
         {(route.type === 'archive' ||
           route.type === 'cart' ||
           route.type === 'checkout' ||
-          route.type === 'wishlist' ||
-          route.type === 'account') && (
+          route.type === 'wishlist') && (
           <ErrorBoundary componentName="ArchiveView">
             <ProductListing
               language={language}
@@ -594,6 +660,7 @@ function StorefrontApp() {
           onNavigateStory={() => navigateTo({ type: 'story' })}
           onNavigateVote={() => navigateTo({ type: 'vote' })}
           onNavigateJournal={() => navigateTo({ type: 'journal' })}
+          onNavigateAccount={() => navigateTo({ type: 'auth', mode: 'signin' })}
           categories={categories}
         />
       </ErrorBoundary>
@@ -645,10 +712,7 @@ function StorefrontApp() {
       <ErrorBoundary componentName="AccountModal">
         <AccountModal
           isOpen={isAccountOpen}
-          onClose={() => {
-            setIsAccountOpen(false);
-            if (route.type === 'account') navigateTo({ type: 'home' });
-          }}
+          onClose={() => setIsAccountOpen(false)}
           language={language}
         />
       </ErrorBoundary>

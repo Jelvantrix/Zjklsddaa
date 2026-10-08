@@ -488,6 +488,7 @@ export type PageRoute =
   | { type: 'checkout' }
   | { type: 'wishlist' }
   | { type: 'account' }
+  | { type: 'auth'; mode?: 'signin' | 'signup' | 'forgot' }
   | { type: 'sitemap' }
   | { type: 'admin-login' }
   | { type: 'admin-console' }

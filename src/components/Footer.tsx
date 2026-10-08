@@ -55,11 +55,18 @@ export const Footer: React.FC<FooterProps> = ({
           <p className="text-xs font-sans text-black/70 whitespace-pre-line leading-relaxed">
             {t.serviceDesc}
           </p>
-          <div className="pt-1 sm:pt-2">
+          <div className="pt-1 sm:pt-2 flex flex-col items-start gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigatePage({ type: 'auth' })}
+              className="text-xs font-mono uppercase tracking-wider text-black underline underline-offset-4 hover:opacity-70 cursor-pointer"
+            >
+              Patron Account & Portal →
+            </button>
             <button
               type="button"
               onClick={() => onNavigatePage({ type: 'service', slug: 'contact' })}
-              className="text-xs font-mono underline underline-offset-4 hover:opacity-70 cursor-pointer"
+              className="text-xs font-mono text-black/70 underline underline-offset-4 hover:opacity-100 cursor-pointer"
             >
               Contact House
             </button>
