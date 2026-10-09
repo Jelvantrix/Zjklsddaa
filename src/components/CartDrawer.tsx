@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { CartItem, Language } from '../types';
-import { translations, formatPrice } from '../data/mockData';
+import { CartItem, Language, translations, formatPrice } from '../types';
 import { FashionImage } from './FashionImage';
 import { X, Plus, Minus, ArrowRight, ShoppingBag } from 'lucide-react';
 import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';

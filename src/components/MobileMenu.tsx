@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Language, Category } from '../types';
-import { translations, SUB_CATEGORIES } from '../data/mockData';
+import { Language, Category, translations, SUB_CATEGORIES } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { X, Upload, Film, Play, Pause, RotateCw, Download, Check, Sparkles, Layers, Sliders } from 'lucide-react';
-import { Product } from '../types';
-import { ARCHIVE_PRODUCTS, PLACEHOLDER_IMG } from '../data/mockData';
+import { Product, NEUTRAL_PLACEHOLDER_IMG } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { generateVeoVideo } from '../services/veoService';
 
 interface VeoMotionModalProps {
@@ -40,8 +40,9 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
   initialProduct,
   onSetAsHeroVideo,
 }) => {
+  const { products } = useStorefrontData();
   const [selectedImage, setSelectedImage] = useState<string>(() => {
-    return initialProduct?.image || ARCHIVE_PRODUCTS[0]?.image || '';
+    return initialProduct?.image || products[0]?.image || '';
   });
   const [selectedAspect, setSelectedAspect] = useState<'16:9' | '9:16'>('16:9');
   const [promptText, setPromptText] = useState(COUTURE_MOTION_PRESETS[0].prompt);
@@ -199,14 +200,14 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
 
                 {/* Archival Plates Quick Selector */}
                 <div className="flex gap-2 overflow-x-auto pb-2 no-scrollbar">
-                  {ARCHIVE_PRODUCTS.slice(0, 8).map((prod) => {
+                  {(products || []).slice(0, 8).map((prod) => {
                     const isSelected = selectedImage === prod.image;
                     return (
                       <button
                         key={prod.id}
                         type="button"
                         onClick={() => {
-                          setSelectedImage(prod.image || PLACEHOLDER_IMG);
+                          setSelectedImage(prod.image || NEUTRAL_PLACEHOLDER_IMG);
                           setGeneratedVideoUrl(null);
                         }}
                         className={`w-14 aspect-[3/4] border shrink-0 overflow-hidden relative transition-all cursor-pointer ${
@@ -214,11 +215,11 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                             ? 'border-black ring-1 ring-black'
                             : 'border-black/10 opacity-70 hover:opacity-100'
                         }`}
-                        title={prod.name.en}
+                        title={prod.name?.en || prod.plateNumber}
                       >
                         <img
-                          src={prod.image}
-                          alt={prod.name.en}
+                          src={prod.image || NEUTRAL_PLACEHOLDER_IMG}
+                          alt={prod.name?.en || 'Plate'}
                           className="w-full h-full object-cover"
                         />
                         <span className="absolute bottom-0 inset-x-0 bg-white/90 text-[8px] py-0.5 text-center truncate">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PRODUCT_IMAGES } from '../data/mockData';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { ArrowLeft, ArrowRight, Compass, Feather, ShieldCheck } from 'lucide-react';
 
 interface StoryPageProps {
@@ -8,6 +8,9 @@ interface StoryPageProps {
 }
 
 export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArchive }) => {
+  const { content } = useStorefrontData();
+  const plate1 = content?.translations?.storyPlate1;
+  const plate2 = content?.translations?.storyPlate2;
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen select-none pt-20 sm:pt-28 lg:pt-32">
       {/* Top Breadcrumb Navigation */}
@@ -102,26 +105,38 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
 
           <div className="lg:col-span-7">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              <div className="aspect-[3/4] overflow-hidden bg-neutral-100 group relative">
-                <img
-                  src={PRODUCT_IMAGES.woolCoat}
-                  alt="Helsinki Silhouette"
-                  className="w-full h-full object-cover object-[center_20%] transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
-                  Plate I · Monolithic Stance
+              {plate1 ? (
+                <div className="aspect-[3/4] overflow-hidden bg-neutral-100 group relative">
+                  <img
+                    src={plate1}
+                    alt="Atelier Silhouette"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
+                    Plate I · Monolithic Stance
+                  </div>
                 </div>
-              </div>
-              <div className="aspect-[3/4] overflow-hidden bg-neutral-100 sm:translate-y-8 group relative">
-                <img
-                  src={PRODUCT_IMAGES.mensTrench}
-                  alt="Porto Tailoring"
-                  className="w-full h-full object-cover object-[center_25%] transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
-                  Plate II · Loom Architecture
+              ) : (
+                <div className="aspect-[3/4] border border-dashed border-black/15 bg-neutral-50/50 flex flex-col items-center justify-center p-6 text-center">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-black/40">Plate I · Studio Ingress</span>
                 </div>
-              </div>
+              )}
+              {plate2 ? (
+                <div className="aspect-[3/4] overflow-hidden bg-neutral-100 sm:translate-y-8 group relative">
+                  <img
+                    src={plate2}
+                    alt="Loom Tailoring"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
+                    Plate II · Loom Architecture
+                  </div>
+                </div>
+              ) : (
+                <div className="aspect-[3/4] border border-dashed border-black/15 bg-neutral-50/50 sm:translate-y-8 flex flex-col items-center justify-center p-6 text-center">
+                  <span className="font-mono text-[10px] uppercase tracking-widest text-black/40">Plate II · Textile Loom</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

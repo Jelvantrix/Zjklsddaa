@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Language, Category } from '../types';
-import { translations, SUB_CATEGORIES } from '../data/mockData';
+import { Language, Category, translations, SUB_CATEGORIES } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { FashionImage } from './FashionImage';
 import { TranslationBar } from './TranslationBar';
 import { Search, Heart, User, ShoppingBag, Menu } from 'lucide-react';
 import { useAuth } from '../supabase/AuthContext';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 
 interface HeaderProps {
   language: Language;
@@ -56,7 +56,11 @@ export const Header: React.FC<HeaderProps> = ({
   const [lastScrollY, setLastScrollY] = useState(0);
 
   const { user, isAdmin } = useAuth();
+  const { products: storeProducts, content: storeContent } = useStorefrontData();
   const t = translations[language];
+
+  const tileImage1 = storeProducts?.[0]?.images?.[0]?.url || storeProducts?.[0]?.image || storeContent?.heroSlides?.[0]?.src || '/placeholder.svg';
+  const tileImage2 = storeProducts?.[1]?.images?.[0]?.url || storeProducts?.[1]?.image || storeContent?.heroSlides?.[1]?.src || '/placeholder.svg';
 
   // Scroll detection: hide on scroll-down, show on scroll-up
   useEffect(() => {
@@ -367,7 +371,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="col-span-4 group cursor-pointer"
               >
                 <FashionImage
-                  src="/src/assets/images/wool_coat_model_1790736253323.jpg"
+                  src={tileImage1}
                   alt="Winter Campaign 1"
                   position="center 20%"
                   scale={1.05}
@@ -394,7 +398,7 @@ export const Header: React.FC<HeaderProps> = ({
                 className="col-span-4 group cursor-pointer"
               >
                 <FashionImage
-                  src="/src/assets/images/mens_trench_model_1790736267744.jpg"
+                  src={tileImage2}
                   alt="Archive Series"
                   position="center 65%"
                   scale={1.2}

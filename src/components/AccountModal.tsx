@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Language } from '../types';
-import { translations } from '../data/mockData';
+import { Language, translations } from '../types';
 import { X, Check } from 'lucide-react';
 
 interface AccountModalProps {

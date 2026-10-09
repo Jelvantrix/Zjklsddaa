@@ -799,3 +799,452 @@ export interface AdvisorInsight extends AiInsight {
     duration: string;
   };
 }
+
+// ==================== MEDIA ASSETS & IMAGE FRAMING ====================
+
+export const NEUTRAL_PLACEHOLDER_IMG = '/placeholder.svg';
+
+export interface ImagePlacementCrop {
+  focalX?: number; // 0 - 100
+  focalY?: number; // 0 - 100
+  zoom?: number; // 1.0 - 4.0
+  rotation?: number; // -45 to 45 or 90-step
+  flipH?: boolean;
+  flipV?: boolean;
+  aspectRatio?: string;
+}
+
+export interface ImageFramingParams {
+  focalX: number; // 0 - 100 %
+  focalY: number; // 0 - 100 %
+  zoom: number; // 1.0 - 4.0
+  rotation: number; // -45 to 45 or degrees
+  flipH?: boolean;
+  flipV?: boolean;
+  aspectRatio?: string; // e.g. '3:4', '4:5', '1:1', '16:9', '9:16'
+  overrides?: Record<string, Partial<ImagePlacementCrop>>;
+}
+
+export interface MediaAsset {
+  id: string;
+  path: string;
+  url: string;
+  kind: 'image' | 'video';
+  width?: number;
+  height?: number;
+  sizeBytes?: number;
+  mimeType?: string;
+  alt?: string;
+  focalX?: number;
+  focalY?: number;
+  createdAt: string;
+}
+
+export function formatPrice(amount: number): string {
+  if (typeof amount !== 'number' || isNaN(amount)) return '0,00 €';
+  return amount.toFixed(2).replace('.', ',') + ' €';
+}
+
+export const SUB_CATEGORIES = {
+  naiset: [
+    { name: { en: 'Coats & Jackets', fi: 'Takit' }, slug: 'takit' },
+    { name: { en: 'Knitwear', fi: 'Neuleet' }, slug: 'neuleet' },
+    { name: { en: 'Tailoring & Trousers', fi: 'Housut' }, slug: 'housut' },
+    { name: { en: 'Dresses & Skirts', fi: 'Mekot' }, slug: 'mekot' },
+    { name: { en: 'Shirts & Tops', fi: 'Paidat' }, slug: 'paidat' },
+  ],
+  miehet: [
+    { name: { en: 'Coats & Outerwear', fi: 'Takit' }, slug: 'takit' },
+    { name: { en: 'Heavy Knitwear', fi: 'Neuleet' }, slug: 'neuleet' },
+    { name: { en: 'Tailored Trousers', fi: 'Housut' }, slug: 'housut' },
+    { name: { en: 'Overshirts', fi: 'Paidat' }, slug: 'paidat' },
+  ],
+  asusteet: [
+    { name: { en: 'Leather Goods', fi: 'Nahkatuotteet' }, slug: 'nahkatuotteet' },
+    { name: { en: 'Wool Scarves & Beanies', fi: 'Huivit ja päähineet' }, slug: 'huivit-paahineet' },
+    { name: { en: 'Jewelry & Hardware', fi: 'Korut' }, slug: 'korut' },
+  ],
+  kokoelmat: [
+    { name: { en: 'Archive Essentials', fi: 'Arkistoperusteet' }, slug: 'essentials' },
+    { name: { en: 'Winter Solstice', fi: 'Talvi' }, slug: 'talvi' },
+  ],
+};
+
+export const translations = {
+  fi: {
+    languageName: 'Suomi',
+    translateBar: 'Käännä sivusto yhdellä klikkauksella:',
+    sitemap: 'Sivukartta',
+    announcement: 'ILMAINEN TOIMITUS YLI 100 € TILAUKSIIN · 14 PÄIVÄN PALAUTUSOIKEUS',
+    nav: {
+      new: 'Uutuudet',
+      women: 'Naiset',
+      men: 'Miehet',
+      accessories: 'Asusteet',
+      collections: 'Kokoelmat',
+      search: 'Haku',
+      wishlist: 'Suosikit',
+      account: 'Kirjaudu',
+      bag: 'Ostoskori',
+      close: 'Sulje',
+      viewAll: 'Näytä kaikki',
+      archive: 'Arkisto',
+      journal: 'Journal',
+      lookbook: 'Lookbook',
+    },
+    latestDrop: {
+      tag: 'UUSIN PUDOTUS',
+      edition: 'Numeroitu sarja',
+      title: 'Pohjoinen arkkitehtuuri',
+      description: 'Veistoksellista raskaansarjan villaa.',
+      link: 'Tutustu',
+    },
+    categoriesMosaic: {
+      women: 'Naiset',
+      men: 'Miehet',
+      accessories: 'Asusteet',
+      collections: 'Kokoelmat',
+      subWomen: 'Puhdasta linjaa ja orgaanisia materiaaleja',
+      subMen: 'Räätälöityä ryhtiä ja pohjoista funktiota',
+      subAcc: 'Käsityönä viimeistellyt yksityiskohdat',
+      subCol: 'Kausittaiset kokonaisuudet',
+    },
+    featured: {
+      tag: 'VALITUT',
+      title: 'Arkiston teokset',
+      dragHint: 'Selaa',
+      viewAll: 'Kaikki teokset',
+    },
+    cart: {
+      title: 'Ostoskori',
+      empty: 'Ostoskorisi on tyhjä',
+      subtotal: 'Välisumma',
+      shipping: 'Toimitus',
+      shippingCalculated: 'Lasketaan kassalla',
+      freeShippingEligible: 'Tilaus oikeuttaa ilmaiseen toimitukseen',
+      freeShippingRemaining: (rem: number) => `Lisää ${formatPrice(rem)} ilmaiseen toimitukseen`,
+      checkout: 'Siirry kassalle',
+      continueShopping: 'Jatka selailua',
+      remove: 'Poista',
+    },
+    product: {
+      addToBag: 'Lisää ostoskoriin',
+      soldOut: 'Loppuunmyyty',
+      selectSize: 'Valitse koko',
+      details: 'Yksityiskohdat',
+      materials: 'Materiaalit',
+      shippingReturns: 'Toimitus ja palautus',
+      care: 'Hoito-ohjeet',
+      craftsmanship: 'Valmistus',
+      origin: 'Alkuperä',
+      numberedPiece: 'Numeroitu arkistokappale',
+    },
+    pdp: {
+      plate: 'Arkistolevy',
+      vatIncluded: 'sis. ALV 24 %',
+      selectSize: 'Valitse koko',
+      sizeGuide: 'Koko-opas (cm)',
+      addToCart: 'Lisää ostoskoriin',
+      addedToCart: 'Lisätty ostoskoriin',
+      outOfStock: 'Tilapäisesti loppu',
+      descTitle: 'Kuvaus ja istuvuus',
+      careTitle: 'Materiaali ja huolenpito',
+      shippingTitle: 'Toimitus ja palautukset',
+      shippingInfo: 'Ilmainen toimitus Postin, Matkahuollon ja Schenkerin noutopisteisiin yli 100 € tilauksiin. 14 päivän maksuton palautusoikeus.',
+      completeLook: 'Täydennä asu',
+      othersViewed: 'Muut katsoivat myös',
+      zoomHint: 'Napsauta suurentaaksesi kuvan',
+    },
+    checkout: {
+      title: 'Kassa',
+      step1: '1. Toimitus',
+      step2: '2. Maksu',
+      step3: '3. Vahvistus',
+      shippingMethods: 'Valitse toimitustapa',
+      customerInfo: 'Asiakastiedot',
+      email: 'Sähköposti',
+      firstName: 'Etunimi',
+      lastName: 'Sukunimi',
+      street: 'Katuosoite',
+      postalCode: 'Postinumero',
+      city: 'Postitoimipaikka',
+      phone: 'Puhelinnumero',
+      proceedToPayment: 'Jatka maksutapaan',
+      paymentMethods: 'Maksutavat',
+      verkkopankki: 'Verkkopankit',
+      mobilepay: 'MobilePay',
+      klarna: 'Klarna',
+      cards: 'Pankki- ja luottokortit',
+      applepay: 'Apple Pay',
+      back: 'Takaisin',
+      pay: 'Vahvista ja tilaa',
+      orderConfirmed: 'Tilaus vahvistettu',
+      orderThanks: 'Kiitos tilauksestasi.',
+      orderSentTo: 'Vahvistus lähetetty osoitteeseen',
+      returnHome: 'Palaa etusivulle',
+    },
+    footer: {
+      newsletterTitle: 'Liity sisäpiiriin',
+      newsletterSubtitle: 'Vastaanota tieto uusista eristä ja hiljaisista arkistojulkaisuista.',
+      subscribe: 'Tilaa',
+      privacyNote: 'Kunnioitamme yksityisyyttäsi. Voit perua tilauksen milloin tahansa.',
+      copyright: 'Kaikki oikeudet pidätetään.',
+    },
+    cookie: {
+      text: 'Käytämme välttämättömiä evästeitä varmistaaksemme sivuston toiminnan ja estetiikan.',
+      accept: 'Hyväksy',
+      settings: 'Asetukset',
+    },
+  },
+  en: {
+    languageName: 'English',
+    translateBar: 'Translate website in 1 click:',
+    sitemap: 'Sitemap',
+    announcement: 'COMPLIMENTARY SHIPPING OVER 100 € · 14-DAY RETURN PRIVILEGE',
+    nav: {
+      new: 'New Arrivals',
+      women: 'Women',
+      men: 'Men',
+      accessories: 'Accessories',
+      collections: 'Collections',
+      search: 'Search',
+      wishlist: 'Wishlist',
+      account: 'Account',
+      bag: 'Bag',
+      close: 'Close',
+      viewAll: 'View All',
+      archive: 'Archive',
+      journal: 'Journal',
+      lookbook: 'Lookbook',
+    },
+    latestDrop: {
+      tag: 'LATEST DROP',
+      edition: 'Numbered Edition',
+      title: 'Nordic Architecture',
+      description: 'Sculptural heavy wool crafted for restraint and durability.',
+      link: 'Discover Drop',
+    },
+    categoriesMosaic: {
+      women: 'Women',
+      men: 'Men',
+      accessories: 'Accessories',
+      collections: 'Collections',
+      subWomen: 'Pure silhouettes and organic materials',
+      subMen: 'Tailored composure and northern function',
+      subAcc: 'Hand-finished minimalist hardware',
+      subCol: 'Seasonal capsule ensembles',
+    },
+    featured: {
+      tag: 'CURATED',
+      title: 'Archival Focus',
+      dragHint: 'Swipe or explore',
+      viewAll: 'Explore All',
+    },
+    cart: {
+      title: 'Shopping Bag',
+      empty: 'Your shopping bag is empty',
+      subtotal: 'Subtotal',
+      shipping: 'Shipping',
+      shippingCalculated: 'Calculated at checkout',
+      freeShippingEligible: 'Complimentary shipping applied',
+      freeShippingRemaining: (rem: number) => `Add ${formatPrice(rem)} for complimentary shipping`,
+      checkout: 'Proceed to Checkout',
+      continueShopping: 'Continue Exploring',
+      remove: 'Remove',
+    },
+    product: {
+      addToBag: 'Add to Bag',
+      soldOut: 'Sold Out',
+      selectSize: 'Select Size',
+      details: 'Garment Details',
+      materials: 'Materials & Origin',
+      shippingReturns: 'Shipping & Returns',
+      care: 'Care Protocol',
+      craftsmanship: 'Craftsmanship',
+      origin: 'Origin',
+      numberedPiece: 'Numbered Archive Piece',
+    },
+    pdp: {
+      plate: 'Archive Plate',
+      vatIncluded: 'incl. 24% VAT',
+      selectSize: 'Select Size',
+      sizeGuide: 'Size Guide (cm)',
+      addToCart: 'Add to Bag',
+      addedToCart: 'Added to Bag',
+      outOfStock: 'Sold Out',
+      descTitle: 'Description & Fit',
+      careTitle: 'Material & Care Protocol',
+      shippingTitle: 'Shipping & Returns',
+      shippingInfo: 'Complimentary shipping over 100 €. 14-day return privilege.',
+      completeLook: 'Harmonious Synthesis',
+      othersViewed: 'Also Viewed',
+      zoomHint: 'Click to enlarge',
+    },
+    checkout: {
+      title: 'Checkout',
+      step1: '1. Delivery',
+      step2: '2. Payment',
+      step3: '3. Confirmation',
+      shippingMethods: 'Select Delivery Method',
+      customerInfo: 'Customer Information',
+      email: 'Email',
+      firstName: 'First Name',
+      lastName: 'Last Name',
+      street: 'Street Address',
+      postalCode: 'Postal Code',
+      city: 'City',
+      phone: 'Phone Number',
+      proceedToPayment: 'Continue to Payment',
+      paymentMethods: 'Payment Methods',
+      verkkopankki: 'Online Banks',
+      mobilepay: 'MobilePay',
+      klarna: 'Klarna',
+      cards: 'Credit & Debit Cards',
+      applepay: 'Apple Pay',
+      back: 'Back',
+      pay: 'Confirm & Place Order',
+      orderConfirmed: 'Order Confirmed',
+      orderThanks: 'Thank you for your order.',
+      orderSentTo: 'Confirmation sent to',
+      returnHome: 'Return to Store',
+    },
+    footer: {
+      newsletterTitle: 'Join the Atelier Dispatch',
+      newsletterSubtitle: 'Receive notifications on limited releases and silent archive drops.',
+      subscribe: 'Subscribe',
+      privacyNote: 'Strict restraint. You may unsubscribe at any moment.',
+      copyright: 'All rights reserved.',
+    },
+    cookie: {
+      text: 'We use necessary cookies to ensure the restraint and performance of this digital archive.',
+      accept: 'Accept',
+      settings: 'Preferences',
+    },
+  },
+  sv: {
+    languageName: 'Svenska',
+    translateBar: 'Översätt webbplats med ett klick:',
+    sitemap: 'Webbplatskarta',
+    announcement: 'FRI FRAKT ÖVER 100 € · 14 DAGARS RETURRÄTT',
+    nav: {
+      new: 'Nyheter',
+      women: 'Dam',
+      men: 'Herr',
+      accessories: 'Accessoarer',
+      collections: 'Kollektioner',
+      search: 'Sök',
+      wishlist: 'Önskelista',
+      account: 'Konto',
+      bag: 'Varukorg',
+      close: 'Stäng',
+      viewAll: 'Visa alla',
+      archive: 'Arkiv',
+      journal: 'Journal',
+      lookbook: 'Lookbook',
+    },
+    latestDrop: {
+      tag: 'SENASTE SLÄPP',
+      edition: 'Numrerad upplaga',
+      title: 'Nordisk arkitektur',
+      description: 'Skulptural tung ull sydd för nordisk funktion.',
+      link: 'Upptäck släppet',
+    },
+    categoriesMosaic: {
+      women: 'Dam',
+      men: 'Herr',
+      accessories: 'Accessoarer',
+      collections: 'Kollektioner',
+      subWomen: 'Rena linjer och organiska material',
+      subMen: 'Skräddad hållning och nordisk funktion',
+      subAcc: 'Handgjorda minimalistiska detaljer',
+      subCol: 'Säsongshelheter',
+    },
+    featured: {
+      tag: 'UTVALDA',
+      title: 'Arkivverk',
+      dragHint: 'Bläddra',
+      viewAll: 'Utforska alla',
+    },
+    cart: {
+      title: 'Varukorg',
+      empty: 'Din varukorg är tom',
+      subtotal: 'Delsumma',
+      shipping: 'Frakt',
+      shippingCalculated: 'Beräknas i kassan',
+      freeShippingEligible: 'Berättigad till fri frakt',
+      freeShippingRemaining: (rem: number) => `Lägg till ${formatPrice(rem)} för fri frakt`,
+      checkout: 'Gå till kassan',
+      continueShopping: 'Fortsätt handla',
+      remove: 'Ta bort',
+    },
+    product: {
+      addToBag: 'Lägg i varukorg',
+      soldOut: 'Slutsåld',
+      selectSize: 'Välj storlek',
+      details: 'Plaggets detaljer',
+      materials: 'Material och ursprung',
+      shippingReturns: 'Frakt och retur',
+      care: 'Skötselråd',
+      craftsmanship: 'Hantverk',
+      origin: 'Ursprung',
+      numberedPiece: 'Numrerat arkivplagg',
+    },
+    pdp: {
+      plate: 'Arkivplatta',
+      vatIncluded: 'inkl. 24 % moms',
+      selectSize: 'Välj storlek',
+      sizeGuide: 'Storleksguide (cm)',
+      addToCart: 'Lägg i varukorg',
+      addedToCart: 'Tillagd i varukorg',
+      outOfStock: 'Slutsåld',
+      descTitle: 'Beskrivning och passform',
+      careTitle: 'Material och skötsel',
+      shippingTitle: 'Frakt och returer',
+      shippingInfo: 'Fri frakt över 100 €. 14 dagars returrätt.',
+      completeLook: 'Harmonisk helhet',
+      othersViewed: 'Andra tittade också på',
+      zoomHint: 'Klicka för att förstora bilden',
+    },
+    checkout: {
+      title: 'Kassa',
+      step1: '1. Leverans',
+      step2: '2. Betalning',
+      step3: '3. Bekräftelse',
+      shippingMethods: 'Välj leveranssätt',
+      customerInfo: 'Kunduppgifter',
+      email: 'E-post',
+      firstName: 'Förnamn',
+      lastName: 'Efternamn',
+      street: 'Gatuadress',
+      postalCode: 'Postnummer',
+      city: 'Postort',
+      phone: 'Telefonnummer',
+      proceedToPayment: 'Fortsätt till betalning',
+      paymentMethods: 'Betalsätt',
+      verkkopankki: 'Internetbank',
+      mobilepay: 'MobilePay',
+      klarna: 'Klarna',
+      cards: 'Betalkort',
+      applepay: 'Apple Pay',
+      back: 'Tillbaka',
+      pay: 'Bekräfta och beställ',
+      orderConfirmed: 'Order bekräftad',
+      orderThanks: 'Tack för din beställning.',
+      orderSentTo: 'Bekräftelse skickad till',
+      returnHome: 'Tillbaka till butiken',
+    },
+    footer: {
+      newsletterTitle: 'Gå med i ateljén',
+      newsletterSubtitle: 'Få meddelanden om begränsade släpp och tysta arkivsläpp.',
+      subscribe: 'Prenumerera',
+      privacyNote: 'Vi respekterar din integritet. Du kan avregistrera dig när som helst.',
+      copyright: 'Alla rättigheter förbehållna.',
+    },
+    cookie: {
+      text: 'Vi använder nödvändiga kakor för att säkerställa arkivets prestanda.',
+      accept: 'Acceptera',
+      settings: 'Inställningar',
+    },
+  },
+};
+

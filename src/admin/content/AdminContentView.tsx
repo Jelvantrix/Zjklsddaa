@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { StoreContent, HeroSlide } from '../../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { StoreContent, HeroSlide, NEUTRAL_PLACEHOLDER_IMG } from '../../types';
 import { useAuth } from '../../supabase/AuthContext';
 import { useStorefrontData } from '../../context/StorefrontDataContext';
 import { updateStoreContent, logAuditEvent } from '../../supabase/dbService';
-import {
-  HERO_SLIDES,
-  PLACEHOLDER_VIDEO,
-  PRODUCT_IMAGES,
-} from '../../data/mockData';
+import { uploadMediaAsset } from '../../supabase/mediaService';
+import { UniversalMediaPickerModal } from '../components/UniversalMediaPickerModal';
 import {
   ArrowUp,
   ArrowDown,
@@ -49,10 +46,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
 
   // Hero Slides List State
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
-    if (content?.heroSlides && content.heroSlides.length > 0) {
-      return content.heroSlides;
-    }
-    return HERO_SLIDES;
+    return content?.heroSlides || [];
   });
 
   // Keep in sync if external content changes
@@ -133,51 +127,6 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   };
 
   // Quick asset presets for studio quality
-  const assetPresets = [
-    {
-      label: 'Campaign Film 2026 (.mp4)',
-      type: 'video' as const,
-      src: PLACEHOLDER_VIDEO,
-      poster: '/src/assets/images/hero_nordic_campaign_1790736679172.jpg',
-      captionEn: 'Motion and Silence · Campaign Film 2026',
-    },
-    {
-      label: 'Nordic Campaign Greatcoat',
-      type: 'image' as const,
-      src: '/src/assets/images/hero_nordic_campaign_1790736679172.jpg',
-      poster: '',
-      captionEn: 'Winter Campaign 2026 · Monolithic Wool Greatcoat',
-    },
-    {
-      label: 'Scandinavian Architectural Still',
-      type: 'image' as const,
-      src: '/src/assets/images/hero_scandinavian_still_1790736692405.jpg',
-      poster: '',
-      captionEn: 'Atelier Series · Structured Obsidian Greatcoat',
-    },
-    {
-      label: 'Wool Coat Runway Model',
-      type: 'image' as const,
-      src: PRODUCT_IMAGES.woolCoat,
-      poster: '',
-      captionEn: 'Minimalist Heavyweight Wool Trench · Drop 01',
-    },
-    {
-      label: 'Mens Trench Studio Model',
-      type: 'image' as const,
-      src: PRODUCT_IMAGES.mensTrench,
-      poster: '',
-      captionEn: 'Structured Double-Breasted Trench · Pure Line',
-    },
-    {
-      label: 'Seamless White Studio Drape',
-      type: 'image' as const,
-      src: PRODUCT_IMAGES.studioDrape,
-      poster: '',
-      captionEn: 'Pure Line · Seamless White Backdrop · Batch 03',
-    },
-  ];
-
   const defaultSections = [
     { id: 'latest_drop', label: 'Section 01: Latest Archival Drop' },
     { id: 'categories_mosaic', label: 'Section 02: Architectural Categories Mosaic' },
@@ -191,10 +140,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   const handleOpenAddModal = () => {
     setEditingSlideId(null);
     setSlideType('image');
-    setSlideSrc(PRODUCT_IMAGES.woolCoat);
+    setSlideSrc('');
     setSlidePoster('');
-    setCaptionEn('New Campaign Slide · Pure Line 2026');
-    setCaptionFi('Uusi Kampanjakuva · Puhdas Linja 2026');
+    setCaptionEn('');
+    setCaptionFi('');
     setPositionDesktop('center 20%');
     setPositionMobile('center 15%');
     setSlideScale(1.0);
@@ -716,63 +665,19 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             </div>
           </div>
 
-          {/* Quick Preset Gallery for Instant Slide Creation */}
-          <div className="border border-black/[0.08] p-4 bg-black/[0.015] space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs uppercase font-semibold text-black tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>Curated Atelier Media Presets</span>
-              </span>
-              <span className="text-[10px] text-black/50">
-                1-Click to add studio video or photography to carousel
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-              {assetPresets.map((preset, pIdx) => (
-                <button
-                  key={pIdx}
-                  type="button"
-                  onClick={() => {
-                    const newSlide: HeroSlide = {
-                      id: `slide-${Date.now()}-${pIdx}`,
-                      type: preset.type,
-                      src: preset.src,
-                      poster: preset.poster || undefined,
-                      positionDesktop: 'center 20%',
-                      positionMobile: 'center 15%',
-                      caption: {
-                        en: preset.captionEn,
-                        fi: preset.captionEn,
-                        sv: preset.captionEn,
-                      },
-                    };
-                    const updated = [...heroSlides, newSlide];
-                    setHeroSlides(updated);
-                    persistHeroSlidesUpdate(updated);
-                  }}
-                  className="p-2.5 border border-black/[0.08] bg-white hover:border-black text-left transition-colors cursor-pointer group flex items-center gap-2.5"
-                >
-                  <div className="w-10 h-10 shrink-0 bg-neutral-100 overflow-hidden relative border border-black/10">
-                    {preset.type === 'video' ? (
-                      <div className="w-full h-full flex items-center justify-center bg-indigo-900 text-white">
-                        <Video className="w-4 h-4" />
-                      </div>
-                    ) : (
-                      <img src={preset.src} alt={preset.label} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                  <div className="overflow-hidden">
-                    <div className="font-medium text-[11px] text-black group-hover:underline truncate">
-                      + Add {preset.label}
-                    </div>
-                    <div className="text-[9.5px] text-black/40 uppercase">
-                      {preset.type === 'video' ? 'Video (.mp4)' : 'Studio Photo'}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
+          {/* Actions for Hero Carousel */}
+          <div className="border border-black/[0.08] p-4 bg-neutral-50 flex items-center justify-between">
+            <span className="text-xs uppercase font-medium text-black/70">
+              {heroSlides.length === 0 ? 'No slides in carousel' : `${heroSlides.length} slide(s) active in carousel`}
+            </span>
+            <button
+              type="button"
+              onClick={handleOpenAddModal}
+              className="px-4 py-2 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-wider font-semibold flex items-center gap-1.5 cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Carousel Slide</span>
+            </button>
           </div>
         </div>
       )}
@@ -1030,7 +935,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   placeholder={
                     slideType === 'video'
                       ? 'https://.../video.mp4'
-                      : '/src/assets/images/... or data:image/...'
+                      : 'https://.../media.webp or /placeholder.svg'
                   }
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                 />
@@ -1056,7 +961,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     type="text"
                     value={slidePoster}
                     onChange={(e) => setSlidePoster(e.target.value)}
-                    placeholder="/src/assets/images/hero_nordic_campaign_1790736679172.jpg"
+                    placeholder="https://.../poster.webp or /placeholder.svg"
                     className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                   />
                 </div>
@@ -1247,7 +1152,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                       />
                     ) : (
                       <img
-                        src={slideSrc}
+                        src={slideSrc || NEUTRAL_PLACEHOLDER_IMG}
                         alt="Preview"
                         className="w-full h-full object-cover transition-transform duration-100"
                         style={{
@@ -1255,7 +1160,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                           transform: `scale(${slideScale}) rotate(${slideRotation}deg)`,
                         }}
                         onError={(e) => {
-                          (e.target as any).src = PRODUCT_IMAGES.woolCoat;
+                          (e.target as any).src = NEUTRAL_PLACEHOLDER_IMG;
                         }}
                       />
                     )}
@@ -1305,7 +1210,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* Frame & Angle Modal for Hero Slide */}
       <ImageFrameAdjusterModal
         isOpen={isSlideAdjusterModalOpen}
-        imageUrl={slideSrc || PRODUCT_IMAGES.woolCoat}
+        imageUrl={slideSrc || NEUTRAL_PLACEHOLDER_IMG}
         title="Adjust Hero Slide Best Frame & Angle"
         initialFocalX={slideFocalX}
         initialFocalY={slideFocalY}

@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Product, CartItem, Language, PageRoute } from './types';
-import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES } from './data/mockData';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { HomeSections } from './components/HomeSections';
@@ -326,10 +325,7 @@ function StorefrontApp() {
   // Resolve current active product if route is 'product' from live products
   const activeProduct =
     route.type === 'product'
-      ? products.find((p) => p.id === route.productId) ||
-        ARCHIVE_PRODUCTS.find((p) => p.id === route.productId) ||
-        products[0] ||
-        ARCHIVE_PRODUCTS[0]
+      ? products.find((p) => p.id === route.productId) || products[0] || null
       : null;
 
   // Enforce Administrator Access: link only opens if signed in with huxaifa0fficial@gmail.com
@@ -453,7 +449,7 @@ function StorefrontApp() {
                 wishlistIds={wishlistIds}
                 products={products}
                 onOpenJournalArticle={(id) => {
-                  const art = JOURNAL_ARTICLES.find((a) => a.id === id);
+                  const art = (content.journalPosts || []).find((a) => a.id === id);
                   if (art) {
                     navigateTo({ type: 'journal', articleSlug: art.slug });
                   } else {
@@ -599,28 +595,36 @@ function StorefrontApp() {
               </div>
 
               <div className="max-w-4xl mx-auto space-y-8">
-                {JOURNAL_ARTICLES.map((article) => (
-                  <article
-                    key={article.id}
-                    onClick={() => setJournalArticleId(article.id)}
-                    className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
-                  >
-                    <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
-                      <span>{article.date}</span>
-                      <span>·</span>
-                      <span>ARCHIVE DOSSIER</span>
-                    </div>
-                    <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
-                      {article.title.en || article.title.fi}
-                    </h2>
-                    <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
-                      {article.subtitle.en || article.subtitle.fi}
+                {(content.journalPosts || []).length === 0 ? (
+                  <div className="p-12 text-center border border-dashed border-black/15 bg-neutral-50/50">
+                    <p className="text-xs uppercase font-mono tracking-wider text-black/50">
+                      No journal monographs published yet
                     </p>
-                    <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
-                      Inspect Dossier →
-                    </span>
-                  </article>
-                ))}
+                  </div>
+                ) : (
+                  content.journalPosts.map((article) => (
+                    <article
+                      key={article.id}
+                      onClick={() => setJournalArticleId(article.id)}
+                      className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
+                    >
+                      <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
+                        <span>{article.date}</span>
+                        <span>·</span>
+                        <span>ARCHIVE DOSSIER</span>
+                      </div>
+                      <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
+                        {article.title.en || article.title.fi}
+                      </h2>
+                      <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
+                        {article.subtitle.en || article.subtitle.fi}
+                      </p>
+                      <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
+                        Inspect Dossier →
+                      </span>
+                    </article>
+                  ))
+                )}
               </div>
             </div>
           </ErrorBoundary>

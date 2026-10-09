@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { translations } from '../data/mockData';
-import { Language } from '../types';
+import { translations, Language } from '../types';
 
 interface CookieBannerProps {
   language: Language;

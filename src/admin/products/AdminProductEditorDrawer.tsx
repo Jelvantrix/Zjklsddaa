@@ -25,8 +25,10 @@ import {
   Move,
   Eye,
   Plus,
+  Maximize2,
 } from 'lucide-react';
 import { ImageFrameAdjusterModal, FrameAdjusterResult } from '../components/ImageFrameAdjusterModal';
+import { uploadMediaAsset } from '../../supabase/mediaService';
 
 interface AdminProductEditorDrawerProps {
   isOpen: boolean;
@@ -38,7 +40,7 @@ interface AdminProductEditorDrawerProps {
   collections?: Collection[];
 }
 
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=1200';
+const PLACEHOLDER_IMG = '/placeholder.svg';
 
 export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> = ({
   isOpen,
@@ -55,42 +57,30 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Form state initialized from selected product or default new product template
+  // Form state initialized from selected product or clean empty product template
   const [formData, setFormData] = useState<Partial<Product>>(() => {
     if (product) return { ...product };
+    const randSuffix = String(Date.now() % 10000).padStart(4, '0');
     return {
-      nr: `ZE-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: { fi: 'Uusi Arkistoteos', en: 'New Archival Piece', sv: 'Nytt Arkivstycke' },
+      nr: `ZE-${new Date().getFullYear()}-${randSuffix}`,
+      name: { fi: '', en: '', sv: '' },
       description: {
-        fi: 'Hienostunut skandinaavinen villakangasteos.',
-        en: 'Refined Scandinavian archival piece tailored with virgin wool.',
-        sv: 'Förfinat skandinaviskt arkivstycke i ren ull.',
+        fi: '',
+        en: '',
+        sv: '',
       },
-      price: 480,
+      price: 0,
       vatRate: 24,
       category: 'naiset',
-      subcategory: 'takit',
-      collectionSeason: 'talvi',
-      material: { fi: '100 % Neitseellinen villa', en: '100% Virgin Wool', sv: '100% Ren ull' },
-      origin: { fi: 'Kudottu Suomessa', en: 'Woven in Finland', sv: 'Vävd i Finland' },
-      care: { fi: 'Vain kemiallinen pesu', en: 'Dry clean only', sv: 'Endast kemtvätt' },
-      images: [
-        {
-          url: PLACEHOLDER_IMG,
-          order: 0,
-          focalX: 50,
-          focalY: 18,
-          isPrimary: true,
-        },
-      ],
-      variants: [
-        { size: 'XS', sku: 'ZE-NEW-XS', stock: 4 },
-        { size: 'S', sku: 'ZE-NEW-S', stock: 8 },
-        { size: 'M', sku: 'ZE-NEW-M', stock: 6 },
-        { size: 'L', sku: 'ZE-NEW-L', stock: 3 },
-      ],
-      limitedEdition: { isLimited: true, editionSize: 50, soldCount: 0 },
-      isLimited: true,
+      subcategory: '',
+      collectionSeason: 'perusvaatteet',
+      material: { fi: '', en: '', sv: '' },
+      origin: { fi: '', en: '', sv: '' },
+      care: { fi: '', en: '', sv: '' },
+      images: [],
+      variants: [],
+      limitedEdition: { isLimited: false, editionSize: 0, soldCount: 0 },
+      isLimited: false,
       status: 'draft',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -101,39 +91,27 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     if (product) {
       setFormData({ ...product });
     } else {
+      const randSuffix = String(Date.now() % 10000).padStart(4, '0');
       setFormData({
-        nr: `ZE-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
-        name: { fi: 'Uusi Arkistoteos', en: 'New Archival Piece', sv: 'Nytt Arkivstycke' },
+        nr: `ZE-${new Date().getFullYear()}-${randSuffix}`,
+        name: { fi: '', en: '', sv: '' },
         description: {
-          fi: 'Hienostunut skandinaavinen villakangasteos.',
-          en: 'Refined Scandinavian archival piece tailored with virgin wool.',
-          sv: 'Förfinat skandinaviskt arkivstycke i ren ull.',
+          fi: '',
+          en: '',
+          sv: '',
         },
-        price: 480,
+        price: 0,
         vatRate: 24,
         category: 'naiset',
-        subcategory: 'takit',
-        collectionSeason: 'talvi',
-        material: { fi: '100 % Neitseellinen villa', en: '100% Virgin Wool', sv: '100% Ren ull' },
-        origin: { fi: 'Kudottu Suomessa', en: 'Woven in Finland', sv: 'Vävd i Finland' },
-        care: { fi: 'Vain kemiallinen pesu', en: 'Dry clean only', sv: 'Endast kemtvätt' },
-        images: [
-          {
-            url: PLACEHOLDER_IMG,
-            order: 0,
-            focalX: 50,
-            focalY: 18,
-            isPrimary: true,
-          },
-        ],
-        variants: [
-          { size: 'XS', sku: 'ZE-NEW-XS', stock: 4 },
-          { size: 'S', sku: 'ZE-NEW-S', stock: 8 },
-          { size: 'M', sku: 'ZE-NEW-M', stock: 6 },
-          { size: 'L', sku: 'ZE-NEW-L', stock: 3 },
-        ],
-        limitedEdition: { isLimited: true, editionSize: 50, soldCount: 0 },
-        isLimited: true,
+        subcategory: '',
+        collectionSeason: 'perusvaatteet',
+        material: { fi: '', en: '', sv: '' },
+        origin: { fi: '', en: '', sv: '' },
+        care: { fi: '', en: '', sv: '' },
+        images: [],
+        variants: [],
+        limitedEdition: { isLimited: false, editionSize: 0, soldCount: 0 },
+        isLimited: false,
         status: 'draft',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -204,32 +182,30 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   };
 
   // Device file upload handler
-  const handleDeviceFileUpload = (
+  const handleDeviceFileUpload = async (
     file: File | undefined,
     target: 'primary' | 'hover' | 'gallery'
   ) => {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (!dataUrl) return;
-
+    try {
+      const asset = await uploadMediaAsset(file);
       if (target === 'primary') {
-        handleUpdateImageUrl(dataUrl);
+        handleUpdateImageUrl(asset.url);
       } else if (target === 'hover') {
-        handleUpdateHoverUrl(dataUrl);
+        handleUpdateHoverUrl(asset.url);
       } else if (target === 'gallery') {
         const currentList = [...(formData.images || [])];
         currentList.push({
-          url: dataUrl,
+          url: asset.url,
           order: currentList.length,
-          focalX: 50,
-          focalY: 20,
+          focalX: asset.focalX ?? 50,
+          focalY: asset.focalY ?? 20,
         });
         setFormData({ ...formData, images: currentList });
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err: any) {
+      alert(err.message || 'File upload failed');
+    }
   };
 
   // Delete image handlers
@@ -804,39 +780,6 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                           Flipped
                         </span>
                       )}
-                    </div>
-
-                    {/* Studio Presets */}
-                    <div>
-                      <span className="block text-[9.5px] uppercase tracking-wider text-black/50 mb-1.5">
-                        Studio Archive Garment Presets:
-                      </span>
-                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
-                        {[
-                          { label: 'Wool Coat', url: '/src/assets/images/wool_coat_model_1790736253323.jpg' },
-                          { label: 'Trench', url: '/src/assets/images/mens_trench_model_1790736267744.jpg' },
-                          { label: 'Knitwear', url: '/src/assets/images/knitwear_sweater_1790736282001.jpg' },
-                          { label: 'Leather Tote', url: '/src/assets/images/leather_bag_tote_1790736295648.jpg' },
-                          { label: 'Trousers', url: '/src/assets/images/tailored_trousers_1790736314928.jpg' },
-                          { label: 'White Drape', url: '/src/assets/images/studio_fashion_white_bg_1790645923450.jpg' },
-                        ].map((preset) => (
-                          <button
-                            type="button"
-                            key={preset.label}
-                            onClick={() => handleUpdateImageUrl(preset.url)}
-                            className={`p-1 border text-left cursor-pointer transition-colors group ${
-                              primaryUrl === preset.url ? 'border-black bg-neutral-200' : 'border-black/15 bg-white hover:border-black'
-                            }`}
-                          >
-                            <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 mb-1">
-                              <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                            </div>
-                            <span className="text-[8.5px] block truncate font-mono text-black/70 group-hover:text-black">
-                              {preset.label}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
                     </div>
                   </div>
                 </div>

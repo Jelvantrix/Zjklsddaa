@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Product, Language } from '../types';
+import { Product, Language, formatPrice } from '../types';
 import { FashionImage } from './FashionImage';
-import { formatPrice, ARCHIVE_PRODUCTS } from '../data/mockData';
 import {
   ArrowLeft,
   Grid,
@@ -28,18 +27,9 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
 }) => {
   const [layoutMode, setLayoutMode] = useState<'spread' | 'grid'>('spread');
 
-  // Curate dedicated looks from live products blended with permanent archival baseline (up to 16)
+  // Curate dedicated looks from live products (up to 16)
   const looks: Product[] = React.useMemo(() => {
-    if (!products || products.length === 0) {
-      return ARCHIVE_PRODUCTS.slice(0, 16);
-    }
-    const combined = [...products];
-    for (const arch of ARCHIVE_PRODUCTS) {
-      if (!combined.some((p) => p.id === arch.id)) {
-        combined.push(arch);
-      }
-    }
-    return combined.slice(0, 16);
+    return (products || []).slice(0, 16);
   }, [products]);
 
   return (

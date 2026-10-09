@@ -434,10 +434,12 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                   <td className="py-4 px-3">
                     <div className="w-10 h-13 bg-neutral-100 overflow-hidden relative">
                       <img
-                        src={prod.images?.[0]?.url || 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400&q=80'}
+                        src={prod.images?.[0]?.url || prod.image || '/placeholder.svg'}
                         alt={prod.name.fi}
                         style={{
-                          objectPosition: `${prod.images?.[0]?.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? 20}%`,
+                          objectPosition: `${prod.images?.[0]?.focalX ?? prod.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? prod.focalY ?? 20}%`,
+                          transform: `scale(${prod.images?.[0]?.scale ?? prod.imageScale ?? 1.0})`,
+                          transformOrigin: `${prod.images?.[0]?.focalX ?? prod.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? prod.focalY ?? 20}%`,
                         }}
                         className="w-full h-full object-cover"
                       />

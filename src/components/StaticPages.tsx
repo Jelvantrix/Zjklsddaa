@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Language, Product } from '../types';
-import { ARCHIVE_PRODUCTS, JOURNAL_ARTICLES, translations, formatPrice } from '../data/mockData';
+import { Language, Product, translations, formatPrice } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { Check } from 'lucide-react';
 
@@ -19,6 +19,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   onNavigate,
   onSelectProduct,
 }) => {
+  const { products, content } = useStorefrontData();
   const t = translations[language] || translations.en;
 
   // Tracking form state
@@ -57,24 +58,28 @@ export const StaticPages: React.FC<StaticPageProps> = ({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 font-mono text-xs">
-            {/* Products (24 pages) */}
+            {/* Products */}
             <div>
               <h3 className="font-editorial text-xl font-normal mb-3 sm:mb-4 border-b border-black/20 pb-2">
-                01. Product Dossiers (24 Plates)
+                01. Product Dossiers ({products.length} Plates)
               </h3>
               <ul className="space-y-2">
-                {ARCHIVE_PRODUCTS.map((prod) => (
-                  <li key={prod.id}>
-                    <button
-                      type="button"
-                      onClick={() => onNavigate({ type: 'product', productId: prod.id })}
-                      className="hover:underline text-black/70 hover:text-black flex items-center justify-between w-full text-left cursor-pointer"
-                    >
-                      <span className="truncate pr-2">{prod.plateNumber} · {prod.name.en || prod.name[language]}</span>
-                      <span className="text-black/40 shrink-0">{formatPrice(prod.price)}</span>
-                    </button>
-                  </li>
-                ))}
+                {products.length === 0 ? (
+                  <li className="text-black/40 italic">No published plates yet</li>
+                ) : (
+                  products.map((prod) => (
+                    <li key={prod.id}>
+                      <button
+                        type="button"
+                        onClick={() => onNavigate({ type: 'product', productId: prod.id })}
+                        className="hover:underline text-black/70 hover:text-black flex items-center justify-between w-full text-left cursor-pointer"
+                      >
+                        <span className="truncate pr-2">{prod.plateNumber || prod.nr} · {prod.name.en || prod.name[language]}</span>
+                        <span className="text-black/40 shrink-0">{formatPrice(prod.price)}</span>
+                      </button>
+                    </li>
+                  ))
+                )}
               </ul>
             </div>
 
@@ -134,7 +139,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                       /journal (Main Journal Index)
                     </button>
                   </li>
-                  {JOURNAL_ARTICLES.map((art) => (
+                  {(content.journalPosts || []).map((art) => (
                     <li key={art.slug}>
                       <button type="button" onClick={() => onNavigate({ type: 'journal', articleSlug: art.slug })} className="hover:underline cursor-pointer truncate max-w-full block">
                         /journal/{art.slug} ({art.title.en || art.title[language]})
@@ -188,33 +193,38 @@ export const StaticPages: React.FC<StaticPageProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
-          {ARCHIVE_PRODUCTS.slice(0, 8).map((product) => (
-            <div
-              key={product.id}
-              onClick={() => onSelectProduct(product)}
-              className="group cursor-pointer"
-            >
-              <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-white mb-3 sm:mb-4">
-                <FashionImage
-                  product={product}
-                  src={product.hoverImage || product.image}
-                  alt={product.name.en || product.name[language]}
-                  position={product.cropVariation.onModel.position}
-                  scale={product.cropVariation.onModel.scale}
-                  aspectRatio="auto"
-                  className="w-full h-full"
-                  imageClassName="group-hover:scale-105 transition-transform duration-700"
-                />
-              </div>
-              <div className="flex items-baseline justify-between font-mono text-xs">
-                <div>
-                  <span className="text-black/40 mr-2">{product.plateNumber}</span>
-                  <span className="font-medium text-black group-hover:underline">{product.name.en || product.name[language]}</span>
-                </div>
-                <span>{formatPrice(product.price)}</span>
-              </div>
+          {products.length === 0 ? (
+            <div className="col-span-2 py-16 text-center border border-dashed border-black/15 bg-neutral-50/50">
+              <p className="text-xs uppercase font-mono tracking-widest text-black/40">No campaign garments live yet</p>
             </div>
-          ))}
+          ) : (
+            products.slice(0, 8).map((product) => (
+              <div
+                key={product.id}
+                onClick={() => onSelectProduct(product)}
+                className="group cursor-pointer"
+              >
+                <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-white mb-3 sm:mb-4">
+                  <FashionImage
+                    product={product}
+                    src={product.hoverImage || product.image}
+                    alt={product.name.en || product.name[language]}
+                    placement="archive"
+                    aspectRatio="auto"
+                    className="w-full h-full"
+                    imageClassName="group-hover:scale-105 transition-transform duration-700"
+                  />
+                </div>
+                <div className="flex items-baseline justify-between font-mono text-xs">
+                  <div>
+                    <span className="text-black/40 mr-2">{product.plateNumber || product.nr}</span>
+                    <span className="font-medium text-black group-hover:underline">{product.name.en || product.name[language]}</span>
+                  </div>
+                  <span>{formatPrice(product.price)}</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     );
