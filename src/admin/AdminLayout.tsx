@@ -55,14 +55,6 @@ import { AdminSecurityView } from './security/AdminSecurityView';
 import { AdminSystemHealthView } from './health/AdminSystemHealthView';
 import { AdminSuggestionsView } from './suggestions/AdminSuggestionsView';
 import { useStorefrontData } from '../context/StorefrontDataContext';
-import {
-  SEED_ORDERS,
-  SEED_CUSTOMERS,
-  SEED_WAITLIST,
-  SEED_DISCOUNTS,
-  SEED_DAILY_STATS,
-  SEED_INSIGHTS,
-} from '../data/seedData';
 
 interface AdminLayoutProps {
   onBackToStorefront: () => void;
@@ -201,8 +193,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [waitlist, setWaitlist] = useState<WaitlistEntry[]>([]);
-  const [discounts, setDiscounts] = useState<Discount[]>(SEED_DISCOUNTS);
-  const [insights, setInsights] = useState<AiInsight[]>(SEED_INSIGHTS);
+  const [discounts, setDiscounts] = useState<Discount[]>(() => {
+    try {
+      const saved = localStorage.getItem('zejesh_discounts');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [insights, setInsights] = useState<AiInsight[]>([]);
 
   // Compute 100% genuine daily statistics from real orders (empty array if 0 orders)
   const realDailyStats: DailyStat[] = useMemo(() => {

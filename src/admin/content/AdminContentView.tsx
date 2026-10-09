@@ -24,7 +24,14 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  Upload,
+  Compass,
+  ZoomIn,
+  RotateCcw,
+  RotateCw,
+  Maximize2,
 } from 'lucide-react';
+import { ImageFrameAdjusterModal, FrameAdjusterResult } from '../components/ImageFrameAdjusterModal';
 
 interface AdminContentViewProps {
   content: StoreContent;
@@ -67,13 +74,63 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   const [captionFi, setCaptionFi] = useState('');
   const [positionDesktop, setPositionDesktop] = useState('center 20%');
   const [positionMobile, setPositionMobile] = useState('center 15%');
+  const [slideScale, setSlideScale] = useState(1.0);
+  const [slideRotation, setSlideRotation] = useState(0);
+  const [slideFocalX, setSlideFocalX] = useState(50);
+  const [slideFocalY, setSlideFocalY] = useState(20);
   const [slideFormError, setSlideFormError] = useState<string | null>(null);
+
+  // File upload refs
+  const slideFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const slidePosterFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const [isSlideAdjusterModalOpen, setIsSlideAdjusterModalOpen] = useState(false);
 
   // Deletion confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Interactive Live Preview in Admin
   const [previewIndex, setPreviewIndex] = useState(0);
+
+  // Device file upload for slide
+  const handleSlideFileUpload = (file: File | undefined) => {
+    if (!file) return;
+    const isVid = file.type.startsWith('video');
+    setSlideType(isVid ? 'video' : 'image');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setSlideSrc(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSlidePosterUpload = (file: File | undefined) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setSlidePoster(dataUrl);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDeleteSlideImage = () => {
+    setSlideSrc('');
+  };
+
+  const handleApplySlideAdjuster = (res: FrameAdjusterResult) => {
+    setSlideScale(res.scale);
+    setSlideRotation(res.rotation);
+    setSlideFocalX(res.focalX);
+    setSlideFocalY(res.focalY);
+    setPositionDesktop(res.position);
+    setPositionMobile(res.position);
+  };
 
   // Quick asset presets for studio quality
   const assetPresets = [
@@ -140,6 +197,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
     setCaptionFi('Uusi Kampanjakuva · Puhdas Linja 2026');
     setPositionDesktop('center 20%');
     setPositionMobile('center 15%');
+    setSlideScale(1.0);
+    setSlideRotation(0);
+    setSlideFocalX(50);
+    setSlideFocalY(20);
     setSlideFormError(null);
     setIsModalOpen(true);
   };
@@ -154,6 +215,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
     setCaptionFi(slide.caption?.fi || '');
     setPositionDesktop(slide.positionDesktop || 'center 20%');
     setPositionMobile(slide.positionMobile || 'center 15%');
+    setSlideScale(slide.scale || 1.0);
+    setSlideRotation(slide.rotation || 0);
+    setSlideFocalX(slide.focalX || 50);
+    setSlideFocalY(slide.focalY || 20);
     setSlideFormError(null);
     setIsModalOpen(true);
   };
@@ -162,7 +227,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   const handleSaveSlideModal = (e: React.FormEvent) => {
     e.preventDefault();
     if (!slideSrc.trim()) {
-      setSlideFormError('Please provide a valid media source URL (e.g. video or image URL).');
+      setSlideFormError('Please provide a valid media source URL or upload a file from your device.');
       return;
     }
 
@@ -177,6 +242,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             poster: slideType === 'video' ? slidePoster.trim() : undefined,
             positionDesktop,
             positionMobile,
+            scale: slideScale,
+            rotation: slideRotation,
+            focalX: slideFocalX,
+            focalY: slideFocalY,
             caption: {
               fi: captionFi.trim() || captionEn.trim(),
               en: captionEn.trim(),
@@ -197,6 +266,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
         poster: slideType === 'video' ? slidePoster.trim() || undefined : undefined,
         positionDesktop,
         positionMobile,
+        scale: slideScale,
+        rotation: slideRotation,
+        focalX: slideFocalX,
+        focalY: slideFocalY,
         caption: {
           fi: captionFi.trim() || captionEn.trim(),
           en: captionEn.trim() || 'Zejesh Campaign Series',
@@ -890,11 +963,65 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 </div>
               </div>
 
-              {/* Media Source URL */}
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
-                  {slideType === 'video' ? 'Video Stream URL (.mp4 / WebM):' : 'Image URL:'}
-                </label>
+              {/* Hidden file inputs for device file uploads */}
+              <input
+                ref={slideFileInputRef}
+                type="file"
+                accept={slideType === 'video' ? 'video/*,image/*' : 'image/*'}
+                onChange={(e) => {
+                  handleSlideFileUpload(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <input
+                ref={slidePosterFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  handleSlidePosterUpload(e.target.files?.[0]);
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+
+              {/* Media Source URL + Device Upload Bar */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+                    {slideType === 'video' ? 'Video Stream URL (.mp4 / WebM):' : 'Image URL or Local File:'}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => slideFileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[10px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Upload from Device</span>
+                    </button>
+                    {slideSrc && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setIsSlideAdjusterModalOpen(true)}
+                          className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                        >
+                          <Compass className="w-3 h-3" />
+                          <span>Adjust Best Frame & Angle</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteSlideImage}
+                          className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                          title="Delete / Clear picture"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <input
                   type="text"
                   required
@@ -903,7 +1030,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   placeholder={
                     slideType === 'video'
                       ? 'https://.../video.mp4'
-                      : '/src/assets/images/... or https://...'
+                      : '/src/assets/images/... or data:image/...'
                   }
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                 />
@@ -911,10 +1038,20 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
 
               {/* Poster Image for Video */}
               {slideType === 'video' && (
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
-                    Video Fallback Poster Image URL (displayed while loading):
-                  </label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+                      Video Fallback Poster Image:
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => slidePosterFileInputRef.current?.click()}
+                      className="px-2 py-0.5 text-[9.5px] uppercase font-mono border border-black/20 hover:border-black flex items-center gap-1 cursor-pointer"
+                    >
+                      <Upload className="w-2.5 h-2.5" />
+                      <span>Upload Poster from Device</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={slidePoster}
@@ -924,6 +1061,104 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   />
                 </div>
               )}
+
+              {/* Frame, Zoom & Angle Controls */}
+              <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] uppercase tracking-wider text-black font-semibold flex items-center gap-1">
+                    <Compass className="w-3 h-3 text-black" />
+                    <span>Best Frame & Angle Calibration</span>
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9.5px] font-mono text-black/60">
+                      Scale: {slideScale.toFixed(2)}x · Angle: {slideRotation}°
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSlideScale(1.0);
+                        setSlideRotation(0);
+                        setPositionDesktop('center 20%');
+                        setPositionMobile('center 15%');
+                      }}
+                      className="text-[9px] uppercase font-mono underline hover:opacity-60 cursor-pointer"
+                    >
+                      Reset 0°
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="flex justify-between text-[10px] text-black/70 mb-1">
+                      <span>Angle / Tilt</span>
+                      <span className="font-bold">{slideRotation}°</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={-45}
+                      max={45}
+                      step={1}
+                      value={slideRotation}
+                      onChange={(e) => setSlideRotation(parseInt(e.target.value, 10))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setSlideRotation((r) => Math.max(-45, r - 5))}
+                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
+                      >
+                        -5°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSlideRotation(0)}
+                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
+                      >
+                        Level 0°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSlideRotation((r) => Math.min(45, r + 5))}
+                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
+                      >
+                        +5°
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-[10px] text-black/70 mb-1">
+                      <span>Zoom / Scale</span>
+                      <span className="font-bold">{slideScale.toFixed(2)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.8}
+                      max={2.5}
+                      step={0.01}
+                      value={slideScale}
+                      onChange={(e) => setSlideScale(parseFloat(e.target.value))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      {[1.0, 1.15, 1.3, 1.5].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSlideScale(s)}
+                          className={`px-1.5 py-0.5 text-[8.5px] border cursor-pointer ${
+                            Math.abs(slideScale - s) < 0.02 ? 'border-black bg-black text-white' : 'border-black/15 bg-white'
+                          }`}
+                        >
+                          {s}x
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Caption / Title */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -989,8 +1224,15 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
               {/* Live Preview Inside Modal */}
               {slideSrc && (
                 <div className="space-y-1">
-                  <span className="text-[10px] uppercase tracking-wider text-black/50">Media Preview:</span>
-                  <div className="w-full h-36 bg-neutral-100 border border-black/15 overflow-hidden relative flex items-center justify-center">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] uppercase tracking-wider text-black/50">
+                      Live Hero Frame Preview:
+                    </span>
+                    <span className="text-[9.5px] font-mono text-black/40">
+                      Scale: {slideScale.toFixed(2)}x · Angle: {slideRotation}°
+                    </span>
+                  </div>
+                  <div className="w-full h-44 bg-neutral-100 border border-black/20 overflow-hidden relative flex items-center justify-center">
                     {slideType === 'video' ? (
                       <video
                         src={slideSrc}
@@ -998,12 +1240,20 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                         controls
                         muted
                         className="w-full h-full object-cover"
+                        style={{
+                          objectPosition: positionDesktop,
+                          transform: `scale(${slideScale}) rotate(${slideRotation}deg)`,
+                        }}
                       />
                     ) : (
                       <img
                         src={slideSrc}
                         alt="Preview"
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transition-transform duration-100"
+                        style={{
+                          objectPosition: positionDesktop,
+                          transform: `scale(${slideScale}) rotate(${slideRotation}deg)`,
+                        }}
                         onError={(e) => {
                           (e.target as any).src = PRODUCT_IMAGES.woolCoat;
                         }}
@@ -1014,25 +1264,62 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
               )}
 
               {/* Buttons */}
-              <div className="pt-3 border-t border-black/10 flex items-center justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border border-black/20 hover:border-black text-black text-xs uppercase tracking-wider cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-black text-white hover:bg-black/80 text-xs uppercase tracking-wider font-semibold cursor-pointer"
-                >
-                  {editingSlideId ? 'Save Slide Changes' : 'Add Slide to Carousel'}
-                </button>
+              <div className="pt-3 border-t border-black/10 flex items-center justify-between">
+                <div>
+                  {editingSlideId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleRemoveSlide(editingSlideId);
+                        setIsModalOpen(false);
+                      }}
+                      className="px-3 py-2 text-red-600 hover:bg-red-50 border border-red-200 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>Delete Slide</span>
+                    </button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-4 py-2 border border-black/20 hover:border-black text-black text-xs uppercase tracking-wider cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-black text-white hover:bg-black/80 text-xs uppercase tracking-wider font-semibold cursor-pointer"
+                  >
+                    {editingSlideId ? 'Save Slide Changes' : 'Add Slide to Carousel'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      {/* Frame & Angle Modal for Hero Slide */}
+      <ImageFrameAdjusterModal
+        isOpen={isSlideAdjusterModalOpen}
+        imageUrl={slideSrc || PRODUCT_IMAGES.woolCoat}
+        title="Adjust Hero Slide Best Frame & Angle"
+        initialFocalX={slideFocalX}
+        initialFocalY={slideFocalY}
+        initialScale={slideScale}
+        initialRotation={slideRotation}
+        initialAspectRatio="16/9"
+        onClose={() => setIsSlideAdjusterModalOpen(false)}
+        onApply={handleApplySlideAdjuster}
+        onUploadFile={(dataUrl) => {
+          setSlideType('image');
+          setSlideSrc(dataUrl);
+        }}
+        onDeleteImage={handleDeleteSlideImage}
+      />
     </div>
   );
 };

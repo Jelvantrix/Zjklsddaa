@@ -90,14 +90,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onScrollCueClick, lang
                   muted
                   loop
                   playsInline
-                  className="w-full h-full object-cover object-[center_18%] pointer-events-none"
-                  style={{ mixBlendMode: 'multiply' }}
+                  className="w-full h-full object-cover pointer-events-none"
+                  style={{
+                    objectPosition: slide.positionDesktop || 'center 18%',
+                    transform: `scale(${slide.scale || 1}) rotate(${slide.rotation || 0}deg)`,
+                    mixBlendMode: 'multiply',
+                  }}
                 />
               ) : (
                 <img
                   src={slide.src}
                   alt={slide.caption?.[language] || 'Zejesh Studio Fashion Archive'}
-                  className="w-full h-full object-cover object-[center_18%] pointer-events-none"
+                  className="w-full h-full object-cover pointer-events-none transition-transform duration-700 ease-out"
+                  style={{
+                    objectPosition: slide.positionDesktop || 'center 18%',
+                    transform: `scale(${slide.scale || 1}) rotate(${slide.rotation || 0}deg)`,
+                  }}
                   draggable={false}
                 />
               )}

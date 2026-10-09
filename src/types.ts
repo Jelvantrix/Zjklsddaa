@@ -23,6 +23,10 @@ export interface ProductImage {
   };
   focalX?: number; // 0 - 100 %
   focalY?: number; // 0 - 100 %
+  scale?: number; // zoom e.g. 1.0 - 3.0
+  rotation?: number; // angle in degrees -180 to 180
+  position?: string; // e.g. '50% 20%'
+  aspectRatio?: string;
   order: number;
   isPrimary?: boolean;
   isHover?: boolean;
@@ -84,6 +88,8 @@ export interface Product {
   imagePosition?: string;
   hoverImagePosition?: string;
   imageScale?: number;
+  imageRotation?: number;
+  hoverImageRotation?: number;
   status?: ProductStatus;
   publishAt?: string | number; // ISO string or timestamp
   seo?: {
@@ -255,6 +261,11 @@ export interface HeroSlide {
   poster?: string;
   positionDesktop: string;
   positionMobile: string;
+  scale?: number;
+  rotation?: number;
+  focalX?: number;
+  focalY?: number;
+  aspectRatio?: string;
   caption?: {
     fi: string;
     en: string;
@@ -454,6 +465,7 @@ export interface JournalArticle {
   };
   readTime: string;
   cropPosition: string;
+  image?: string;
 }
 
 export interface CommunitySuggestion {

@@ -17,7 +17,16 @@ import {
   Check,
   AlertCircle,
   Trash2,
+  Upload,
+  RotateCcw,
+  RotateCw,
+  Compass,
+  ZoomIn,
+  Move,
+  Eye,
+  Plus,
 } from 'lucide-react';
+import { ImageFrameAdjusterModal, FrameAdjusterResult } from '../components/ImageFrameAdjusterModal';
 
 interface AdminProductEditorDrawerProps {
   isOpen: boolean;
@@ -134,25 +143,33 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
   if (!isOpen) return null;
 
-  // Active focal point and image state
+  // Active focal point, rotation, and image state
   const activeImage = formData.images?.[0];
   const primaryUrl = activeImage?.url || formData.image || PLACEHOLDER_IMG;
   const hoverUrl = formData.hoverImage || '';
   const focalX = activeImage?.focalX ?? 50;
   const focalY = activeImage?.focalY ?? 18;
   const focalScale = (formData as any).imageScale ?? (formData.cropVariation?.onModel?.scale ?? 1.05);
+  const focalRotation = (formData as any).imageRotation ?? 0;
+  const currentAspectRatio = formData.cropVariation?.onModel?.aspectRatio || '3/4';
+  const isFlipped = formData.cropVariation?.onModel?.flipped || false;
 
-  /**
-   * Builds a *complete* `cropVariation`, preserving the existing packshot,
-   * detail crops and `onModel.aspectRatio`.
-   *
-   * The previous inline spreads dropped `packshot` (for records without saved
-   * crop data) and overwrote `onModel` without its `aspectRatio`, so every
-   * focal-point edit silently lost crop metadata.
-   */
-  const cropWithOnModel = (position: string, scale: number): Product['cropVariation'] => {
+  // File upload input refs
+  const primaryFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const hoverFileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const galleryFileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  // Full Adjuster Modal state
+  const [isAdjusterModalOpen, setIsAdjusterModalOpen] = useState(false);
+  const [adjustingTarget, setAdjustingTarget] = useState<'primary' | 'hover'>('primary');
+
+  const cropWithOnModel = (
+    position: string,
+    scale: number,
+    aspectRatio: '3/4' | '4/5' | '1/1' | '16/9' = currentAspectRatio as any,
+    flipped = isFlipped
+  ): Product['cropVariation'] => {
     const base = formData.cropVariation;
-    const onModel = base?.onModel;
     return {
       packshot: base?.packshot || {
         position: 'center center',
@@ -162,8 +179,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       onModel: {
         position,
         scale,
-        aspectRatio: onModel?.aspectRatio || '3/4',
-        ...(onModel?.flipped !== undefined ? { flipped: onModel.flipped } : {}),
+        aspectRatio,
+        flipped,
       },
       detail1: base?.detail1 || { position: 'center center', scale: 1.2 },
       detail2: base?.detail2 || { position: 'center center', scale: 1.2 },
@@ -184,6 +201,63 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
   const handleUpdateHoverUrl = (url: string) => {
     setFormData({ ...formData, hoverImage: url });
+  };
+
+  // Device file upload handler
+  const handleDeviceFileUpload = (
+    file: File | undefined,
+    target: 'primary' | 'hover' | 'gallery'
+  ) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const dataUrl = event.target?.result as string;
+      if (!dataUrl) return;
+
+      if (target === 'primary') {
+        handleUpdateImageUrl(dataUrl);
+      } else if (target === 'hover') {
+        handleUpdateHoverUrl(dataUrl);
+      } else if (target === 'gallery') {
+        const currentList = [...(formData.images || [])];
+        currentList.push({
+          url: dataUrl,
+          order: currentList.length,
+          focalX: 50,
+          focalY: 20,
+        });
+        setFormData({ ...formData, images: currentList });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Delete image handlers
+  const handleDeletePrimaryImage = () => {
+    const currentList = [...(formData.images || [])];
+    if (currentList.length > 0) {
+      currentList.shift();
+    }
+    const nextPrimary = currentList[0]?.url || '';
+    setFormData({
+      ...formData,
+      image: nextPrimary,
+      images: currentList,
+    });
+  };
+
+  const handleDeleteHoverImage = () => {
+    setFormData({ ...formData, hoverImage: '' });
+  };
+
+  const handleDeleteGalleryImage = (index: number) => {
+    const currentList = [...(formData.images || [])];
+    currentList.splice(index, 1);
+    setFormData({
+      ...formData,
+      images: currentList,
+      image: currentList[0]?.url || formData.image,
+    });
   };
 
   const handleUpdateFocalX = (x: number) => {
@@ -220,10 +294,24 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     });
   };
 
+  const handleUpdateRotation = (rotation: number) => {
+    setFormData({
+      ...formData,
+      imageRotation: rotation,
+    } as any);
+  };
+
+  const handleToggleFlip = () => {
+    setFormData({
+      ...formData,
+      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, focalScale, currentAspectRatio as any, !isFlipped),
+    });
+  };
+
   const handleFocalPointClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    const x = Math.round(((e.clientX - rect.left) / rect.width) * 100);
-    const y = Math.round(((e.clientY - rect.top) / rect.height) * 100);
+    const x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
+    const y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
 
     const updatedImages = [...(formData.images || [])];
     if (updatedImages[0]) {
@@ -241,6 +329,42 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     }
   };
 
+  // Open modal adjuster for primary or hover image
+  const handleOpenAdjuster = (target: 'primary' | 'hover') => {
+    setAdjustingTarget(target);
+    setIsAdjusterModalOpen(true);
+  };
+
+  // Apply results from modal adjuster
+  const handleApplyAdjusterResult = (res: FrameAdjusterResult) => {
+    if (adjustingTarget === 'primary') {
+      const updatedImages = [...(formData.images || [])];
+      if (updatedImages[0]) {
+        updatedImages[0] = {
+          ...updatedImages[0],
+          focalX: res.focalX,
+          focalY: res.focalY,
+          scale: res.scale,
+          rotation: res.rotation,
+        };
+      }
+      setFormData({
+        ...formData,
+        imagePosition: res.position,
+        imageScale: res.scale,
+        imageRotation: res.rotation,
+        images: updatedImages,
+        cropVariation: cropWithOnModel(res.position, res.scale, res.aspectRatio as any, res.flipped),
+      } as any);
+    } else {
+      setFormData({
+        ...formData,
+        hoverImagePosition: res.position,
+        hoverImageRotation: res.rotation,
+      } as any);
+    }
+  };
+
   const { saveProduct, deleteProduct } = useStorefrontData();
 
   const handleSave = async () => {
@@ -255,7 +379,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       hoverImage: hoverUrl || primaryUrl,
       imagePosition: `${focalX}% ${focalY}%`,
       imageScale: focalScale,
-      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, focalScale),
+      imageRotation: focalRotation,
+      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, focalScale, currentAspectRatio as any, isFlipped),
       isComingSoon: Boolean(formData.isComingSoon || formData.status === 'coming_soon'),
       comingSoonNotice: formData.comingSoonNotice || '',
       updatedAt: new Date().toISOString(),
@@ -551,103 +676,431 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             </div>
           )}
 
-          {/* TAB 2: MEDIA, IMAGE URLS & POSITION ADJUSTMENT */}
+          {/* TAB 2: MEDIA, IMAGE URLS, DEVICE FILE UPLOADS & FRAME/ANGLE ADJUSTMENT */}
           {activeTab === 'media' && (
             <div className="space-y-6">
-              {/* Image URL Inputs */}
-              <div className="border border-black/[0.1] p-4 bg-neutral-50/50 space-y-4">
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
-                  Product Image Management
-                </h4>
+              {/* Hidden file inputs for device file uploads */}
+              <input
+                ref={primaryFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  handleDeviceFileUpload(e.target.files?.[0], 'primary');
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <input
+                ref={hoverFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  handleDeviceFileUpload(e.target.files?.[0], 'hover');
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
+              <input
+                ref={galleryFileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  handleDeviceFileUpload(e.target.files?.[0], 'gallery');
+                  e.target.value = '';
+                }}
+                className="hidden"
+              />
 
-                <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
-                    Primary Image URL
-                  </label>
-                  <input
-                    type="text"
-                    value={primaryUrl}
-                    onChange={(e) => handleUpdateImageUrl(e.target.value)}
-                    placeholder="https://... or /src/assets/..."
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
-                    Hover / Secondary Image URL (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={hoverUrl}
-                    onChange={(e) => handleUpdateHoverUrl(e.target.value)}
-                    placeholder="https://... or /src/assets/..."
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
-                  />
-                </div>
-
-                {/* Studio Preset Images Quick Picker */}
-                <div>
-                  <span className="block text-[10px] uppercase tracking-wider text-black/50 mb-2">
-                    Studio Archive Presets (Click to apply):
-                  </span>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-                    {[
-                      { label: 'Wool Coat', url: '/src/assets/images/wool_coat_model_1790736253323.jpg' },
-                      { label: 'Trench', url: '/src/assets/images/mens_trench_model_1790736267744.jpg' },
-                      { label: 'Knitwear', url: '/src/assets/images/knitwear_sweater_1790736282001.jpg' },
-                      { label: 'Leather Tote', url: '/src/assets/images/leather_bag_tote_1790736295648.jpg' },
-                      { label: 'Trousers', url: '/src/assets/images/tailored_trousers_1790736314928.jpg' },
-                      { label: 'White Horizon', url: '/src/assets/images/studio_fashion_white_bg_1790645923450.jpg' },
-                    ].map((preset) => (
+              {/* 1. Primary Image Management Card */}
+              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-black/10 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-black" />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                      Primary Garment Picture
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => primaryFileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Upload from Device</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAdjuster('primary')}
+                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Compass className="w-3 h-3" />
+                      <span>Adjust Best Frame & Angle</span>
+                    </button>
+                    {primaryUrl && (
                       <button
                         type="button"
-                        key={preset.label}
-                        onClick={() => handleUpdateImageUrl(preset.url)}
-                        className={`p-1 border text-left cursor-pointer transition-colors group ${
-                          primaryUrl === preset.url ? 'border-black bg-neutral-200' : 'border-black/15 bg-white hover:border-black'
-                        }`}
+                        onClick={handleDeletePrimaryImage}
+                        className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                        title="Delete primary picture"
                       >
-                        <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 mb-1">
-                          <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
-                        </div>
-                        <span className="text-[9px] block truncate font-mono text-black/70 group-hover:text-black">
-                          {preset.label}
-                        </span>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  <div className="sm:col-span-3">
+                    <div className="w-full aspect-[3/4] border border-black/20 overflow-hidden relative bg-black/5 shadow-2xs">
+                      {primaryUrl ? (
+                        <img
+                          src={primaryUrl}
+                          alt="Primary"
+                          style={{
+                            objectPosition: `${focalX}% ${focalY}%`,
+                            transform: `${isFlipped ? 'scaleX(-1)' : ''} scale(${focalScale}) rotate(${focalRotation}deg)`,
+                          }}
+                          className="w-full h-full object-cover transition-transform duration-100"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-[10px]">
+                          <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
+                          <span>No Image Loaded</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-9 space-y-3">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                        Primary Image URL (or upload local file above):
+                      </label>
+                      <input
+                        type="text"
+                        value={primaryUrl}
+                        onChange={(e) => handleUpdateImageUrl(e.target.value)}
+                        placeholder="https://... or data:image/..."
+                        className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="text-[10px] uppercase tracking-wider text-black/50 font-semibold">
+                        Current Frame:
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                        Anchor: {focalX}% / {focalY}%
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                        Scale: {Number(focalScale).toFixed(2)}x
+                      </span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                        Angle: {focalRotation}°
+                      </span>
+                      {isFlipped && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 bg-black text-white">
+                          Flipped
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Studio Presets */}
+                    <div>
+                      <span className="block text-[9.5px] uppercase tracking-wider text-black/50 mb-1.5">
+                        Studio Archive Garment Presets:
+                      </span>
+                      <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                        {[
+                          { label: 'Wool Coat', url: '/src/assets/images/wool_coat_model_1790736253323.jpg' },
+                          { label: 'Trench', url: '/src/assets/images/mens_trench_model_1790736267744.jpg' },
+                          { label: 'Knitwear', url: '/src/assets/images/knitwear_sweater_1790736282001.jpg' },
+                          { label: 'Leather Tote', url: '/src/assets/images/leather_bag_tote_1790736295648.jpg' },
+                          { label: 'Trousers', url: '/src/assets/images/tailored_trousers_1790736314928.jpg' },
+                          { label: 'White Drape', url: '/src/assets/images/studio_fashion_white_bg_1790645923450.jpg' },
+                        ].map((preset) => (
+                          <button
+                            type="button"
+                            key={preset.label}
+                            onClick={() => handleUpdateImageUrl(preset.url)}
+                            className={`p-1 border text-left cursor-pointer transition-colors group ${
+                              primaryUrl === preset.url ? 'border-black bg-neutral-200' : 'border-black/15 bg-white hover:border-black'
+                            }`}
+                          >
+                            <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 mb-1">
+                              <img src={preset.url} alt={preset.label} className="w-full h-full object-cover" />
+                            </div>
+                            <span className="text-[8.5px] block truncate font-mono text-black/70 group-hover:text-black">
+                              {preset.label}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Picture Best Position & Zoom Adjustment */}
-              <div className="p-4 border border-black/[0.08] bg-neutral-50/50 space-y-4">
+              {/* 2. Secondary / Hover Image Card */}
+              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-4 shadow-2xs">
+                <div className="flex items-center justify-between border-b border-black/10 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <Eye className="w-4 h-4 text-black" />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                      Hover / Secondary Model Picture (Optional)
+                    </h4>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => hoverFileInputRef.current?.click()}
+                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    >
+                      <Upload className="w-3 h-3" />
+                      <span>Upload from Device</span>
+                    </button>
+                    {hoverUrl && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAdjuster('hover')}
+                          className="px-2.5 py-1 text-[10.5px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Compass className="w-3 h-3" />
+                          <span>Adjust Frame</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleDeleteHoverImage}
+                          className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                          title="Delete hover picture"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                  <div className="sm:col-span-3">
+                    <div className="w-full aspect-[3/4] border border-black/20 overflow-hidden relative bg-black/5 shadow-2xs">
+                      {hoverUrl ? (
+                        <img
+                          src={hoverUrl}
+                          alt="Hover"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-[10px]">
+                          <span>No hover image (Primary used)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="sm:col-span-9">
+                    <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                      Hover Image URL:
+                    </label>
+                    <input
+                      type="text"
+                      value={hoverUrl}
+                      onChange={(e) => handleUpdateHoverUrl(e.target.value)}
+                      placeholder="https://... or data:image/..."
+                      className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Additional Gallery Images Card */}
+              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
-                      Adjust Picture to Best Position & Scale
+                      Archival Garment Gallery ({(formData.images || []).length} pictures)
                     </h4>
-                    <p className="text-xs text-black/60 font-sans mt-0.5">
-                      Click directly on the model image below, or adjust the precision sliders to position the crop.
+                    <p className="text-[11px] text-black/60 font-sans mt-0.5">
+                      Upload detail shots, fabric macros, lookbook runway poses, or packshots.
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      handleUpdateFocalX(50);
-                      handleUpdateFocalY(20);
-                      handleUpdateScale(1.05);
-                    }}
-                    className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black/20 hover:border-black bg-white cursor-pointer"
+                    onClick={() => galleryFileInputRef.current?.click()}
+                    className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-mono bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
-                    Reset Position
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Upload Picture from Device</span>
                   </button>
                 </div>
 
-                {/* Precision Sliders */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-1">
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
+                  {(formData.images || []).map((img, idx) => (
+                    <div
+                      key={idx}
+                      className="relative border border-black/15 bg-white p-1 group shadow-2xs"
+                    >
+                      <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 relative">
+                        <img src={img.url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
+                        <span className="absolute top-1 left-1 bg-black text-white text-[8px] font-mono px-1 py-0.5">
+                          {idx === 0 ? 'PRIMARY' : `#${idx + 1}`}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between mt-1 pt-1 border-t border-black/10">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            handleUpdateImageUrl(img.url);
+                          }}
+                          className="text-[9px] uppercase tracking-wider font-mono text-black hover:underline cursor-pointer"
+                        >
+                          Make Main
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteGalleryImage(idx)}
+                          className="text-red-600 hover:text-red-800 p-0.5 cursor-pointer"
+                          title="Delete image"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Complete Inline Frame & Angle Adjuster Panel */}
+              <div className="p-4 border border-black/[0.12] bg-white space-y-5 shadow-sm">
+                <div className="flex items-center justify-between border-b border-black/10 pb-3">
                   <div>
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black flex items-center gap-1.5">
+                      <Compass className="w-4 h-4 text-black" />
+                      <span>Adjust Picture to Best Frame & Angle</span>
+                    </h4>
+                    <p className="text-xs text-black/60 font-sans mt-0.5">
+                      Click directly on the garment preview below to anchor focal center, or fine-tune angle/scale sliders.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAdjuster('primary')}
+                      className="px-3 py-1.5 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>Open Fullscreen Adjuster</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleUpdateFocalX(50);
+                        handleUpdateFocalY(20);
+                        handleUpdateScale(1.05);
+                        handleUpdateRotation(0);
+                      }}
+                      className="px-2.5 py-1.5 text-[10px] uppercase font-mono border border-black/20 hover:border-black bg-white cursor-pointer"
+                    >
+                      Reset 0° & Center
+                    </button>
+                  </div>
+                </div>
+
+                {/* Precision Sliders: Angle, Scale, X, Y */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                  {/* Angle / Rotation */}
+                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                      <span className="flex items-center gap-1">
+                        <Compass className="w-3 h-3 text-black" />
+                        <span>Angle / Tilt</span>
+                      </span>
+                      <span className="font-bold">{focalRotation}°</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={-180}
+                      max={180}
+                      step={1}
+                      value={focalRotation}
+                      onChange={(e) => handleUpdateRotation(parseInt(e.target.value, 10))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRotation(Math.max(-180, focalRotation - 90))}
+                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black flex items-center gap-0.5 cursor-pointer"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" /> -90°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRotation(0)}
+                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black cursor-pointer"
+                      >
+                        0°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateRotation(Math.min(180, focalRotation + 90))}
+                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black flex items-center gap-0.5 cursor-pointer"
+                      >
+                        <RotateCw className="w-2.5 h-2.5" /> +90°
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleToggleFlip}
+                        className={`px-1.5 py-0.5 text-[9px] border cursor-pointer ${
+                          isFlipped ? 'border-black bg-black text-white' : 'border-black/15 bg-white hover:border-black'
+                        }`}
+                      >
+                        Flip
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Zoom / Scale */}
+                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                      <span className="flex items-center gap-1">
+                        <ZoomIn className="w-3 h-3 text-black" />
+                        <span>Zoom / Scale</span>
+                      </span>
+                      <span className="font-bold">{Number(focalScale).toFixed(2)}x</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0.7}
+                      max={3.0}
+                      step={0.01}
+                      value={focalScale}
+                      onChange={(e) => handleUpdateScale(parseFloat(e.target.value))}
+                      className="w-full accent-black cursor-pointer"
+                    />
+                    <div className="flex items-center justify-between gap-1 pt-0.5">
+                      {[1.0, 1.25, 1.5, 2.0].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => handleUpdateScale(s)}
+                          className={`px-1.5 py-0.5 text-[9px] border cursor-pointer ${
+                            Math.abs(focalScale - s) < 0.02
+                              ? 'border-black bg-black text-white font-bold'
+                              : 'border-black/15 bg-white hover:border-black'
+                          }`}
+                        >
+                          {s}x
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Horizontal X */}
+                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
                       <span>Horizontal (X)</span>
                       <span className="font-bold">{focalX}%</span>
                     </div>
@@ -659,10 +1112,16 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       onChange={(e) => handleUpdateFocalX(Number(e.target.value))}
                       className="w-full accent-black cursor-pointer"
                     />
+                    <div className="flex items-center justify-between text-[9px] text-black/50">
+                      <span>Left (0%)</span>
+                      <span>Center (50%)</span>
+                      <span>Right (100%)</span>
+                    </div>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
+                  {/* Vertical Y */}
+                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
+                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
                       <span>Vertical (Y)</span>
                       <span className="font-bold">{focalY}%</span>
                     </div>
@@ -674,92 +1133,100 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       onChange={(e) => handleUpdateFocalY(Number(e.target.value))}
                       className="w-full accent-black cursor-pointer"
                     />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/70 mb-1">
-                      <span>Zoom / Scale</span>
-                      <span className="font-bold">{Number(focalScale).toFixed(2)}x</span>
+                    <div className="flex items-center justify-between text-[9px] text-black/50">
+                      <span>Top (0%)</span>
+                      <span>Torso (35%)</span>
+                      <span>Hem (100%)</span>
                     </div>
-                    <input
-                      type="range"
-                      min={1.0}
-                      max={1.5}
-                      step={0.01}
-                      value={focalScale}
-                      onChange={(e) => handleUpdateScale(parseFloat(e.target.value))}
-                      className="w-full accent-black cursor-pointer"
-                    />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                <div className="lg:col-span-7">
-                  <span className="text-[10px] uppercase tracking-wider text-black/50 block mb-1">
-                    Interactive Anchor (Click to set focal position):
-                  </span>
-                  <div
-                    onClick={handleFocalPointClick}
-                    className="relative w-full aspect-[3/4] border border-black/[0.12] overflow-hidden bg-black/5 cursor-crosshair group select-none"
-                  >
-                    <img
-                      src={primaryUrl}
-                      alt="Focal source"
-                      style={{
-                        objectPosition: `${focalX}% ${focalY}%`,
-                        transform: `scale(${focalScale})`,
-                      }}
-                      className="w-full h-full object-cover pointer-events-none transition-all duration-150"
-                    />
-
-                    {/* Target crosshair */}
-                    <div
-                      style={{ left: `${focalX}%`, top: `${focalY}%` }}
-                      className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none"
-                    >
-                      <div className="w-7 h-7 rounded-full border border-black/80 bg-white/40 flex items-center justify-center backdrop-blur-sm shadow-md">
-                        <div className="w-1.5 h-1.5 bg-black rounded-full" />
-                      </div>
-                      <span className="absolute top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-1.5 py-0.5 whitespace-nowrap shadow-sm">
-                        X:{focalX}% Y:{focalY}%
+                {/* Visual Canvas and Live Storefront Previews */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
+                  <div className="lg:col-span-7">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+                        Interactive Target Viewport (Click to anchor focal center):
+                      </span>
+                      <span className="text-[10px] font-mono text-black/40">
+                        {currentAspectRatio} Aspect
                       </span>
                     </div>
-                  </div>
-                </div>
-
-                <div className="lg:col-span-5 space-y-4">
-                  <div className="text-[10.5px] uppercase tracking-wider text-black/60 font-semibold">
-                    Live Storefront Previews:
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] text-black/50 block mb-1">3:4 Archive Dossier & Catalogue:</span>
-                    <div className="w-36 aspect-[3/4] border border-black/[0.12] overflow-hidden relative bg-black/5 shadow-xs">
+                    <div
+                      onClick={handleFocalPointClick}
+                      className="relative w-full aspect-[3/4] border-2 border-black/30 overflow-hidden bg-black/5 cursor-crosshair group select-none shadow-md"
+                    >
                       <img
                         src={primaryUrl}
+                        alt="Focal source"
                         style={{
                           objectPosition: `${focalX}% ${focalY}%`,
-                          transform: `scale(${focalScale})`,
+                          transform: `${isFlipped ? 'scaleX(-1)' : ''} scale(${focalScale}) rotate(${focalRotation}deg)`,
                         }}
-                        className="w-full h-full object-cover transition-all duration-150"
-                        alt="3:4 Preview"
+                        className="w-full h-full object-cover pointer-events-none transition-transform duration-100 ease-out"
                       />
+
+                      {/* Rule of thirds lines */}
+                      <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-black/10 opacity-30 group-hover:opacity-60 transition-opacity">
+                        <div className="border-r border-b border-black/20" />
+                        <div className="border-r border-b border-black/20" />
+                        <div className="border-b border-black/20" />
+                        <div className="border-r border-b border-black/20" />
+                        <div className="border-r border-b border-black/20" />
+                        <div className="border-b border-black/20" />
+                        <div className="border-r border-b border-black/20" />
+                        <div className="border-r border-b border-black/20" />
+                        <div />
+                      </div>
+
+                      {/* Target crosshair */}
+                      <div
+                        style={{ left: `${focalX}%`, top: `${focalY}%` }}
+                        className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 transition-all duration-75"
+                      >
+                        <div className="w-8 h-8 rounded-full border-2 border-white bg-black/50 flex items-center justify-center backdrop-blur-xs shadow-lg">
+                          <div className="w-2 h-2 bg-white rounded-full ring-2 ring-black" />
+                        </div>
+                        <span className="absolute top-9 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-2 py-0.5 whitespace-nowrap shadow-md rounded-xs">
+                          X:{focalX}% Y:{focalY}%
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div>
-                    <span className="text-[10px] text-black/50 block mb-1">1:1 Square (Cart & Checkout Bag):</span>
-                    <div className="w-28 aspect-square border border-black/[0.12] overflow-hidden relative bg-black/5 shadow-xs">
-                      <img
-                        src={primaryUrl}
-                        style={{
-                          objectPosition: `${focalX}% ${focalY}%`,
-                          transform: `scale(${focalScale})`,
-                        }}
-                        className="w-full h-full object-cover transition-all duration-150"
-                        alt="1:1 Preview"
-                      />
+                  <div className="lg:col-span-5 space-y-4">
+                    <div className="text-[10.5px] uppercase tracking-wider text-black font-semibold border-b border-black/10 pb-1.5">
+                      Storefront Multi-Frame Previews:
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-black/60 block mb-1">3:4 Archive Dossier & Catalogue:</span>
+                      <div className="w-36 aspect-[3/4] border border-black/[0.15] overflow-hidden relative bg-black/5 shadow-xs">
+                        <img
+                          src={primaryUrl}
+                          style={{
+                            objectPosition: `${focalX}% ${focalY}%`,
+                            transform: `${isFlipped ? 'scaleX(-1)' : ''} scale(${focalScale}) rotate(${focalRotation}deg)`,
+                          }}
+                          className="w-full h-full object-cover transition-transform duration-100"
+                          alt="3:4 Preview"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] text-black/60 block mb-1">1:1 Square (Cart & Checkout Bag):</span>
+                      <div className="w-28 aspect-square border border-black/[0.15] overflow-hidden relative bg-black/5 shadow-xs">
+                        <img
+                          src={primaryUrl}
+                          style={{
+                            objectPosition: `${focalX}% ${focalY}%`,
+                            transform: `${isFlipped ? 'scaleX(-1)' : ''} scale(${focalScale}) rotate(${focalRotation}deg)`,
+                          }}
+                          className="w-full h-full object-cover transition-transform duration-100"
+                          alt="1:1 Preview"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1093,6 +1560,26 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           )}
         </div>
       </div>
+
+      {/* Fullscreen Interactive Best Frame & Angle Modal */}
+      <ImageFrameAdjusterModal
+        isOpen={isAdjusterModalOpen}
+        imageUrl={adjustingTarget === 'primary' ? primaryUrl : (hoverUrl || primaryUrl)}
+        title={adjustingTarget === 'primary' ? 'Adjust Primary Garment Frame & Angle' : 'Adjust Hover Model Picture Frame & Angle'}
+        initialFocalX={focalX}
+        initialFocalY={focalY}
+        initialScale={focalScale}
+        initialRotation={focalRotation}
+        initialAspectRatio={currentAspectRatio}
+        initialFlipped={isFlipped}
+        onClose={() => setIsAdjusterModalOpen(false)}
+        onApply={handleApplyAdjusterResult}
+        onUploadFile={(dataUrl) => {
+          if (adjustingTarget === 'primary') handleUpdateImageUrl(dataUrl);
+          else handleUpdateHoverUrl(dataUrl);
+        }}
+        onDeleteImage={adjustingTarget === 'primary' ? handleDeletePrimaryImage : handleDeleteHoverImage}
+      />
     </div>
   );
 };

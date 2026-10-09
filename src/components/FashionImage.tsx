@@ -10,6 +10,7 @@ interface FashionImageProps {
   aspectRatio?: '3/4' | '4/5' | '1/1' | '16/9' | 'auto';
   position?: string;
   scale?: number;
+  rotation?: number;
   flipped?: boolean;
   className?: string;
   imageClassName?: string;
@@ -25,9 +26,10 @@ export const FashionImage: React.FC<FashionImageProps> = ({
   isHover = false,
   alt,
   aspectRatio = '3/4',
-  position = 'center 30%',
-  scale = 1,
-  flipped = false,
+  position,
+  scale,
+  rotation,
+  flipped,
   className = '',
   imageClassName = '',
   priority = false,
@@ -43,6 +45,28 @@ export const FashionImage: React.FC<FashionImageProps> = ({
     (isHover ? product?.hoverImage || product?.image : product?.image) ||
     product?.images?.[0]?.url ||
     PLACEHOLDER_IMG;
+
+  // Resolve best frame positioning from product metadata if not explicitly overridden
+  const resolvedPosition =
+    position ||
+    (isHover ? product?.hoverImagePosition : product?.imagePosition) ||
+    product?.cropVariation?.onModel?.position ||
+    'center 30%';
+
+  const resolvedScale =
+    scale !== undefined
+      ? scale
+      : ((product as any)?.imageScale || product?.cropVariation?.onModel?.scale || 1);
+
+  const resolvedRotation =
+    rotation !== undefined
+      ? rotation
+      : ((isHover ? (product as any)?.hoverImageRotation : (product as any)?.imageRotation) || (product as any)?.rotation || 0);
+
+  const resolvedFlipped =
+    flipped !== undefined
+      ? flipped
+      : (product?.cropVariation?.onModel?.flipped ?? false);
 
   const aspectClasses = {
     '3/4': 'aspect-[3/4]',
@@ -69,8 +93,8 @@ export const FashionImage: React.FC<FashionImageProps> = ({
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
         style={{
-          objectPosition: position,
-          transform: `${flipped ? 'scaleX(-1)' : ''} scale(${scale})`,
+          objectPosition: resolvedPosition,
+          transform: `${resolvedFlipped ? 'scaleX(-1)' : ''} scale(${resolvedScale}) rotate(${resolvedRotation}deg)`,
         }}
         className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
           enableMultiply ? 'mix-blend-multiply' : ''
