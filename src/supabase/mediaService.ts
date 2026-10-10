@@ -28,55 +28,64 @@ export async function compressImageToWebP(
   quality = 0.85
 ): Promise<ClientCompressedImage> {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Failed to read image file'));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error('Invalid image file'));
-      img.onload = () => {
-        let width = img.naturalWidth || img.width;
-        let height = img.naturalHeight || img.height;
+    if (typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+      reject(new Error('Image compression is not available in this environment'));
+      return;
+    }
+    // Object URLs keep the bytes in memory — nothing is ever base64-encoded
+    // into the database (the no-seed guard forbids data URLs outright).
+    const objectUrl = URL.createObjectURL(file);
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
 
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
-        }
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Could not create canvas context'));
-          return;
-        }
-
-        // High quality smoothing
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob(
-          (blob) => {
-            if (!blob) {
-              reject(new Error('Canvas WebP compression failed'));
-              return;
-            }
-            const previewUrl = URL.createObjectURL(blob);
-            resolve({ blob, width, height, previewUrl });
-          },
-          'image/webp',
-          quality
-        );
-      };
-      img.src = e.target?.result as string;
+    const img = new Image();
+    img.onerror = () => {
+      cleanup();
+      reject(new Error('Invalid image file'));
     };
-    reader.readAsDataURL(file);
+    img.onload = () => {
+      let width = img.naturalWidth || img.width;
+      let height = img.naturalHeight || img.height;
+
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        cleanup();
+        reject(new Error('Could not create canvas context'));
+        return;
+      }
+
+      // High quality smoothing
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.drawImage(img, 0, 0, width, height);
+      cleanup();
+
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) {
+            reject(new Error('Canvas WebP compression failed'));
+            return;
+          }
+          const previewUrl = URL.createObjectURL(blob);
+          resolve({ blob, width, height, previewUrl });
+        },
+        'image/webp',
+        quality
+      );
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -84,6 +93,18 @@ export async function compressImageToWebP(
  * Gets media assets from the database ordered by creation date.
  */
 export async function getMediaAssets(): Promise<MediaAsset[]> {
+  const { data } = await getMediaAssetsWithStatus();
+  return data;
+}
+
+/**
+ * Same as getMediaAssets but also surfaces the failure so callers can render
+ * an honest "Could not load data" state instead of pretending it is empty.
+ */
+export async function getMediaAssetsWithStatus(): Promise<{
+  data: MediaAsset[];
+  error: string | null;
+}> {
   try {
     const { data, error } = await supabase
       .from('media_assets')
@@ -91,13 +112,11 @@ export async function getMediaAssets(): Promise<MediaAsset[]> {
       .order('createdAt', { ascending: false });
 
     if (error) {
-      console.warn('Could not fetch media_assets:', error.message);
-      return [];
+      return { data: [], error: error.message };
     }
-    return (data || []) as MediaAsset[];
-  } catch (err) {
-    console.warn('Media assets query failed:', err);
-    return [];
+    return { data: (data || []) as MediaAsset[], error: null };
+  } catch (err: any) {
+    return { data: [], error: err?.message || 'Could not load data' };
   }
 }
 
@@ -110,6 +129,7 @@ export async function uploadMediaAsset(
     alt?: string;
     focalX?: number;
     focalY?: number;
+    framing?: import('../types').ImageFramingParams | null;
     onProgress?: (percent: number) => void;
   }
 ): Promise<MediaAsset> {
@@ -185,6 +205,7 @@ export async function uploadMediaAsset(
     alt: options?.alt || file.name.replace(/\.[^/.]+$/, ''),
     focalX: options?.focalX ?? 50,
     focalY: options?.focalY ?? 50,
+    framing: options?.framing ?? undefined,
     createdAt: new Date().toISOString(),
   };
 
@@ -202,19 +223,58 @@ export async function uploadMediaAsset(
       alt: newAsset.alt,
       focalX: newAsset.focalX,
       focalY: newAsset.focalY,
+      framing: newAsset.framing ?? null,
       createdAt: newAsset.createdAt,
     });
 
   if (dbError) {
-    console.warn('Could not record in media_assets table, returning storage asset:', dbError.message);
+    // Roll the Storage object back so no orphaned file is left behind.
+    await supabase.storage.from(MEDIA_BUCKET).remove([uploadData.path]).catch(() => undefined);
+    throw new Error(
+      `Could not record the upload in the media library: ${dbError.message}. The file was not saved.`
+    );
   }
 
   options?.onProgress?.(100);
   return newAsset;
 }
 
+/** Persists ImageEditor framing parameters (and alt text) onto a media asset row. */
+export async function updateMediaAsset(
+  id: string,
+  patch: Partial<
+    Pick<MediaAsset, 'alt' | 'focalX' | 'focalY' | 'framing'>
+  >
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const payload: Record<string, unknown> = {};
+    if (patch.alt !== undefined) payload.alt = patch.alt;
+    if (patch.focalX !== undefined) payload.focalX = patch.focalX;
+    if (patch.focalY !== undefined) payload.focalY = patch.focalY;
+    if (patch.framing !== undefined) payload.framing = patch.framing;
+
+    if (Object.keys(payload).length === 0) return { success: true };
+
+    const { error } = await supabase
+      .from('media_assets')
+      .update(payload)
+      .eq('id', id);
+
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Could not update media asset' };
+  }
+}
+
+/** Returns true when a value is an inline base64/data URL (never allowed in the DB). */
+export function isDataUrl(value?: string | null): boolean {
+  return typeof value === 'string' && /^\s*data:/i.test(value);
+}
+
 /**
- * Searches where an image URL or path is used across products, collections, categories, and content.
+ * Searches where an image URL or path is used across products, categories,
+ * collections and the CMS content row.
  */
 export async function findMediaUsage(url: string): Promise<{
   productIds: string[];
@@ -231,20 +291,29 @@ export async function findMediaUsage(url: string): Promise<{
     totalUses: 0,
   };
 
-  if (!url) return result;
+  if (!url || isDataUrl(url)) return result;
+
+  const deepUses = (value: unknown): boolean => {
+    if (typeof value === 'string') return value === url;
+    if (Array.isArray(value)) return value.some(deepUses);
+    if (value && typeof value === 'object') {
+      return Object.values(value as Record<string, unknown>).some(deepUses);
+    }
+    return false;
+  };
 
   try {
-    // 1. Check products
+    // 1. Products (primary, hover and gallery)
     const { data: products } = await supabase
       .from('products')
       .select('id, name, image, hoverImage, images');
 
     if (products) {
       for (const p of products) {
-        let isUsed = p.image === url || p.hoverImage === url;
-        if (!isUsed && Array.isArray(p.images)) {
-          isUsed = p.images.some((img: any) => img?.url === url);
-        }
+        const isUsed =
+          p.image === url ||
+          p.hoverImage === url ||
+          (Array.isArray(p.images) && p.images.some((img: any) => img?.url === url));
         if (isUsed) {
           result.productIds.push(p.id);
           const title = (p.name && (p.name.en || p.name.fi)) || p.id;
@@ -253,49 +322,194 @@ export async function findMediaUsage(url: string): Promise<{
       }
     }
 
-    // 2. Check content
+    // 2. Categories & collections covers
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('id, name, image');
+    if (categories?.some((c: any) => c.image === url)) {
+      result.contentSections.push('Category covers');
+    }
+
+    const { data: collections } = await supabase
+      .from('collections')
+      .select('id, name, cover');
+    if (collections?.some((c: any) => c.cover === url)) {
+      result.contentSections.push('Collection covers');
+    }
+
+    // 3. CMS content row (hero, slides, journal, story plates, announcement)
     const { data: contentData } = await supabase
       .from('content')
-      .select('heroMedia, heroSlides, journalPosts')
+      .select('heroMedia, heroSlides, journalPosts, translations, announcementBar')
       .limit(1)
       .maybeSingle();
 
     if (contentData) {
-      if (
-        contentData.heroMedia?.desktopSrc === url ||
-        contentData.heroMedia?.mobileSrc === url
-      ) {
+      if (deepUses(contentData.heroMedia)) {
         result.heroUsage = true;
         result.contentSections.push('Hero Section');
       }
 
-      if (Array.isArray(contentData.heroSlides)) {
-        const inSlides = contentData.heroSlides.some(
-          (s: any) =>
-            s.src === url ||
-            s.desktopMedia?.url === url ||
-            s.mobileMedia?.url === url
-        );
-        if (inSlides) {
-          result.heroUsage = true;
-          result.contentSections.push('Hero Slides');
-        }
+      if (deepUses(contentData.heroSlides)) {
+        result.heroUsage = true;
+        result.contentSections.push('Hero Slides');
       }
 
-      if (Array.isArray(contentData.journalPosts)) {
-        const inJournal = contentData.journalPosts.some((j: any) => j.coverImage === url);
-        if (inJournal) {
-          result.contentSections.push('Journal Posts');
-        }
+      if (deepUses(contentData.journalPosts)) {
+        result.contentSections.push('Journal Posts');
+      }
+
+      if (deepUses(contentData.translations)) {
+        result.contentSections.push('Story / page sections');
+      }
+
+      if (deepUses(contentData.announcementBar)) {
+        result.contentSections.push('Announcement bar');
       }
     }
-
-    result.totalUses = result.productIds.length + (result.heroUsage ? 1 : 0) + result.contentSections.length;
   } catch (err) {
     console.warn('Error checking media usage:', err);
   }
 
+  result.totalUses =
+    result.productIds.length + (result.heroUsage ? 1 : 0) + result.contentSections.length;
   return result;
+}
+
+/**
+ * Removes every reference to `url` from products and CMS content without
+ * deleting the underlying file. Used by the "Remove everywhere" delete flow so
+ * the storefront never shows a broken image.
+ */
+export async function removeMediaReferences(
+  url: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!url || isDataUrl(url)) return { success: true };
+
+  try {
+    const { data: products } = await supabase
+      .from('products')
+      .select('id, image, hoverImage, images');
+
+    if (products) {
+      for (const p of products) {
+        const patch: Record<string, unknown> = {};
+        if (p.image === url) patch.image = null;
+        if (p.hoverImage === url) patch.hoverImage = null;
+        if (Array.isArray(p.images) && p.images.some((img: any) => img?.url === url)) {
+          patch.images = p.images
+            .filter((img: any) => img?.url !== url)
+            .map((img: any, idx: number) => ({ ...img, order: idx }));
+        }
+        if (Object.keys(patch).length > 0) {
+          const { error } = await supabase.from('products').update(patch).eq('id', p.id);
+          if (error) return { success: false, error: error.message };
+        }
+      }
+    }
+
+    const stripSlide = (s: any) => {
+      if (!s) return s;
+      const next = { ...s };
+      if (next.src === url) next.src = '';
+      if (next.poster === url) next.poster = '';
+      if (next.desktopMedia?.url === url) next.desktopMedia = { ...next.desktopMedia, url: '' };
+      if (next.mobileMedia?.url === url) next.mobileMedia = { ...next.mobileMedia, url: '' };
+      return next;
+    };
+
+    const { data: contentData } = await supabase
+      .from('content')
+      .select('id, heroMedia, heroSlides, journalPosts, translations')
+      .limit(1)
+      .maybeSingle();
+
+    if (contentData) {
+      const contentPatch: Record<string, unknown> = {};
+      const heroMedia = contentData.heroMedia || {};
+      if (heroMedia.desktopSrc === url || heroMedia.mobileSrc === url) {
+        contentPatch.heroMedia = {
+          ...heroMedia,
+          desktopSrc: heroMedia.desktopSrc === url ? '' : heroMedia.desktopSrc,
+          mobileSrc: heroMedia.mobileSrc === url ? '' : heroMedia.mobileSrc,
+        };
+      }
+      if (Array.isArray(contentData.heroSlides)) {
+        contentPatch.heroSlides = contentData.heroSlides.map(stripSlide);
+      }
+      if (Array.isArray(contentData.journalPosts)) {
+        contentPatch.journalPosts = contentData.journalPosts.map((j: any) =>
+          j && j.image === url ? { ...j, image: '' } : j
+        );
+      }
+      if (contentData.translations && deepContains(contentData.translations, url)) {
+        contentPatch.translations = deepStrip(contentData.translations, url);
+      }
+      if (Object.keys(contentPatch).length > 0) {
+        const { error } = await supabase
+          .from('content')
+          .update(contentPatch)
+          .eq('id', contentData.id);
+        if (error) return { success: false, error: error.message };
+      }
+    }
+
+    const { data: categories } = await supabase
+      .from('categories')
+      .select('id, image');
+    if (categories) {
+      for (const c of categories) {
+        if (c.image === url) {
+          const { error } = await supabase
+            .from('categories')
+            .update({ image: null })
+            .eq('id', c.id);
+          if (error) return { success: false, error: error.message };
+        }
+      }
+    }
+
+    const { data: collections } = await supabase
+      .from('collections')
+      .select('id, cover');
+    if (collections) {
+      for (const c of collections) {
+        if (c.cover === url) {
+          const { error } = await supabase
+            .from('collections')
+            .update({ cover: null })
+            .eq('id', c.id);
+          if (error) return { success: false, error: error.message };
+        }
+      }
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Could not remove all references' };
+  }
+}
+
+function deepContains(value: unknown, url: string): boolean {
+  if (typeof value === 'string') return value === url;
+  if (Array.isArray(value)) return value.some((v) => deepContains(v, url));
+  if (value && typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some((v) => deepContains(v, url));
+  }
+  return false;
+}
+
+function deepStrip<T>(value: T, url: string): T {
+  if (typeof value === 'string') return (value === url ? (('' as unknown) as T) : value);
+  if (Array.isArray(value)) return (value.map((v) => deepStrip(v, url)) as unknown) as T;
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = deepStrip(v, url);
+    }
+    return out as unknown as T;
+  }
+  return value;
 }
 
 /**

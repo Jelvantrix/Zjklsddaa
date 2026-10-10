@@ -1,8 +1,11 @@
 import React from 'react';
-import { JournalArticle, Language, translations } from '../types';
+import { JournalArticle, ImageFramingParams, Language, translations } from '../types';
 import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { X, ArrowLeft } from 'lucide-react';
+
+/** Journal entries may carry editor framing in `content.journalPosts[].framing`. */
+type JournalRecord = JournalArticle & { framing?: ImageFramingParams };
 
 interface JournalModalProps {
   articleId: string | null;
@@ -20,7 +23,9 @@ export const JournalModal: React.FC<JournalModalProps> = ({
 
   if (!articleId) return null;
 
-  const article = (content.journalPosts || []).find((a) => a.id === articleId);
+  const article = (content.journalPosts || []).find((a) => a.id === articleId) as
+    | JournalRecord
+    | undefined;
   if (!article) return null;
 
   return (
@@ -60,15 +65,21 @@ export const JournalModal: React.FC<JournalModalProps> = ({
           "{article.subtitle[language] || article.subtitle.en}"
         </p>
 
-        <div className="aspect-[16/10] overflow-hidden border border-black/10 bg-white mb-10">
-          <FashionImage
-            alt={article.title[language] || article.title.en}
-            position={article.cropPosition}
-            scale={1.15}
-            aspectRatio="auto"
-            className="w-full h-full"
-          />
-        </div>
+        {/* Cover image — renders nothing when no cover is configured */}
+        {article.image ? (
+          <div className="aspect-[16/10] overflow-hidden border border-black/10 bg-white mb-10">
+            <FashionImage
+              src={article.image}
+              framing={article.framing}
+              placement="archive"
+              alt={article.title[language] || article.title.en}
+              position={article.cropPosition}
+              scale={1.15}
+              aspectRatio="auto"
+              className="w-full h-full"
+            />
+          </div>
+        ) : null}
 
         <div className="text-sm sm:text-base font-sans text-black/80 leading-relaxed space-y-6">
           <p>

@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Product, Language, Category, translations, formatPrice } from '../types';
 import { FashionImage } from './FashionImage';
 import { ProductCardSkeleton } from './ProductCardSkeleton';
+import { joinWaitlist } from '../supabase/dbService';
 import {
   SlidersHorizontal,
   Heart,
@@ -168,6 +169,31 @@ export const ProductListing: React.FC<ProductListingProps> = ({
   const isCategoryComingSoon = currentCategoryObj?.isComingSoon;
   const [waitlistEmail, setWaitlistEmail] = useState('');
   const [waitlistDone, setWaitlistDone] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+  const [isJoiningWaitlist, setIsJoiningWaitlist] = useState(false);
+
+  // Registers the address in the real waitlist table; success is only shown
+  // once the database confirms the insert.
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const email = waitlistEmail.trim();
+    if (!email || isJoiningWaitlist) return;
+
+    setIsJoiningWaitlist(true);
+    setWaitlistError('');
+    try {
+      const saved = await joinWaitlist(email, 'coming_soon_waitlist', 'product_listing_banner');
+      if (saved) {
+        setWaitlistDone(true);
+      } else {
+        setWaitlistError('Could not save your email — please try again later.');
+      }
+    } catch {
+      setWaitlistError('Could not save your email — please try again later.');
+    } finally {
+      setIsJoiningWaitlist(false);
+    }
+  };
 
   return (
     <section id="archive" className="w-full bg-white text-black min-h-screen pt-24 sm:pt-32 lg:pt-36">
@@ -225,30 +251,33 @@ export const ProductListing: React.FC<ProductListingProps> = ({
               Our Helsinki and Porto ateliers are hand-tailoring the inaugural release for this collection. Register below for early private accession access prior to public release.
             </p>
             {!waitlistDone ? (
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (waitlistEmail.trim()) {
-                    setWaitlistDone(true);
-                  }
-                }}
-                className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 max-w-md"
-              >
-                <input
-                  type="email"
-                  required
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  placeholder="Enter email for priority drop notice"
-                  className="py-2 px-1 text-xs font-mono border-b border-black/30 bg-transparent focus:border-black focus:outline-none flex-1"
-                />
-                <button
-                  type="submit"
-                  className="py-2 text-xs uppercase tracking-[0.2em] font-mono text-black hover:opacity-60 underline underline-offset-4 cursor-pointer shrink-0 transition-opacity"
+              <>
+                <form
+                  onSubmit={handleWaitlistSubmit}
+                  className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-2 max-w-md"
                 >
-                  Join Waitlist →
-                </button>
-              </form>
+                  <input
+                    type="email"
+                    required
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    placeholder="Enter email for priority drop notice"
+                    className="py-2 px-1 text-xs font-mono border-b border-black/30 bg-transparent focus:border-black focus:outline-none flex-1"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isJoiningWaitlist}
+                    className="py-2 text-xs uppercase tracking-[0.2em] font-mono text-black hover:opacity-60 underline underline-offset-4 cursor-pointer shrink-0 transition-opacity disabled:opacity-50"
+                  >
+                    {isJoiningWaitlist ? 'Joining…' : 'Join Waitlist →'}
+                  </button>
+                </form>
+                {waitlistError && (
+                  <p role="alert" className="text-xs font-mono text-rose-700 pt-1">
+                    {waitlistError}
+                  </p>
+                )}
+              </>
             ) : (
               <div className="text-xs font-mono text-emerald-800 font-semibold pt-1">
                 ✓ Thank you. You are on the private register for this department.
@@ -459,6 +488,7 @@ export const ProductListing: React.FC<ProductListingProps> = ({
                         isHover={hoveredCardId === product.id}
                         src={hoveredCardId === product.id ? product.hoverImage : product.image}
                         alt={product.name[language]}
+                        placement="archive"
                         position={activeCrop.position}
                         scale={activeCrop.scale}
                         flipped={activeCrop.flipped}

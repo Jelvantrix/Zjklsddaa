@@ -73,6 +73,7 @@ export async function generateVeoVideo(
     let attempts = 0;
     const maxAttempts = 40; // ~80 seconds max
     let videoUrl = '';
+    let failureReason = '';
 
     while (attempts < maxAttempts) {
       attempts++;
@@ -95,6 +96,10 @@ export async function generateVeoVideo(
 
       // Auth/rate-limit failures will not recover by polling again.
       if (statusRes.status === 401 || statusRes.status === 403 || statusRes.status === 429) {
+        failureReason =
+          statusRes.status === 429
+            ? 'Rate limited while checking generation status — please wait a moment and retry.'
+            : 'Studio sign-in required before generating video.';
         break;
       }
       if (!statusRes.ok) continue;
@@ -107,8 +112,10 @@ export async function generateVeoVideo(
     }
 
     if (!videoUrl) {
-      // Fallback to high-quality sample video so user experience is smooth
-      videoUrl = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+      // No video was produced — report a real failure instead of a sample clip.
+      throw new Error(
+        failureReason || 'Video generation did not complete in time. No video was produced — please retry.'
+      );
     }
 
     onStatusUpdate?.('Video generation complete. Loading stream...', 100);
@@ -118,7 +125,6 @@ export async function generateVeoVideo(
     return {
       success: false,
       error: err?.message || 'Failed to generate video',
-      videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
     };
   }
 }

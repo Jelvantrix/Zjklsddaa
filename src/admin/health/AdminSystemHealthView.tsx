@@ -28,7 +28,19 @@ export const AdminSystemHealthView: React.FC = () => {
   const [eventsPerMinute, setEventsPerMinute] = useState<number>(0);
   const [lastAggregation, setLastAggregation] = useState<{ date: string; time: string; status: string } | null>(null);
 
-  // Firestore read/write estimates
+  // Database reachability — measured, never assumed.
+  const [dbStatus, setDbStatus] = useState<'checking' | 'connected' | 'unreachable'>('checking');
+
+  // Endpoint host read from the live client configuration (not a hardcoded ID).
+  const databaseEndpoint = (() => {
+    try {
+      return new URL(String((supabase as any).supabaseUrl)).host;
+    } catch {
+      return 'Unknown';
+    }
+  })();
+
+  // Database read/write estimates recorded by this device
   const [readsToday, setReadsToday] = useState<number>(() => {
     const saved = localStorage.getItem('zejesh_metrics_reads_today');
     return saved ? parseInt(saved, 10) : 0;
@@ -38,11 +50,11 @@ export const AdminSystemHealthView: React.FC = () => {
     return saved ? parseInt(saved, 10) : 0;
   });
 
-  // Consent Metrics
+  // Consent Metrics — 0/0 (and reported as "No data yet") until a choice is stored
   const [consentStats, setConsentStats] = useState<{ accepted: number; total: number; rate: number }>({
     accepted: 0,
     total: 0,
-    rate: 100,
+    rate: 0,
   });
 
   // Tracker Errors
@@ -101,13 +113,15 @@ export const AdminSystemHealthView: React.FC = () => {
       // Initial fetch (run async so the unsubscribe callback stays synchronous)
       (async () => {
         try {
-          const { data: rows } = await supabase
+          const { data: rows, error } = await supabase
             .from('events')
             .select('*')
             .order('timestamp', { ascending: false })
             .limit(50);
+          setDbStatus(error ? 'unreachable' : 'connected');
           processEventRows(rows || []);
         } catch (e) {
+          setDbStatus('unreachable');
           console.warn('Events listener note:', e);
         }
       })();
@@ -129,14 +143,14 @@ export const AdminSystemHealthView: React.FC = () => {
           const docData = rows[0];
           setLastAggregation({
             date: docData.date || 'N/A',
-            time: docData.calculatedAt ? new Date(docData.calculatedAt).toLocaleTimeString() : 'Recent',
-            status: 'Operational (Incremental Cache)',
+            time: docData.calculatedAt ? new Date(docData.calculatedAt).toLocaleTimeString() : 'Not recorded',
+            status: `Recorded for ${docData.date || 'unknown date'}`,
           });
         } else {
           setLastAggregation({
             date: 'None yet',
-            time: 'Pending events',
-            status: 'Awaiting first day aggregation',
+            time: 'Not recorded',
+            status: 'No aggregation recorded yet',
           });
         }
       } catch (err) {
@@ -145,14 +159,14 @@ export const AdminSystemHealthView: React.FC = () => {
     };
     fetchLastAggregation();
 
-    // 3. Load consent stats from storage
+    // 3. Load consent stats from storage — no default is assumed
     const consent = localStorage.getItem('zejesh_analytics_consent');
     if (consent === 'accepted') {
       setConsentStats({ accepted: 1, total: 1, rate: 100 });
     } else if (consent === 'declined') {
       setConsentStats({ accepted: 0, total: 1, rate: 0 });
     } else {
-      setConsentStats({ accepted: 1, total: 1, rate: 100 });
+      setConsentStats({ accepted: 0, total: 0, rate: 0 });
     }
 
     return () => unsubscribe();
@@ -188,7 +202,7 @@ export const AdminSystemHealthView: React.FC = () => {
       sessionId: `session-health-${Date.now()}`,
       page: '/admin/system-health',
       deviceClass: 'desktop',
-      verifiedBy: adminProfile?.email || 'admin@zejesh.com',
+      verifiedBy: adminProfile?.email || user?.email || 'unknown-admin',
       metadata: {
         agent: 'Zejesh Production Health Guard',
         action: 'Round-Trip Verification',
@@ -225,7 +239,7 @@ export const AdminSystemHealthView: React.FC = () => {
           latencyMs: latency,
           eventId: testId,
           verifiedAt: new Date().toLocaleTimeString(),
-          message: `Verified Firestore round-trip in ${latency}ms. Document committed and read back with 100% integrity.`,
+          message: `Round-trip write and read-back verified in ${latency}ms. The document was stored and returned by the database.`,
         });
         setLastEventRawTs(Date.now());
         setTotalEventsCount((c) => c + 1);
@@ -239,7 +253,7 @@ export const AdminSystemHealthView: React.FC = () => {
       console.error('Test event verification error:', err);
       setTestResult({
         status: 'failed',
-        message: err.message || 'Write/read permission denied in Firestore rules.',
+        message: err.message || 'The write/read test failed.',
       });
       setTrackerErrors((prev) => [
         {
@@ -254,8 +268,7 @@ export const AdminSystemHealthView: React.FC = () => {
     }
   };
 
-  // GCP Firestore Standard pricing calculation ($0.06 / 100k reads, $0.18 / 100k writes)
-  const estimatedCostUsd = (readsToday * 0.0000006 + writesToday * 0.0000018).toFixed(4);
+  // Note: read/write counters are local to this device — no cost figure is invented from them.
 
   return (
     <div className="space-y-8 max-w-6xl font-mono text-xs text-black">
@@ -263,12 +276,27 @@ export const AdminSystemHealthView: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-black/[0.08]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] uppercase tracking-[0.25em] text-black/50">Production Infrastructure</span>
+            <span
+              className={`w-2 h-2 rounded-full animate-pulse ${
+                dbStatus === 'connected'
+                  ? 'bg-emerald-500'
+                  : dbStatus === 'checking'
+                  ? 'bg-black/30'
+                  : 'bg-rose-500'
+              }`}
+            />
+            <span className="text-[10px] uppercase tracking-[0.25em] text-black/50">
+              {dbStatus === 'connected'
+                ? 'Production Infrastructure · Database reachable'
+                : dbStatus === 'checking'
+                ? 'Production Infrastructure · Checking database…'
+                : 'Production Infrastructure · Database unreachable'}
+            </span>
           </div>
           <h1 className="font-editorial text-3xl sm:text-4xl font-normal tracking-tight">System Health & Live Ingestion</h1>
           <p className="text-xs font-mono text-black/50 mt-1">
-            Real-time verification of Firestore connectivity, live event ingestion rate, cost metering, and telemetry audit.
+            Measured database connectivity, recent event ingestion, the consent record held on this device,
+            and captured telemetry errors. Anything not measured is shown as "No data yet".
           </p>
         </div>
 
@@ -299,12 +327,12 @@ export const AdminSystemHealthView: React.FC = () => {
               {testResult.status === 'success' ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Firestore Verification: Verified & Confirmed Real</span>
+                  <span>Database Round-Trip: Verified</span>
                 </>
               ) : (
                 <>
                   <AlertTriangle className="w-4 h-4 text-red-600" />
-                  <span>Firestore Verification Failed</span>
+                  <span>Database Round-Trip Failed</span>
                 </>
               )}
             </span>
@@ -329,7 +357,9 @@ export const AdminSystemHealthView: React.FC = () => {
             <span>Event Ingestion</span>
             <Activity className="w-3.5 h-3.5" />
           </div>
-          <div className="text-2xl font-editorial font-normal text-black">{totalEventsCount}</div>
+          <div className="text-2xl font-editorial font-normal text-black">
+            {dbStatus === 'checking' ? 'Checking…' : dbStatus === 'connected' ? totalEventsCount : 'Could not load data'}
+          </div>
           <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
             <span>Current Pace:</span>
             <span className="font-semibold text-black">{eventsPerMinute} events/min</span>
@@ -349,69 +379,88 @@ export const AdminSystemHealthView: React.FC = () => {
           </div>
         </div>
 
-        {/* Card 3: Operations & Cost */}
+        {/* Card 3: Operations recorded by this browser */}
         <div className="p-4 border border-black/[0.08] bg-white space-y-2">
           <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
-            <span>Firestore Ops Today</span>
+            <span>Ops Recorded (This Device)</span>
             <DollarSign className="w-3.5 h-3.5" />
           </div>
           <div className="text-2xl font-editorial font-normal text-black">
             {readsToday + writesToday} <span className="text-xs font-mono text-black/50 font-normal">ops</span>
           </div>
           <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>Est. GCP Cost:</span>
-            <span className="font-semibold text-black">${estimatedCostUsd}</span>
+            <span>Reads / Writes:</span>
+            <span className="font-semibold text-black">{readsToday} / {writesToday}</span>
           </div>
         </div>
 
-        {/* Card 4: Consent Rate */}
+        {/* Card 4: Consent Record */}
         <div className="p-4 border border-black/[0.08] bg-white space-y-2">
           <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
             <span>Telemetry Consent</span>
             <ShieldCheck className="w-3.5 h-3.5" />
           </div>
-          <div className="text-2xl font-editorial font-normal text-black">{consentStats.rate}%</div>
+          <div className="text-2xl font-editorial font-normal text-black">
+            {consentStats.total > 0 ? `${consentStats.rate}%` : 'No data yet'}
+          </div>
           <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>GDPR Status:</span>
-            <span className="font-semibold text-emerald-700">Fully Compliant</span>
+            <span>Stored on this device:</span>
+            <span className="font-semibold text-black">
+              {consentStats.total === 0
+                ? 'No record'
+                : consentStats.rate === 100
+                ? 'Accepted'
+                : 'Declined'}
+            </span>
           </div>
         </div>
       </div>
 
       {/* CORE SUBSYSTEM DETAILS */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Subsystem 1: Database & Rules Audit */}
+        {/* Subsystem 1: Database reachability audit */}
         <div className="border border-black/[0.08] bg-white p-5 space-y-4">
           <div className="flex items-center justify-between border-b border-black/[0.08] pb-3">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-black" />
-              <h3 className="font-semibold uppercase tracking-wider text-xs">Cloud Firestore Core</h3>
+              <h3 className="font-semibold uppercase tracking-wider text-xs">Supabase Database Core</h3>
             </div>
-            <span className="px-2 py-0.5 border border-emerald-500 text-emerald-700 bg-emerald-50 text-[10px] font-semibold">
-              CONNECTED
+            <span
+              className={`px-2 py-0.5 border text-[10px] font-semibold ${
+                dbStatus === 'connected'
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
+                  : dbStatus === 'checking'
+                  ? 'border-black/30 text-black/50 bg-white'
+                  : 'border-rose-500 text-rose-700 bg-rose-50'
+              }`}
+            >
+              {dbStatus === 'connected' ? 'CONNECTED' : dbStatus === 'checking' ? 'CHECKING…' : 'UNREACHABLE'}
             </span>
           </div>
 
           <div className="space-y-2.5 text-xs font-mono">
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Database ID:</span>
-              <span className="font-mono text-black font-medium">ai-studio-pohjoinenminimal-1ffc2158-7042-4aef-a178-9d83050f52e4</span>
+              <span className="text-black/50">Database Endpoint:</span>
+              <span className="font-mono text-black font-medium truncate pl-3">{databaseEndpoint}</span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
               <span className="text-black/50">Security Rules:</span>
-              <span className="font-mono text-black">Active (Role-Based RBAC v2)</span>
+              <span className="font-mono text-black">Not verifiable from this client</span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Reads Today:</span>
+              <span className="text-black/50">Reads (This Device):</span>
               <span className="font-mono text-black font-semibold">{readsToday} reads</span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Writes Today:</span>
+              <span className="text-black/50">Writes (This Device):</span>
               <span className="font-mono text-black font-semibold">{writesToday} writes</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-black/50">Last Scheduled Aggregation:</span>
-              <span className="font-mono text-black">{lastAggregation?.status || 'Checking...'}</span>
+              <span className="text-black/50">Last Recorded Aggregation:</span>
+              <span className="font-mono text-black">
+                {lastAggregation?.status ||
+                  (dbStatus === 'connected' ? 'Checking…' : 'Could not load data')}
+              </span>
             </div>
           </div>
         </div>
@@ -423,31 +472,45 @@ export const AdminSystemHealthView: React.FC = () => {
               <ShieldCheck className="w-4 h-4 text-black" />
               <h3 className="font-semibold uppercase tracking-wider text-xs">Supabase Authentication & Identity</h3>
             </div>
-            <span className="px-2 py-0.5 border border-emerald-500 text-emerald-700 bg-emerald-50 text-[10px] font-semibold">
-              SECURE
+            <span
+              className={`px-2 py-0.5 border text-[10px] font-semibold ${
+                user || adminProfile
+                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
+                  : 'border-rose-500 text-rose-700 bg-rose-50'
+              }`}
+            >
+              {user || adminProfile ? 'SESSION ACTIVE' : 'NO SESSION'}
             </span>
           </div>
 
           <div className="space-y-2.5 text-xs font-mono">
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
               <span className="text-black/50">Authenticated Operator:</span>
-              <span className="font-mono text-black font-semibold">{adminProfile?.email || user?.email || 'huxaifa0fficial@gmail.com'}</span>
+              <span className="font-mono text-black font-semibold truncate pl-3">
+                {adminProfile?.email || user?.email || 'Not signed in'}
+              </span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
               <span className="text-black/50">Active Role:</span>
-              <span className="font-mono uppercase font-bold text-black">{adminProfile?.role || role}</span>
+              <span className="font-mono uppercase font-bold text-black">
+                {adminProfile?.role || role || 'No role assigned'}
+              </span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Session Encryption:</span>
-              <span className="font-mono text-black">AES-256 TLS Tokenized</span>
+              <span className="text-black/50">Page Connection:</span>
+              <span className="font-mono text-black">
+                {typeof window !== 'undefined' && window.location.protocol === 'https:'
+                  ? 'HTTPS (browser TLS)'
+                  : 'Not HTTPS'}
+              </span>
             </div>
             <div className="flex justify-between py-1 border-b border-black/[0.04]">
               <span className="text-black/50">Privilege Level:</span>
-              <span className="font-mono text-black">{isOwner ? 'Full Master Authority (Owner)' : 'Staff Limited'}</span>
+              <span className="font-mono text-black">{isOwner ? 'Owner (full access)' : 'Staff (limited access)'}</span>
             </div>
             <div className="flex justify-between py-1">
-              <span className="text-black/50">Cloud Functions Package:</span>
-              <span className="font-mono text-black">Ready (/functions)</span>
+              <span className="text-black/50">Server Functions:</span>
+              <span className="font-mono text-black">Unknown — not verified</span>
             </div>
           </div>
         </div>
@@ -468,7 +531,7 @@ export const AdminSystemHealthView: React.FC = () => {
         {trackerErrors.length === 0 ? (
           <div className="py-6 text-center text-black/40 text-xs">
             <CheckCircle2 className="w-5 h-5 mx-auto mb-1 text-emerald-600" />
-            <span>Clean execution pipeline. Zero telemetry ingestion exceptions recorded.</span>
+            <span>No telemetry errors captured in this session.</span>
           </div>
         ) : (
           <div className="divide-y divide-black/[0.06]">

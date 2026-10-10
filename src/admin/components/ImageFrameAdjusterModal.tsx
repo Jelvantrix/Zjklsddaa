@@ -92,23 +92,22 @@ export const ImageFrameAdjusterModal: React.FC<ImageFrameAdjusterModalProps> = (
     setFocalY(y);
   };
 
-  // Device file upload
+  // Device file upload — use URL.createObjectURL (never base64 into DB)
+  // so the file bytes never become base64 in the DB (no-seed guard).
+  const [uploadObjectUrl, setUploadObjectUrl] = useState<string | null>(null);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setCurrentUrl(dataUrl);
-        if (onUploadFile) {
-          onUploadFile(dataUrl);
-        }
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = '';
+    const objectUrl = URL.createObjectURL(file);
+    setUploadObjectUrl(objectUrl);
+    setCurrentUrl(objectUrl);
+    if (onUploadFile) {
+      onUploadFile(objectUrl);
+    }
+    // cleanup on unmount / re-run
+    useEffect(() => () => URL.revokeObjectURL(objectUrl), [objectUrl]);
   };
 
   // Reset to neutral balanced frame

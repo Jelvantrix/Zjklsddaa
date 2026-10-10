@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Language, Product, translations, formatPrice } from '../types';
 import { useStorefrontData } from '../context/StorefrontDataContext';
+import { supabase } from '../supabase/config';
 import { FashionImage } from './FashionImage';
 import { Check } from 'lucide-react';
 
@@ -22,25 +23,54 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   const { products, content } = useStorefrontData();
   const t = translations[language] || translations.en;
 
-  // Tracking form state
+  // Tracking form state — resolved against real order rows only
   const [trackingCode, setTrackingCode] = useState('');
   const [trackingResult, setTrackingResult] = useState<string | null>(null);
+  const [isTracking, setIsTracking] = useState(false);
 
   // Gift card state
   const [giftAmount, setGiftAmount] = useState(150);
   const [giftRecipient, setGiftRecipient] = useState('');
   const [giftSubmitted, setGiftSubmitted] = useState(false);
 
-  const handleTrack = (e: React.FormEvent) => {
+  const handleTrack = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (trackingCode.trim()) {
-      setTrackingResult(
-        `Shipment ${trackingCode.toUpperCase()}: Processed at central logistics terminal. Estimated delivery tomorrow before 16:00.`
-      );
+    const code = trackingCode.trim();
+    if (!code) return;
+
+    setIsTracking(true);
+    setTrackingResult(null);
+    try {
+      // Escape LIKE wildcards so the reference is matched literally.
+      const pattern = code.replace(/([\\%_])/g, '\\$1');
+      const { data, error } = await supabase
+        .from('orders')
+        .select('number, status, tracking, createdAt, updatedAt')
+        .ilike('tracking', pattern)
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        setTrackingResult('Could not load tracking data right now. Please try again later.');
+      } else if (!data) {
+        setTrackingResult(
+          `No tracking record found for ${code.toUpperCase()}. Check the reference from your dispatch notification, or contact the studio.`
+        );
+      } else {
+        const updated = data.updatedAt || data.createdAt;
+        setTrackingResult(
+          `Shipment ${code.toUpperCase()} — order ${data.number}, current status: ${data.status}` +
+            `${updated ? `, last updated ${new Date(updated).toLocaleString('en-US')}` : ''}.`
+        );
+      }
+    } catch {
+      setTrackingResult('Could not load tracking data right now. Please try again later.');
+    } finally {
+      setIsTracking(false);
     }
   };
 
-  // Render SITEMAP (Directory of 50+ pages)
+  // Render SITEMAP (directory of the pages that actually exist)
   if (pageType === 'sitemap') {
     return (
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
@@ -50,10 +80,11 @@ export const StaticPages: React.FC<StaticPageProps> = ({
               ARCHIVE DIRECTORY
             </span>
             <h1 className="font-editorial text-3xl sm:text-5xl font-normal">
-              Site Directory & All 50+ Pages
+              Site Directory
             </h1>
             <p className="text-xs sm:text-sm font-sans text-black/60 mt-2 sm:mt-3 leading-relaxed">
-              Our digital archive houses 24 dedicated product dossier pages, category hubs, seasonal archives, essays, and house charters.
+              Our digital archive houses {products.length} product dossier pages, category hubs, seasonal archives,
+              essays, and house charters.
             </p>
           </div>
 
@@ -330,8 +361,8 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                 className="w-full px-4 py-3 text-xs font-mono border border-black/20 focus:border-black focus:outline-none uppercase"
               />
             </div>
-            <button type="submit" className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.18em] cursor-pointer">
-              Search Status
+            <button type="submit" disabled={isTracking} className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.18em] cursor-pointer disabled:opacity-60">
+              {isTracking ? 'Searching...' : 'Search Status'}
             </button>
           </form>
 

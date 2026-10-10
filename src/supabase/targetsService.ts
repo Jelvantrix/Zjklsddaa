@@ -219,7 +219,7 @@ export async function saveMetricActual(
     const fullActual: MetricActual & { id: string } = {
       ...actual,
       id,
-      isDemo: false, // Production data is never marked as demo
+      isDemo: false, // Production rows are never flagged
     };
 
     const { error } = await supabase.from('metricActuals').upsert(fullActual);
@@ -251,7 +251,7 @@ export async function getMetricActuals(
 
     const items: MetricActual[] = [];
     (data || []).forEach((row: any) => {
-      // Filter out demo data in production
+      // Filter out non-production rows
       if (!row.isDemo) {
         items.push({ ...row, id: row.id });
       }

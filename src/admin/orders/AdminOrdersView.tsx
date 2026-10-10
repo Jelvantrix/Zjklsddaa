@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Order, OrderStatus } from '../../types';
-import { Search, Printer, FileText, CheckCircle, RefreshCw, Truck, ArrowRight, X, Clock, ShoppingBag, Plus } from 'lucide-react';
+import { Search, Printer, FileText, CheckCircle, RefreshCw, Truck, ArrowRight, X, Clock, ShoppingBag } from 'lucide-react';
 import { useAuth } from '../../supabase/AuthContext';
 import { supabase } from '../../supabase/config';
-import { logAuditEvent, createStoreOrder } from '../../supabase/dbService';
+import { logAuditEvent } from '../../supabase/dbService';
 
 interface AdminOrdersViewProps {
   orders: Order[];
@@ -18,7 +18,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
   const [trackingNumber, setTrackingNumber] = useState('');
   const [internalNote, setInternalNote] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isCreatingTest, setIsCreatingTest] = useState(false);
 
   // Sync selected order if list changes
   React.useEffect(() => {
@@ -128,60 +127,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
     }
   };
 
-  const handleCreateTestOrder = async () => {
-    setIsCreatingTest(true);
-    try {
-      await createStoreOrder({
-        number: `#ZE-${Date.now().toString().slice(-5)}`,
-        customer: {
-          name: 'Sofia Lindqvist',
-          email: 'sofia.lindqvist@archive.com',
-          phone: '+358 40 918 2741',
-          address: {
-            street: 'Unioninkatu 28 B',
-            postalCode: '00170',
-            city: 'Helsinki',
-            country: 'Finland',
-          },
-        },
-        items: [
-          {
-            productId: 'ze-001',
-            productNr: 'Nº 001',
-            productName: 'Heavy Wool Solstice Coat',
-            size: 'M',
-            quantity: 1,
-            price: 780,
-          },
-        ],
-        totals: {
-          subtotal: 780,
-          shipping: 0,
-          vat: 150.96,
-          discount: 0,
-          total: 780,
-        },
-        status: 'paid',
-        shippingMethod: 'Posti Carbon-Neutral Courier',
-        tracking: 'FI994281092837X',
-        timeline: [
-          {
-            at: new Date().toISOString(),
-            status: 'paid',
-            note: 'Verified checkout payment received via Stripe SEPA',
-            by: 'Payment Gateway',
-          },
-        ],
-        createdAt: new Date().toISOString(),
-      });
-      onRefresh();
-    } catch (err) {
-      console.error('Test order creation failed:', err);
-    } finally {
-      setIsCreatingTest(false);
-    }
-  };
-
   const printDocument = () => {
     window.print();
   };
@@ -216,17 +161,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
         </div>
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleCreateTestOrder}
-            disabled={isCreatingTest}
-            className="px-3 py-1.5 border border-black/20 hover:border-black text-xs font-mono flex items-center gap-1.5 cursor-pointer bg-white transition-colors"
-            title="Create a verified test order"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>{isCreatingTest ? 'Creating...' : 'Create Test Order'}</span>
-          </button>
-
           {selectedOrder && (
             <button
               type="button"
@@ -251,15 +185,6 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
               Real customer orders placed through the storefront checkout will immediately sync here in real-time.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={handleCreateTestOrder}
-            disabled={isCreatingTest}
-            className="px-5 py-2.5 bg-black text-white text-xs uppercase tracking-widest font-medium hover:bg-neutral-800 transition-colors cursor-pointer inline-flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>{isCreatingTest ? 'Generating...' : 'Simulate First Order'}</span>
-          </button>
         </div>
       ) : (
         <>

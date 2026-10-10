@@ -4,6 +4,7 @@ import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
 import { createStoreOrder } from '../supabase/dbService';
+import { supabase } from '../supabase/config';
 import { lockBodyScroll, unlockBodyScroll } from '../utils/scrollLock';
 
 interface CheckoutModalProps {
@@ -50,6 +51,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [selectedBank, setSelectedBank] = useState('OP');
   const [createdOrderNumber, setCreatedOrderNumber] = useState('');
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const subtotal = items.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
@@ -58,17 +60,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const shippingCost = shippingMethod === 'whiteglove' ? 12.0 : (subtotal >= 100 ? 0 : 4.9);
   const total = subtotal + shippingCost;
-  const orderNumber = createdOrderNumber || '#ZE-84291';
 
   if (!isOpen) return null;
 
   const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
+    setOrderError(null);
     setStep(2);
   };
 
   const handleConfirmOrder = async () => {
+    if (isSubmittingOrder) return;
     setIsSubmittingOrder(true);
+    setOrderError(null);
     try {
       const res = await createStoreOrder({
         customer: {
@@ -111,15 +115,32 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         createdAt: new Date().toISOString(),
       });
 
-      if (res.id) {
-        setCreatedOrderNumber(`#${res.id}`);
+      if (!res?.id) {
+        throw new Error('No order reference was returned.');
       }
-    } catch (err) {
-      console.error('Order placement error:', err);
-    } finally {
-      setIsSubmittingOrder(false);
+
+      // Read the row back so the receipt only ever shows a number the database holds.
+      const { data: stored, error: readError } = await supabase
+        .from('orders')
+        .select('id, number')
+        .eq('id', res.id)
+        .maybeSingle();
+
+      if (readError || !stored?.id) {
+        throw new Error('The order could not be confirmed in the database.');
+      }
+
+      setCreatedOrderNumber(stored.number || res.number || stored.id);
       setStep(3);
       onOrderSuccess();
+    } catch (err) {
+      // Honest failure: stay on the payment step and never show a fake receipt.
+      console.error('Order placement error:', err);
+      setOrderError(
+        'Your order could not be placed — no order was created. Please check your connection and try again.'
+      );
+    } finally {
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -442,6 +463,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </button>
               </div>
 
+              {orderError && (
+                <div role="alert" className="p-3 sm:p-4 border border-rose-300 bg-rose-50 text-rose-900 text-xs font-mono leading-relaxed">
+                  {orderError}
+                </div>
+              )}
+
               <div className="pt-2 sm:pt-4 flex items-center justify-center gap-2 text-xs font-mono text-black/50 text-center">
                 <ShieldCheck className="w-4 h-4 shrink-0" />
                 <span>SSL Encrypted 256-Bit Channel · 14-Day Complimentary Returns</span>
@@ -461,7 +488,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </h3>
 
               <div className="p-4 sm:p-5 border border-black/15 bg-black/5 font-mono text-xs space-y-1">
-                <p><strong>Order Reference:</strong> {orderNumber}</p>
+                <p><strong>Order Reference:</strong> {createdOrderNumber || 'Not available'}</p>
                 <p><strong>Recipient:</strong> {firstName} {lastName}</p>
                 <p><strong>Delivery Address:</strong> {street}, {postalCode} {city}</p>
                 <p><strong>Delivery Tier:</strong> {shippingMethod.toUpperCase()}</p>

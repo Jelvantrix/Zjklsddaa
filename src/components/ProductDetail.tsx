@@ -59,7 +59,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   };
 
   // Diverse crops of the studio model photo on pure white background
-  const galleryCrops = [
+  const legacyGalleryCrops = [
     { pos: product?.cropVariation?.packshot?.position || 'center 20%', scale: product?.cropVariation?.packshot?.scale || 1, label: '01 · Full Silhouette' },
     { pos: product?.cropVariation?.onModel?.position || 'center 20%', scale: product?.cropVariation?.onModel?.scale || 1.05, flipped: true, label: '02 · Atelier Model' },
     { pos: product?.cropVariation?.detail1?.position || 'center 15%', scale: product?.cropVariation?.detail1?.scale || 1.4, label: '03 · Collar & Fastening' },
@@ -67,6 +67,41 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
     { pos: product?.cropVariation?.detail3?.position || 'center 50%', scale: product?.cropVariation?.detail3?.scale || 1.3, label: '05 · Profile & Pockets' },
     { pos: product?.cropVariation?.detail4?.position || 'center 60%', scale: product?.cropVariation?.detail4?.scale || 1.5, label: '06 · Hand-Finished Seams' },
   ];
+
+  // Real uploaded gallery images (with their own non-destructive framing) win
+  // over the legacy studio crops. Empty gallery -> honest placeholder only.
+  const galleryEntries = (() => {
+    const images = (product.images || [])
+      .filter((img) => img && img.url)
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    if (images.length === 0) {
+      return legacyGalleryCrops.map((c) => ({
+        src: undefined as string | undefined,
+        pos: c.pos,
+        scale: c.scale,
+        flipped: c.flipped,
+        framing: product.framing,
+        alt: undefined as string | undefined,
+        label: c.label,
+      }));
+    }
+
+    return images.map((img, idx) => ({
+      src: img.url as string | undefined,
+      pos: img.position,
+      scale: img.scale,
+      flipped: undefined as boolean | undefined,
+      framing: img.framing || product.framing,
+      alt: img.alt?.[language] || img.alt?.en || undefined,
+      label: `${String(idx + 1).padStart(2, '0')} · ${
+        img.alt?.[language] || img.alt?.en || product.name[language]
+      }`,
+    }));
+  })();
+
+  const galleryCrops = galleryEntries;
 
   // Recommendations from real products
   const completeTheLook = (products || []).filter(
@@ -126,8 +161,10 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
             >
               <FashionImage
                 product={product}
-                src={idx % 2 === 1 ? (product.hoverImage || product.image) : product.image}
-                alt={`${product.name[language]} - Kuva ${idx + 1}`}
+                src={crop.src ?? (idx % 2 === 1 ? (product.hoverImage || product.image) : product.image)}
+                alt={crop.alt || `${product.name[language]} - Kuva ${idx + 1}`}
+                framing={crop.framing}
+                placement="productPage"
                 position={crop.pos}
                 scale={crop.scale}
                 flipped={crop.flipped}
@@ -154,8 +191,13 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
           <div className="aspect-[3/4] border border-black/5 overflow-hidden bg-white max-w-lg mx-auto relative group">
             <FashionImage
               product={product}
-              src={activeMobileImageIdx % 2 === 1 ? (product.hoverImage || product.image) : product.image}
-              alt={product.name[language]}
+              src={
+                galleryCrops[activeMobileImageIdx].src ??
+                (activeMobileImageIdx % 2 === 1 ? (product.hoverImage || product.image) : product.image)
+              }
+              alt={galleryCrops[activeMobileImageIdx].alt || product.name[language]}
+              framing={galleryCrops[activeMobileImageIdx].framing}
+              placement="productPage"
               position={galleryCrops[activeMobileImageIdx].pos}
               scale={galleryCrops[activeMobileImageIdx].scale}
               flipped={galleryCrops[activeMobileImageIdx].flipped}
@@ -426,6 +468,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
                   product={p}
                   src={p.image}
                   alt={p.name[language]}
+                  placement="card"
                   position={p.cropVariation.packshot.position}
                   scale={p.cropVariation.packshot.scale}
                   aspectRatio="auto"
@@ -463,10 +506,15 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
           <div className="max-w-2xl md:max-w-4xl max-h-[85vh] aspect-[3/4] overflow-hidden border border-black/20">
             <FashionImage
               product={product}
-              src={zoomedImageIndex % 2 === 1 ? (product.hoverImage || product.image) : product.image}
-              alt="Suurennettu kuva"
+              src={
+                galleryCrops[zoomedImageIndex].src ??
+                (zoomedImageIndex % 2 === 1 ? (product.hoverImage || product.image) : product.image)
+              }
+              alt={galleryCrops[zoomedImageIndex].alt || `${product.name[language]} — enlarged view`}
+              framing={galleryCrops[zoomedImageIndex].framing}
+              placement="productPage"
               position={galleryCrops[zoomedImageIndex].pos}
-              scale={galleryCrops[zoomedImageIndex].scale * 1.3}
+              scale={(galleryCrops[zoomedImageIndex].scale || 1) * 1.3}
               flipped={galleryCrops[zoomedImageIndex].flipped}
               aspectRatio="auto"
               className="w-full h-full"

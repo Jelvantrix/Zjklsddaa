@@ -45,6 +45,24 @@ const DEFAULT_CROP: ImagePlacementCrop = {
   aspectRatio: '3:4',
 };
 
+/** Tailwind aspect utilities keyed by the editor's ratio presets. */
+const aspectClasses: Record<string, string> = {
+  '3:4': 'aspect-[3/4]',
+  '4:5': 'aspect-[4/5]',
+  '1:1': 'aspect-square',
+  '16:9': 'aspect-[16/9]',
+  '9:16': 'aspect-[9/16]',
+};
+
+/** Ratio presets as [width, height] used by the canvas exporter. */
+const aspectRatios: Record<string, [number, number]> = {
+  '3:4': [3, 4],
+  '4:5': [4, 5],
+  '1:1': [1, 1],
+  '16:9': [16, 9],
+  '9:16': [9, 16],
+};
+
 export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
   isOpen,
   imageUrl,
@@ -92,6 +110,18 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
   const currentCrop: ImagePlacementCrop = activePlacement === 'all' || sameForAll
     ? mainCrop
     : { ...mainCrop, ...(overrides[activePlacement] || {}) };
+
+  /** Resolves the crop that a given storefront placement actually renders. */
+  const cropFor = (key: PlacementKey): ImagePlacementCrop =>
+    sameForAll ? mainCrop : { ...mainCrop, ...(overrides[key] || {}) };
+
+  const styleFor = (crop: ImagePlacementCrop): React.CSSProperties => ({
+    objectPosition: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,
+    transform: `${crop.flipH ? 'scaleX(-1) ' : ''}${crop.flipV ? 'scaleY(-1) ' : ''}scale(${
+      crop.zoom || 1
+    }) rotate(${crop.rotation || 0}deg)`,
+    transformOrigin: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,
+  });
 
   // Sync when modal opens or initial values change
   useEffect(() => {
@@ -184,6 +214,15 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
       } else if (e.key === '-' || e.key === '_') {
         e.preventDefault();
         updateCrop({ zoom: Math.max(1.0, Number(((currentCrop.zoom ?? 1) - 0.1).toFixed(2))) });
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        handleUndo();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && e.shiftKey) ||
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y')
+      ) {
+        e.preventDefault();
+        handleRedo();
       } else if (e.key === 'Escape') {
         onClose();
       }
@@ -219,6 +258,40 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
     }
   };
 
+  // --- Touch: pinch to zoom (two fingers) ---------------------------------
+  const pinchRef = useRef<{ distance: number; zoom: number } | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2) {
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      pinchRef.current = {
+        distance: Math.hypot(dx, dy),
+        zoom: currentCrop.zoom ?? 1,
+      };
+    }
+  };
+
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length === 2 && pinchRef.current) {
+      e.preventDefault();
+      const dx = e.touches[0].clientX - e.touches[1].clientX;
+      const dy = e.touches[0].clientY - e.touches[1].clientY;
+      const distance = Math.hypot(dx, dy);
+      const ratio = distance / Math.max(1, pinchRef.current.distance);
+      const next = Math.min(4, Math.max(1, Number((pinchRef.current.zoom * ratio).toFixed(2))));
+      updateCrop({ zoom: next }, false);
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (e.touches.length < 2 && pinchRef.current) {
+      pinchRef.current = null;
+      setHistory((prev) => [...prev.slice(0, historyIdx + 1), currentCrop]);
+      setHistoryIdx((prev) => prev + 1);
+    }
+  };
+
   const handleSave = () => {
     const finalFraming: ImageFramingParams = {
       focalX: mainCrop.focalX ?? 50,
@@ -249,8 +322,9 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
       });
 
       const canvas = document.createElement('canvas');
-      const targetW = 1600;
-      const targetH = Math.round(targetW * (4 / 3)); // 3:4 aspect
+      const [rw, rh] = aspectRatios[currentCrop.aspectRatio || '3:4'] || [3, 4];
+      const targetW = rh >= rw ? 1600 : 2400;
+      const targetH = Math.round((targetW * rh) / rw);
       canvas.width = targetW;
       canvas.height = targetH;
       const ctx = canvas.getContext('2d');
@@ -437,7 +511,12 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
                 onPointerDown={handlePointerDown}
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
-                className="relative w-full aspect-[3/4] max-h-[50vh] bg-white border border-black/20 overflow-hidden cursor-crosshair shadow-sm select-none touch-none"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+                className={`relative w-full max-h-[50vh] bg-white border border-black/20 overflow-hidden cursor-crosshair shadow-sm select-none touch-none ${
+                  aspectClasses[currentCrop.aspectRatio || '3:4'] || 'aspect-[3/4]'
+                }`}
               >
                 <img
                   src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
@@ -629,45 +708,43 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
             )}
 
             <div className="space-y-6">
-              {/* Placement 1: Product Card (3:4) */}
-              <div className="border border-black/10 p-3">
-                <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
-                  <span>Product Card (Grid & Catalog)</span>
-                  <span>3:4</span>
-                </div>
-                <div className="w-36 aspect-[3/4] bg-neutral-100 overflow-hidden border border-black/10">
-                  <img
-                    src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
-                    alt="Card preview"
-                    className="w-full h-full object-cover"
-                    style={{
-                      objectPosition: `${currentCrop.focalX}% ${currentCrop.focalY}%`,
-                      transform: `${currentCrop.flipH ? 'scaleX(-1) ' : ''}${currentCrop.flipV ? 'scaleY(-1) ' : ''}scale(${currentCrop.zoom || 1}) rotate(${currentCrop.rotation || 0}deg)`,
-                    }}
-                  />
-                </div>
-              </div>
+              <PlacementPreview
+                label="Product Card (Grid & Catalog)"
+                meta="3:4"
+                ratioClass="aspect-[3/4]"
+                boxClass="w-36"
+                crop={cropFor('card')}
+                imageUrl={imageUrl}
+              />
 
-              {/* Placement 2: Listing / Archive Plate (4:5) */}
-              <div className="border border-black/10 p-3">
-                <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
-                  <span>Archive Editorial Plate</span>
-                  <span>4:5</span>
-                </div>
-                <div className="w-40 aspect-[4/5] bg-neutral-100 overflow-hidden border border-black/10">
-                  <img
-                    src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
-                    alt="Archive preview"
-                    className="w-full h-full object-cover"
-                    style={{
-                      objectPosition: `${currentCrop.focalX}% ${currentCrop.focalY}%`,
-                      transform: `${currentCrop.flipH ? 'scaleX(-1) ' : ''}${currentCrop.flipV ? 'scaleY(-1) ' : ''}scale(${currentCrop.zoom || 1}) rotate(${currentCrop.rotation || 0}deg)`,
-                    }}
-                  />
-                </div>
-              </div>
+              <PlacementPreview
+                label="Listing / Archive Plate — crop A"
+                meta="4:5"
+                ratioClass="aspect-[4/5]"
+                boxClass="w-40"
+                crop={cropFor('archive')}
+                imageUrl={imageUrl}
+              />
 
-              {/* Placement 3: Home Hero (Desktop 16:9 & Mobile 9:16) */}
+              <PlacementPreview
+                label="Listing / Archive Plate — crop B"
+                meta="3:4"
+                ratioClass="aspect-[3/4]"
+                boxClass="w-40"
+                crop={cropFor('archive')}
+                imageUrl={imageUrl}
+              />
+
+              <PlacementPreview
+                label="Product Page Gallery"
+                meta="1:1"
+                ratioClass="aspect-square"
+                boxClass="w-36"
+                crop={cropFor('productPage')}
+                imageUrl={imageUrl}
+              />
+
+              {/* Home Hero — desktop & mobile */}
               <div className="border border-black/10 p-3">
                 <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
                   <span>Home Hero Section</span>
@@ -681,10 +758,7 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
                         src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
                         alt="Hero desktop preview"
                         className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: `${currentCrop.focalX}% ${currentCrop.focalY}%`,
-                          transform: `${currentCrop.flipH ? 'scaleX(-1) ' : ''}${currentCrop.flipV ? 'scaleY(-1) ' : ''}scale(${currentCrop.zoom || 1}) rotate(${currentCrop.rotation || 0}deg)`,
-                        }}
+                        style={styleFor(cropFor('heroDesktop'))}
                       />
                     </div>
                   </div>
@@ -696,34 +770,21 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
                         src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
                         alt="Hero mobile preview"
                         className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: `${currentCrop.focalX}% ${currentCrop.focalY}%`,
-                          transform: `${currentCrop.flipH ? 'scaleX(-1) ' : ''}${currentCrop.flipV ? 'scaleY(-1) ' : ''}scale(${currentCrop.zoom || 1}) rotate(${currentCrop.rotation || 0}deg)`,
-                        }}
+                        style={styleFor(cropFor('heroMobile'))}
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Placement 4: Share / Open Graph Crop */}
-              <div className="border border-black/10 p-3">
-                <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
-                  <span>Social Share / Open Graph</span>
-                  <span>1.91:1</span>
-                </div>
-                <div className="w-56 aspect-[1.91/1] bg-neutral-100 overflow-hidden border border-black/10">
-                  <img
-                    src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
-                    alt="Social preview"
-                    className="w-full h-full object-cover"
-                    style={{
-                      objectPosition: `${currentCrop.focalX}% ${currentCrop.focalY}%`,
-                      transform: `${currentCrop.flipH ? 'scaleX(-1) ' : ''}${currentCrop.flipV ? 'scaleY(-1) ' : ''}scale(${currentCrop.zoom || 1}) rotate(${currentCrop.rotation || 0}deg)`,
-                    }}
-                  />
-                </div>
-              </div>
+              <PlacementPreview
+                label="Social Share / Open Graph"
+                meta="1.91:1"
+                ratioClass="aspect-[1.91/1]"
+                boxClass="w-56"
+                crop={cropFor('og')}
+                imageUrl={imageUrl}
+              />
             </div>
           </div>
         </div>
@@ -731,3 +792,36 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
     </div>
   );
 };
+
+/** One live storefront placement preview (updates while the owner adjusts). */
+const PlacementPreview: React.FC<{
+  label: string;
+  meta: string;
+  ratioClass: string;
+  boxClass: string;
+  crop: ImagePlacementCrop;
+  imageUrl: string;
+}> = ({ label, meta, ratioClass, boxClass, crop, imageUrl }) => (
+  <div className="border border-black/10 p-3">
+    <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
+      <span>{label}</span>
+      <span>{meta}</span>
+    </div>
+    <div
+      className={`${boxClass} ${ratioClass} bg-neutral-100 overflow-hidden border border-black/10`}
+    >
+      <img
+        src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
+        alt={`${label} preview`}
+        className="w-full h-full object-cover"
+        style={{
+          objectPosition: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,
+          transform: `${crop.flipH ? 'scaleX(-1) ' : ''}${crop.flipV ? 'scaleY(-1) ' : ''}scale(${
+            crop.zoom || 1
+          }) rotate(${crop.rotation || 0}deg)`,
+          transformOrigin: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,
+        }}
+      />
+    </div>
+  </div>
+);

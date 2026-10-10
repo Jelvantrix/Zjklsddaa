@@ -24,6 +24,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src", "server.ts", "api"],
+  "include": ["src", "server.ts", "api", "tests", "vitest.config.ts", "playwright.config.ts"],
   "exclude": ["node_modules"]
 }

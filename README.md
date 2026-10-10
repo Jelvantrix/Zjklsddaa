@@ -22,8 +22,11 @@ Copy `.env.example` to `.env` and fill it in:
 | `SUPABASE_SERVICE_ROLE_KEY` | **Server only** | Bypasses RLS. **Never** prefix with `VITE_` |
 | `GEMINI_API_KEY` | Server only | Video generation |
 | `TRUST_PROXY` | Server only | Set to `1` when behind nginx/Cloudflare/etc. |
-| `DEMO_MODE` | Either | Must be `false`/unset in production |
 | `NODE_ENV` | Server only | `development` is opt-in via `npm run dev`; everything else runs with production posture |
+
+> The legacy `DEMO_MODE` flag, all seed constants and every fixture were removed.
+> The app only ever renders real database content; an empty database produces an
+> honest empty state, never invented items.
 
 `SUPABASE_SERVICE_ROLE_KEY` is read through `process.env`, not `import.meta.env`,
 so Vite never inlines it. A build-time check (`config.ts`) throws if it is ever
@@ -38,7 +41,20 @@ Run the migrations **in order** in the Supabase SQL Editor (or `supabase db push
 
 1. `supabase/migrations/0001_init_schema.sql` — 21 tables, indexes, realtime publication, `pg_cron` daily-stats job
 2. `supabase/migrations/0002_production_security.sql` — role helpers, checkout RPCs, Row Level Security
-3. `supabase/setup-first-admin.sql` — **required**, see below
+3. `supabase/migrations/0003_suggest_proposals_system.sql` — proposals / waves / votes system
+4. `supabase/migrations/0004_owner_only_security.sql` — `is_owner()`, owner-only admin lockdown
+5. `supabase/migrations/0005_remove_seed_data.sql` — **purges every seeded row**, resets `settings`/`content` to empty defaults (keeps `public.admins` + `public.owner_config`)
+6. `supabase/migrations/0006_media_storage.sql` — public-read `media` Storage bucket (15 MB, restricted mime types, owner-only writes) + `public.media_assets` table
+7. `supabase/setup-first-admin.sql` — **required**, see below
+
+Migrations are idempotent — 0005 and 0006 are safe to re-run from the SQL
+Editor at any time.
+
+### 2.0 Verifying the media bucket
+
+After 0006, **Storage → Buckets** must show a bucket named `media` with
+**Public bucket** enabled, a 15 MB file size limit and the mime types
+`image/jpeg, image/png, image/webp, image/avif, video/mp4, video/webm`.
 
 ### 2.1 Creating the first administrator
 
@@ -50,9 +66,9 @@ Edit the three values at the top of `supabase/setup-first-admin.sql` and run it
 once. It creates the Supabase Auth account *and* the matching `owner` row
 atomically.
 
-> **Note:** the account `huxaifa0fficial@gmail.com` is referenced in demo seed
-> constants only. It is not an access credential and does not exist until you
-> create it.
+> **Note:** `huxaifa0fficial@gmail.com` is the configured owner address held in
+> `public.owner_config`. It is not an access credential and no account exists
+> until you create it.
 
 ### 2.2 Supabase Auth settings
 
@@ -132,6 +148,19 @@ Measured behaviour of a running server:
 npm install
 npm run dev      # NODE_ENV=development — Vite middleware, stack traces in errors
 ```
+
+### 4.1 Tests and the no-seed guard
+
+```bash
+npm run check:no-seed   # greps src/ for SEED_/mock/Math.random/demo/lorem/unsplash/picsum/… and FAILS the build
+npm test                # Vitest unit tests (framing, media validation, guard self-test)
+npm run test:e2e        # Playwright (builds first: `npm run build`) — mocked Supabase, zero seeded data
+npm run verify          # guard + typecheck + production build
+```
+
+`npm run build` runs the guard first, so a commit that reintroduces seeded or
+fabricated data cannot ship. `.github/workflows/ci.yml` runs the same steps on
+every push and pull request.
 
 ## 5. Production
 

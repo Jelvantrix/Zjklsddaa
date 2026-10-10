@@ -29,10 +29,12 @@ import {
 } from 'lucide-react';
 import { Product, Order, Customer, WaitlistEntry, Discount, AiInsight, DailyStat, AuditLog } from '../types';
 import { useAuth } from '../supabase/AuthContext';
+import { supabase } from '../supabase/config';
 import {
   subscribeToOrders,
   subscribeToCustomers,
   subscribeToWaitlist,
+  logAuditEvent,
 } from '../supabase/dbService';
 import { AdminCommandPalette } from './AdminCommandPalette';
 import { AdminNotificationsModal } from './AdminNotificationsModal';
@@ -98,30 +100,41 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     return saved ? parseInt(saved, 10) : 15;
   });
 
-  // Security Audit Logs
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
-    {
-      id: 'audit-01',
-      who: adminProfile?.email || 'owner@zejesh.fi',
-      action: 'TERMINAL_SESSION_INIT',
-      target: 'Studio Console (Helsinki HQ)',
-      at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
-    },
-    {
-      id: 'audit-02',
-      who: 'merchandiser@zejesh.fi',
-      action: 'CATALOG_SYNC',
-      target: '24 Archival Garments',
-      at: new Date(Date.now() - 1000 * 60 * 48).toISOString(),
-    },
-    {
-      id: 'audit-03',
-      who: 'system_daemon',
-      action: 'ENCRYPTION_HEARTBEAT',
-      target: 'Firestore Database Link',
-      at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
-    },
-  ]);
+  // Security Audit Logs — loaded from the real auditLog table (empty until real activity exists)
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+
+  const refreshAuditLogs = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('auditLog')
+        .select('*')
+        .order('at', { ascending: false })
+        .limit(100);
+      if (!error && data) {
+        setAuditLogs(data as AuditLog[]);
+      }
+    } catch (err) {
+      console.warn('Audit log load failed:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAuditLogs();
+    try {
+      const channel = supabase
+        .channel('admin-audit-logs-channel')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'auditLog' }, () => {
+          refreshAuditLogs();
+        })
+        .subscribe();
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (err) {
+      console.warn('Audit log subscription failed:', err);
+      return () => {};
+    }
+  }, [refreshAuditLogs]);
 
   const handleUpdateAutoLock = (mins: number) => {
     setAutoLockMinutes(mins);
@@ -131,31 +144,17 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const handleLockTerminalNow = useCallback(() => {
     setIsTerminalLocked(true);
     sessionStorage.removeItem('zejesh_sec_unlocked_ts');
-    setAuditLogs((prev) => [
-      {
-        id: `audit-${Date.now()}`,
-        who: adminProfile?.email || 'owner@zejesh.fi',
-        action: 'TERMINAL_LOCKED',
-        target: 'Console Manual Lockout',
-        at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
-  }, [adminProfile?.email]);
+    void logAuditEvent(adminProfile?.email || 'admin', 'TERMINAL_LOCKED', 'Console Manual Lockout').finally(() =>
+      refreshAuditLogs()
+    );
+  }, [adminProfile?.email, refreshAuditLogs]);
 
   const handleUnlockTerminal = () => {
     setIsTerminalLocked(false);
     sessionStorage.setItem('zejesh_sec_unlocked_ts', Date.now().toString());
-    setAuditLogs((prev) => [
-      {
-        id: `audit-${Date.now()}`,
-        who: adminProfile?.email || 'owner@zejesh.fi',
-        action: 'TERMINAL_UNLOCKED',
-        target: 'Security Gate Clearance',
-        at: new Date().toISOString(),
-      },
-      ...prev,
-    ]);
+    void logAuditEvent(adminProfile?.email || 'admin', 'TERMINAL_UNLOCKED', 'Security Gate Clearance').finally(() =>
+      refreshAuditLogs()
+    );
   };
 
   // Inactivity Auto-Lock Detector
@@ -202,7 +201,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   });
   const [insights, setInsights] = useState<AiInsight[]>([]);
 
-  // Compute 100% genuine daily statistics from real orders (empty array if 0 orders)
+  // Daily statistics computed from real orders only. Visitor/session/page-view
+  // counts have no source here, so they are reported as 0 rather than invented.
   const realDailyStats: DailyStat[] = useMemo(() => {
     if (orders.length === 0) return [];
     const map: Record<string, DailyStat> = {};
@@ -214,15 +214,15 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           date: d,
           revenue: 0,
           orders: 0,
-          visitors: 1,
-          sessions: 1,
-          addToBags: o.items.length,
-          pageViews: o.items.length * 2,
+          visitors: 0,
+          sessions: 0,
+          addToBags: 0,
+          pageViews: 0,
         };
       }
       map[d].revenue += (o.totals?.total || 0);
       map[d].orders += 1;
-      map[d].addToBags += o.items.length;
+      map[d].addToBags += (o.items || []).reduce((s, it) => s + (it.quantity || 0), 0);
     }
     return Object.values(map).sort((a, b) => a.date.localeCompare(b.date));
   }, [orders]);
@@ -248,8 +248,37 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isEditorDrawerOpen, setIsEditorDrawerOpen] = useState(false);
 
-  // Real operator presence
-  const [liveVisitors, setLiveVisitors] = useState(1);
+  // Live operator presence — counted from real events recorded in the last 5 minutes.
+  // Stays at 0 (and the badge is hidden) when nothing is recorded.
+  const [liveVisitors, setLiveVisitors] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadLiveVisitors = async () => {
+      try {
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
+        const { count, error } = await supabase
+          .from('events')
+          .select('id', { count: 'exact', head: true })
+          .gte('timestamp', fiveMinutesAgo);
+        if (!cancelled) {
+          setLiveVisitors(!error && typeof count === 'number' ? count : 0);
+        }
+      } catch (err) {
+        console.warn('Live visitor count failed:', err);
+        if (!cancelled) setLiveVisitors(0);
+      }
+    };
+
+    loadLiveVisitors();
+    const timer = window.setInterval(loadLiveVisitors, 60000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -264,7 +293,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     { id: 'waitlist', label: 'Waitlists', icon: Clock, badge: 'VIP' },
     { id: 'discounts', label: 'Discounts', icon: Percent },
     { id: 'suggestions', label: 'Client Suggestions & Votes', icon: ThumbsUp, highlight: true },
-    { id: 'content', label: 'Hero Slides & CMS', icon: FileText, badge: content?.heroSlides?.length || 4 },
+    { id: 'content', label: 'Hero Slides & CMS', icon: FileText, badge: content?.heroSlides?.length },
     { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'advisor', label: 'AI Advisor', icon: Sparkles, highlight: true },
     { id: 'security', label: 'Security & Audit', icon: ShieldCheck, highlight: true },
@@ -308,12 +337,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </span>
           </div>
 
-          {/* Visitors Counter */}
-          <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/15 text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-            <span className="text-black/40 uppercase tracking-wider text-[10px]">Live Session:</span>
-            <span className="font-medium text-black">{liveVisitors} Active</span>
-          </div>
+          {/* Visitors Counter — only shown when real events were recorded in the last 5 minutes */}
+          {liveVisitors > 0 && (
+            <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/15 text-xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+              <span className="text-black/40 uppercase tracking-wider text-[10px]">Live Session:</span>
+              <span className="font-medium text-black">{liveVisitors} Active</span>
+            </div>
+          )}
         </div>
 
         {/* Global Search & Actions: Pure Typography, No Box Containers */}
@@ -432,7 +463,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                   <span className="font-semibold text-black uppercase tracking-wider">{adminProfile?.role || role}</span>
                 </div>
-                <div className="text-[11px] text-black/50 truncate">{adminProfile?.email || 'owner@zejesh.fi'}</div>
+                <div className="text-[11px] text-black/50 truncate">{adminProfile?.email || 'Not signed in'}</div>
                 <button
                   type="button"
                   onClick={onBackToStorefront}
@@ -486,9 +517,9 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <div className="p-4 border-t border-black/10 text-xs space-y-1">
               <div className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                <span className="font-semibold text-black uppercase tracking-wider text-[11px]">{adminProfile?.role || role || 'OWNER'}</span>
+                <span className="font-semibold text-black uppercase tracking-wider text-[11px]">{adminProfile?.role || role || 'No role assigned'}</span>
               </div>
-              <div className="text-[10.5px] text-black/50 truncate font-mono">{adminProfile?.email || 'huxaifa0fficial@gmail.com'}</div>
+              <div className="text-[10.5px] text-black/50 truncate font-mono">{adminProfile?.email || 'Not signed in'}</div>
             </div>
           )}
         </aside>

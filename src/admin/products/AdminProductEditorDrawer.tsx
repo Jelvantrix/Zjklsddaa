@@ -1,5 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Product, ProductVariant, Category, Collection } from '../../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Product,
+  ProductVariant,
+  Category,
+  Collection,
+  ImageFramingParams,
+  MediaAsset,
+} from '../../types';
 import { useAuth } from '../../supabase/AuthContext';
 import { useStorefrontData } from '../../context/StorefrontDataContext';
 import { logAuditEvent } from '../../supabase/dbService';
@@ -26,9 +33,24 @@ import {
   Eye,
   Plus,
   Maximize2,
+  GripVertical,
+  ChevronLeft,
+  ChevronRight,
+  Star,
+  Type,
+  ImagePlus,
+  Sliders,
 } from 'lucide-react';
-import { ImageFrameAdjusterModal, FrameAdjusterResult } from '../components/ImageFrameAdjusterModal';
-import { uploadMediaAsset } from '../../supabase/mediaService';
+import { UniversalImageEditorModal } from '../components/UniversalImageEditorModal';
+import { UniversalMediaPickerModal } from '../components/UniversalMediaPickerModal';
+import {
+  isDataUrl,
+  findMediaUsage,
+  removeMediaReferences,
+  deleteMediaAssetPermanently,
+  getMediaAssets,
+  updateMediaAsset,
+} from '../../supabase/mediaService';
 
 interface AdminProductEditorDrawerProps {
   isOpen: boolean;
@@ -41,6 +63,81 @@ interface AdminProductEditorDrawerProps {
 }
 
 const PLACEHOLDER_IMG = '/placeholder.svg';
+
+/** Where the shared UniversalMediaPicker should send the chosen file. */
+type PickerTarget =
+  | { kind: 'primary' }
+  | { kind: 'hover' }
+  | { kind: 'gallery-add' }
+  | { kind: 'gallery-replace'; index: number };
+
+/** Which stored image the UniversalImageEditor should calibrate. */
+type EditorTarget =
+  | { kind: 'primary' }
+  | { kind: 'hover' }
+  | { kind: 'gallery'; index: number };
+
+/** A reference the owner asked to remove (never deletes the file by itself). */
+type DeleteTarget =
+  | { kind: 'image'; index: number; url: string }
+  | { kind: 'hover'; url: string };
+
+type MediaUsage = {
+  productIds: string[];
+  productTitles: string[];
+  heroUsage: boolean;
+  contentSections: string[];
+  totalUses: number;
+};
+
+/** Editor presets ('3:4') -> legacy cropVariation tokens ('3/4'). */
+const toLegacyAspect = (aspect?: string): string => (aspect ? aspect.replace(':', '/') : '3/4');
+
+const legacyAspectForCrop = (
+  aspect?: string
+): '3/4' | '4/5' | '1/1' | '16/9' => {
+  const value = (aspect || '').replace(':', '/');
+  return (['3/4', '4/5', '1/1', '16/9'] as string[]).includes(value)
+    ? (value as '3/4' | '4/5' | '1/1' | '16/9')
+    : '3/4';
+};
+
+/** Legacy crop token -> editor preset. */
+const toEditorAspect = (aspect?: string): string => (aspect ? aspect.replace('/', ':') : '3:4');
+
+/**
+ * Strips every stored base64/data URL so inline imagery can never round-trip
+ * back into the database. Returns the cleaned product plus how many were found.
+ */
+const sanitizeStoredProduct = (
+  product: Product
+): { clean: Product; stripped: number } => {
+  let stripped = 0;
+  const images = (product.images || []).map((img) => {
+    if (img && isDataUrl(img.url)) {
+      stripped += 1;
+      return { ...img, url: '' };
+    }
+    return img;
+  });
+  const image = product.image;
+  const hoverImage = product.hoverImage;
+  if (isDataUrl(image)) {
+    stripped += 1;
+  }
+  if (isDataUrl(hoverImage)) {
+    stripped += 1;
+  }
+  return {
+    clean: {
+      ...product,
+      images,
+      image: isDataUrl(image) ? '' : image,
+      hoverImage: isDataUrl(hoverImage) ? '' : hoverImage,
+    },
+    stripped,
+  };
+};
 
 export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> = ({
   isOpen,
@@ -87,11 +184,48 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     };
   });
 
+  // ---------------------------------------------------------------
+  // Shared media tooling state (hooks must all run before the early
+  // return below so the drawer can be closed safely).
+  // ---------------------------------------------------------------
+  const [pickerTarget, setPickerTarget] = useState<PickerTarget | null>(null);
+  const [editorTarget, setEditorTarget] = useState<EditorTarget | null>(null);
+  const [notice, setNotice] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [dataUrlStripped, setDataUrlStripped] = useState(false);
+  const [libraryAssets, setLibraryAssets] = useState<MediaAsset[]>([]);
+
+  // Per-image alt text editor
+  const [altEditIndex, setAltEditIndex] = useState<number | null>(null);
+  const [altDraftEn, setAltDraftEn] = useState('');
+  const [altDraftFi, setAltDraftFi] = useState('');
+  const [isSavingAlt, setIsSavingAlt] = useState(false);
+
+  // Reference / library deletion flow
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [deleteUsage, setDeleteUsage] = useState<MediaUsage | null>(null);
+  const [checkingUsage, setCheckingUsage] = useState(false);
+  const [deleteAction, setDeleteAction] = useState<'idle' | 'working' | 'error'>('idle');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Native drag & drop reorder
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  const { saveProduct, deleteProduct } = useStorefrontData();
+
+  const notify = (type: 'success' | 'error', text: string) => {
+    setNotice({ type, text });
+    window.setTimeout(() => setNotice(null), 5000);
+  };
+
   useEffect(() => {
     if (product) {
-      setFormData({ ...product });
+      const { clean, stripped } = sanitizeStoredProduct(product);
+      setDataUrlStripped(stripped > 0);
+      setFormData(clean);
     } else {
       const randSuffix = String(Date.now() % 10000).padStart(4, '0');
+      setDataUrlStripped(false);
       setFormData({
         nr: `ZE-${new Date().getFullYear()}-${randSuffix}`,
         name: { fi: '', en: '', sv: '' },
@@ -117,7 +251,106 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         updatedAt: new Date().toISOString(),
       });
     }
+    setPickerTarget(null);
+    setEditorTarget(null);
+    setDeleteTarget(null);
+    setAltEditIndex(null);
+    setNotice(null);
   }, [product, isOpen]);
+
+  // Media library snapshot: keeps alt edits and permanent deletes honest.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    let cancelled = false;
+    getMediaAssets()
+      .then((assets) => {
+        if (!cancelled) setLibraryAssets(assets);
+      })
+      .catch(() => {
+        if (!cancelled) setLibraryAssets([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
+  // Always check real usage before offering any destructive choice.
+  useEffect(() => {
+    if (!deleteTarget?.url || isDataUrl(deleteTarget.url)) {
+      setDeleteUsage(null);
+      setCheckingUsage(false);
+      return undefined;
+    }
+    let cancelled = false;
+    setCheckingUsage(true);
+    setDeleteUsage(null);
+    findMediaUsage(deleteTarget.url)
+      .then((usage) => {
+        if (!cancelled) {
+          setDeleteUsage(usage);
+          setCheckingUsage(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCheckingUsage(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [deleteTarget]);
+
+  // Stable seed for the UniversalImageEditor: its init effect depends on
+  // object identity, so the value must not be rebuilt on unrelated renders.
+  const editorInitialFraming = useMemo<Partial<ImageFramingParams> | undefined>(() => {
+    if (!editorTarget) return undefined;
+    const images = formData.images || [];
+
+    if (editorTarget.kind === 'gallery') {
+      const entry = images[editorTarget.index];
+      const base = entry?.framing;
+      return {
+        focalX: base?.focalX ?? entry?.focalX ?? 50,
+        focalY: base?.focalY ?? entry?.focalY ?? 50,
+        zoom: base?.zoom ?? entry?.scale ?? 1,
+        rotation: base?.rotation ?? entry?.rotation ?? 0,
+        flipH: base?.flipH ?? false,
+        flipV: base?.flipV ?? false,
+        aspectRatio: base?.aspectRatio ?? toEditorAspect(entry?.aspectRatio),
+        overrides: base?.overrides,
+      };
+    }
+
+    if (editorTarget.kind === 'hover') {
+      const entry = images.find((img) => img?.url && img.url === formData.hoverImage);
+      const base = entry?.framing;
+      const position = (formData as any).hoverImagePosition as string | undefined;
+      const [hx, hy] = (position || '').split(' ');
+      return {
+        focalX: base?.focalX ?? (hx ? parseFloat(hx) : 50),
+        focalY: base?.focalY ?? (hy ? parseFloat(hy) : 50),
+        zoom: base?.zoom ?? 1,
+        rotation: base?.rotation ?? ((formData as any).hoverImageRotation as number | undefined) ?? 0,
+        flipH: base?.flipH ?? false,
+        flipV: base?.flipV ?? false,
+        aspectRatio: base?.aspectRatio ?? '3:4',
+        overrides: base?.overrides,
+      };
+    }
+
+    const entry = images[0];
+    const base = entry?.framing || formData.framing;
+    return {
+      focalX: base?.focalX ?? entry?.focalX ?? 50,
+      focalY: base?.focalY ?? entry?.focalY ?? 18,
+      zoom: base?.zoom ?? entry?.scale ?? ((formData as any).imageScale as number | undefined) ?? 1.05,
+      rotation:
+        base?.rotation ?? entry?.rotation ?? ((formData as any).imageRotation as number | undefined) ?? 0,
+      flipH: base?.flipH ?? formData.cropVariation?.onModel?.flipped ?? false,
+      flipV: base?.flipV ?? false,
+      aspectRatio: base?.aspectRatio ?? toEditorAspect(formData.cropVariation?.onModel?.aspectRatio),
+      overrides: base?.overrides,
+    };
+  }, [editorTarget, formData]);
 
   if (!isOpen) return null;
 
@@ -131,15 +364,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   const focalRotation = (formData as any).imageRotation ?? 0;
   const currentAspectRatio = formData.cropVariation?.onModel?.aspectRatio || '3/4';
   const isFlipped = formData.cropVariation?.onModel?.flipped || false;
+  const galleryImages = formData.images || [];
 
-  // File upload input refs
-  const primaryFileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const hoverFileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const galleryFileInputRef = React.useRef<HTMLInputElement | null>(null);
-
-  // Full Adjuster Modal state
-  const [isAdjusterModalOpen, setIsAdjusterModalOpen] = useState(false);
-  const [adjustingTarget, setAdjustingTarget] = useState<'primary' | 'hover'>('primary');
 
   const cropWithOnModel = (
     position: string,
@@ -168,191 +394,470 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
   };
 
   const handleUpdateImageUrl = (url: string) => {
+    if (isDataUrl(url)) {
+      notify('error', 'Inline base64 images are rejected. Upload the file to the media library instead.');
+      return;
+    }
     const updatedImages = [...(formData.images || [])];
     if (updatedImages[0]) {
       updatedImages[0] = { ...updatedImages[0], url };
-    } else {
+    } else if (url) {
       updatedImages[0] = { url, order: 0, focalX: 50, focalY: 18, isPrimary: true };
     }
     setFormData({ ...formData, image: url, images: updatedImages });
   };
 
   const handleUpdateHoverUrl = (url: string) => {
+    if (isDataUrl(url)) {
+      notify('error', 'Inline base64 images are rejected. Upload the file to the media library instead.');
+      return;
+    }
     setFormData({ ...formData, hoverImage: url });
   };
 
-  // Device file upload handler
-  const handleDeviceFileUpload = async (
-    file: File | undefined,
-    target: 'primary' | 'hover' | 'gallery'
-  ) => {
-    if (!file) return;
-    try {
-      const asset = await uploadMediaAsset(file);
-      if (target === 'primary') {
-        handleUpdateImageUrl(asset.url);
-      } else if (target === 'hover') {
-        handleUpdateHoverUrl(asset.url);
-      } else if (target === 'gallery') {
-        const currentList = [...(formData.images || [])];
-        currentList.push({
-          url: asset.url,
-          order: currentList.length,
-          focalX: asset.focalX ?? 50,
-          focalY: asset.focalY ?? 20,
-        });
-        setFormData({ ...formData, images: currentList });
-      }
-    } catch (err: any) {
-      alert(err.message || 'File upload failed');
+  /** Routes whatever the shared media picker chose into the right slot. */
+  const handlePickerSelect = (url: string) => {
+    if (isDataUrl(url)) {
+      notify('error', 'Inline base64 images are rejected. Upload the file to the media library instead.');
+      return;
     }
-  };
+    const target = pickerTarget;
+    if (!target) return;
 
-  // Delete image handlers
-  const handleDeletePrimaryImage = () => {
-    const currentList = [...(formData.images || [])];
-    if (currentList.length > 0) {
-      currentList.shift();
+    if (target.kind === 'primary') {
+      handleUpdateImageUrl(url);
+      return;
     }
-    const nextPrimary = currentList[0]?.url || '';
-    setFormData({
-      ...formData,
-      image: nextPrimary,
-      images: currentList,
-    });
-  };
-
-  const handleDeleteHoverImage = () => {
-    setFormData({ ...formData, hoverImage: '' });
-  };
-
-  const handleDeleteGalleryImage = (index: number) => {
-    const currentList = [...(formData.images || [])];
-    currentList.splice(index, 1);
-    setFormData({
-      ...formData,
-      images: currentList,
-      image: currentList[0]?.url || formData.image,
-    });
-  };
-
-  const handleUpdateFocalX = (x: number) => {
-    const updatedImages = [...(formData.images || [])];
-    if (updatedImages[0]) {
-      updatedImages[0] = { ...updatedImages[0], focalX: x };
+    if (target.kind === 'hover') {
+      handleUpdateHoverUrl(url);
+      return;
     }
-    setFormData({
-      ...formData,
-      imagePosition: `${x}% ${focalY}%`,
-      images: updatedImages,
-      cropVariation: cropWithOnModel(`${x}% ${focalY}%`, focalScale),
-    });
-  };
 
-  const handleUpdateFocalY = (y: number) => {
-    const updatedImages = [...(formData.images || [])];
-    if (updatedImages[0]) {
-      updatedImages[0] = { ...updatedImages[0], focalY: y };
+    const list = [...(formData.images || [])];
+    if (target.kind === 'gallery-add') {
+      list.push({ url, order: list.length, alt: undefined });
+      setFormData({ ...formData, images: list.map((img, i) => ({ ...img, order: i })) });
+      notify('success', 'Picture added to the gallery. Save the record to keep it.');
+      return;
     }
+
+    const entry = list[target.index];
+    if (!entry) return;
+    // A different file deserves a clean frame, but keeps its alt text.
+    list[target.index] = { url, order: target.index, alt: entry.alt, isPrimary: target.index === 0 };
     setFormData({
       ...formData,
-      imagePosition: `${focalX}% ${y}%`,
-      images: updatedImages,
-      cropVariation: cropWithOnModel(`${focalX}% ${y}%`, focalScale),
+      images: list,
+      image: target.index === 0 ? url : formData.image,
     });
+    notify('success', 'Picture replaced. Save the record to keep it.');
   };
 
-  const handleUpdateScale = (scale: number) => {
-    setFormData({
-      ...formData,
-      imageScale: scale,
-      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, scale),
-    });
+  /** Titles and current values for the shared picker. */
+  const pickerTitle =
+    pickerTarget?.kind === 'primary'
+      ? 'Choose Primary Picture'
+      : pickerTarget?.kind === 'hover'
+        ? 'Choose Hover Picture'
+        : pickerTarget?.kind === 'gallery-add'
+          ? 'Add Gallery Picture'
+          : pickerTarget
+            ? `Replace Picture #${pickerTarget.index + 1}`
+            : 'Select Media';
+
+  const pickerCurrentUrl =
+    pickerTarget?.kind === 'primary'
+      ? (formData.images?.[0]?.url || formData.image || '')
+      : pickerTarget?.kind === 'hover'
+        ? (formData.hoverImage || '')
+        : pickerTarget?.kind === 'gallery-replace'
+          ? ((formData.images || [])[pickerTarget.index]?.url || '')
+          : '';
+
+  /** Image and title for the shared UniversalImageEditor. */
+  const editorImageUrl =
+    editorTarget?.kind === 'primary'
+      ? (formData.images?.[0]?.url || formData.image || '')
+      : editorTarget?.kind === 'hover'
+        ? (formData.hoverImage || '')
+        : editorTarget
+          ? ((formData.images || [])[editorTarget.index]?.url || '')
+          : '';
+
+  const editorTitle =
+    editorTarget?.kind === 'primary'
+      ? 'Frame the Primary Picture'
+      : editorTarget?.kind === 'hover'
+        ? 'Frame the Hover Picture'
+        : editorTarget
+          ? `Frame Gallery Picture #${editorTarget.index + 1}`
+          : 'Image Frame & Angle Editor';
+
+  /**
+   * Reads the current primary framing and merges a patch into it, so the
+   * ImageEditor parameters and the legacy fields can never drift apart.
+   */
+  const primaryFramingWith = (patch: Partial<ImageFramingParams>): ImageFramingParams => {
+    const entry = (formData.images || [])[0];
+    const base = entry?.framing || formData.framing;
+    return {
+      focalX: patch.focalX ?? base?.focalX ?? entry?.focalX ?? focalX,
+      focalY: patch.focalY ?? base?.focalY ?? entry?.focalY ?? focalY,
+      zoom: patch.zoom ?? base?.zoom ?? entry?.scale ?? focalScale,
+      rotation: patch.rotation ?? base?.rotation ?? entry?.rotation ?? focalRotation,
+      flipH: patch.flipH ?? base?.flipH ?? isFlipped,
+      flipV: patch.flipV ?? base?.flipV ?? false,
+      aspectRatio: patch.aspectRatio ?? base?.aspectRatio ?? toEditorAspect(currentAspectRatio),
+      overrides: patch.overrides !== undefined ? patch.overrides : base?.overrides,
+    };
   };
 
-  const handleUpdateRotation = (rotation: number) => {
+  /**
+   * Writes ImageFramingParams onto images[0].framing AND product.framing, then
+   * mirrors it into imagePosition / imageScale / imageRotation / cropVariation
+   * so older storefront paths keep reading the same values.
+   */
+  const applyPrimaryFraming = (next: ImageFramingParams) => {
+    const position = `${next.focalX}% ${next.focalY}%`;
+    const legacyAspect = toLegacyAspect(next.aspectRatio);
+    const list = [...(formData.images || [])];
+    const url = list[0]?.url || formData.image || '';
+    if (!url || isDataUrl(url)) {
+      notify('error', 'Choose a picture first — only media library images can be framed.');
+      return;
+    }
+    list[0] = {
+      ...(list[0] as NonNullable<(typeof list)[0]>),
+      url,
+      order: 0,
+      isPrimary: true,
+      framing: next,
+      focalX: next.focalX,
+      focalY: next.focalY,
+      scale: next.zoom,
+      rotation: next.rotation,
+      position,
+      aspectRatio: legacyAspect,
+    };
     setFormData({
       ...formData,
-      imageRotation: rotation,
+      images: list,
+      image: url,
+      framing: next,
+      imagePosition: position,
+      imageScale: next.zoom,
+      imageRotation: next.rotation,
+      cropVariation: cropWithOnModel(
+        position,
+        next.zoom,
+        legacyAspectForCrop(next.aspectRatio),
+        Boolean(next.flipH)
+      ),
     } as any);
   };
 
-  const handleToggleFlip = () => {
+  /** Framing for a secondary gallery tile (index > 0). */
+  const applyGalleryFraming = (index: number, next: ImageFramingParams) => {
+    const list = [...(formData.images || [])];
+    if (!list[index]) return;
+    const position = `${next.focalX}% ${next.focalY}%`;
+    list[index] = {
+      ...list[index],
+      framing: next,
+      focalX: next.focalX,
+      focalY: next.focalY,
+      scale: next.zoom,
+      rotation: next.rotation,
+      position,
+      aspectRatio: toLegacyAspect(next.aspectRatio),
+      order: index,
+    };
+    setFormData({ ...formData, images: list });
+  };
+
+  /**
+   * Hover framing: legacy hoverImagePosition / hoverImageRotation always, plus
+   * the full parameter set when the hover picture also lives in the gallery.
+   */
+  const applyHoverFraming = (next: ImageFramingParams) => {
+    const position = `${next.focalX}% ${next.focalY}%`;
+    const list = [...(formData.images || [])];
+    const hoverIdx = list.findIndex((img) => img?.url && img.url === formData.hoverImage);
+    if (hoverIdx >= 0) {
+      list[hoverIdx] = {
+        ...list[hoverIdx],
+        framing: next,
+        focalX: next.focalX,
+        focalY: next.focalY,
+        scale: next.zoom,
+        rotation: next.rotation,
+        position,
+        aspectRatio: toLegacyAspect(next.aspectRatio),
+      };
+    }
     setFormData({
       ...formData,
-      cropVariation: cropWithOnModel(`${focalX}% ${focalY}%`, focalScale, currentAspectRatio as any, !isFlipped),
-    });
+      images: list,
+      hoverImagePosition: position,
+      hoverImageRotation: next.rotation,
+    } as any);
   };
+
+  // ---------------------------------------------------------------
+  // Gallery: reorder, primary swap, hover, delete references
+  // ---------------------------------------------------------------
+  const reorderImages = (from: number, to: number) => {
+    const list = [...(formData.images || [])];
+    if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return;
+    const [moved] = list.splice(from, 1);
+    list.splice(to, 0, moved);
+    const next = list.map((img, idx) => ({ ...img, order: idx, isPrimary: idx === 0 }));
+    setFormData({ ...formData, images: next, image: next[0]?.url || '' });
+  };
+
+  const moveImageBy = (index: number, delta: number) => reorderImages(index, index + delta);
+
+  /** Swaps the target into slot 0 — the previous primary is never destroyed. */
+  const handleSetAsPrimary = (index: number) => {
+    if (index === 0) return;
+    const list = [...(formData.images || [])];
+    const target = list[index];
+    const previous = list[0];
+    if (!target?.url || !previous) return;
+    list[0] = { ...target, order: 0, isPrimary: true };
+    list[index] = { ...previous, order: index, isPrimary: false };
+    setFormData({ ...formData, images: list, image: list[0].url });
+    notify('success', 'Primary picture swapped. The previous primary stays in the gallery.');
+  };
+
+  const handleSetAsHover = (index: number) => {
+    const current = (formData.images || [])[index];
+    if (!current?.url) return;
+    const wasHover = Boolean(current.isHover);
+    const next = (formData.images || []).map((img, i) => ({ ...img, isHover: i === index ? !wasHover : false }));
+    setFormData({ ...formData, images: next, hoverImage: wasHover ? '' : current.url });
+    notify(
+      'success',
+      wasHover
+        ? 'Hover picture cleared.'
+        : 'Hover picture set. Its framing stays stored on that gallery image.'
+    );
+  };
+
+  /** Removes only the reference from this record (the file is kept). */
+  const applyLocalReferenceRemoval = (target: DeleteTarget) => {
+    if (target.kind === 'hover') {
+      setFormData({ ...formData, hoverImage: '' });
+      return;
+    }
+    const list = [...(formData.images || [])];
+    list.splice(target.index, 1);
+    const next = list.map((img, idx) => ({ ...img, order: idx, isPrimary: idx === 0 }));
+    setFormData({ ...formData, images: next, image: next[0]?.url || '' });
+  };
+
+  const openDeleteTarget = (target: DeleteTarget) => {
+    setDeleteError(null);
+    setDeleteAction('idle');
+    if (!target.url || isDataUrl(target.url)) {
+      applyLocalReferenceRemoval(target);
+      notify('success', 'Empty image slot cleared.');
+      return;
+    }
+    setDeleteTarget(target);
+  };
+
+  const handleDeletePrimaryImage = () =>
+    openDeleteTarget({ kind: 'image', index: 0, url: (formData.images || [])[0]?.url || formData.image || '' });
+  const handleDeleteHoverImage = () => openDeleteTarget({ kind: 'hover', url: formData.hoverImage || '' });
+  const handleDeleteGalleryImage = (index: number) =>
+    openDeleteTarget({ kind: 'image', index, url: (formData.images || [])[index]?.url || '' });
+
+  const handleRemoveReference = () => {
+    if (!deleteTarget) return;
+    applyLocalReferenceRemoval(deleteTarget);
+    setDeleteTarget(null);
+    setDeleteUsage(null);
+    notify('success', 'Reference removed from this record. The file stays in the media library.');
+  };
+
+  const handleRemoveEverywhere = async () => {
+    if (!deleteTarget) return;
+    setDeleteAction('working');
+    setDeleteError(null);
+    const res = await removeMediaReferences(deleteTarget.url);
+    if (!res.success) {
+      setDeleteAction('error');
+      setDeleteError(res.error || 'Could not remove every reference.');
+      return;
+    }
+    applyLocalReferenceRemoval(deleteTarget);
+    setDeleteTarget(null);
+    setDeleteUsage(null);
+    setDeleteAction('idle');
+    notify(
+      'success',
+      'Reference removed from every product, cover and CMS section. The file stays in the media library.'
+    );
+  };
+
+  const handleDeletePermanently = async () => {
+    if (!deleteTarget || checkingUsage) return;
+    const asset = libraryAssets.find((a) => a.url === deleteTarget.url);
+    if (!asset) {
+      setDeleteAction('error');
+      setDeleteError(
+        'This file is not tracked in the media library, so it cannot be deleted from Storage. Remove the reference instead.'
+      );
+      return;
+    }
+    setDeleteAction('working');
+    setDeleteError(null);
+    if (deleteUsage && deleteUsage.totalUses > 0) {
+      const rm = await removeMediaReferences(deleteTarget.url);
+      if (!rm.success) {
+        setDeleteAction('error');
+        setDeleteError(rm.error || 'Could not remove every reference first.');
+        return;
+      }
+    }
+    const res = await deleteMediaAssetPermanently(asset);
+    if (!res.success) {
+      setDeleteAction('error');
+      setDeleteError(res.error || 'Failed to delete the file from Storage.');
+      return;
+    }
+    setLibraryAssets((prev) => prev.filter((a) => a.id !== asset.id));
+    applyLocalReferenceRemoval(deleteTarget);
+    setDeleteTarget(null);
+    setDeleteUsage(null);
+    setDeleteAction('idle');
+    notify('success', 'File deleted permanently from the media library.');
+  };
+
+  // ---------------------------------------------------------------
+  // Per-image alt text (also written back to the media library asset)
+  // ---------------------------------------------------------------
+  const openAltEditor = (index: number) => {
+    const entry = (formData.images || [])[index];
+    if (!entry) return;
+    setAltDraftEn(entry.alt?.en || '');
+    setAltDraftFi(entry.alt?.fi || '');
+    setAltEditIndex(index);
+  };
+
+  const handleSaveAlt = async () => {
+    if (altEditIndex === null) return;
+    const index = altEditIndex;
+    const list = [...(formData.images || [])];
+    if (!list[index]) {
+      setAltEditIndex(null);
+      return;
+    }
+    const en = altDraftEn.trim();
+    const fi = altDraftFi.trim() || en;
+    if (!en && !fi) {
+      notify('error', 'Alt text cannot be empty.');
+      return;
+    }
+    list[index] = { ...list[index], alt: { en: en || fi, fi: fi || en } };
+    const savedUrl = list[index].url;
+    setFormData({ ...formData, images: list });
+    setAltEditIndex(null);
+
+    const asset = libraryAssets.find((a) => a.url === savedUrl);
+    if (!asset) {
+      notify('success', 'Alt text saved on this record.');
+      return;
+    }
+    setIsSavingAlt(true);
+    const res = await updateMediaAsset(asset.id, { alt: en || fi });
+    setIsSavingAlt(false);
+    if (res.success) {
+      notify('success', 'Alt text saved on this record and in the media library.');
+    } else {
+      notify('error', `Alt text saved on this record, but the media library update failed: ${res.error}`);
+    }
+  };
+
+
+  // Inline precision controls — every change is mirrored into BOTH the
+  // ImageFramingParams (images[0].framing + product.framing) and the legacy
+  // fields (imagePosition / imageScale / imageRotation / cropVariation).
+  const handleUpdateFocalX = (x: number) => applyPrimaryFraming(primaryFramingWith({ focalX: x }));
+  const handleUpdateFocalY = (y: number) => applyPrimaryFraming(primaryFramingWith({ focalY: y }));
+  const handleUpdateScale = (scale: number) => applyPrimaryFraming(primaryFramingWith({ zoom: scale }));
+  const handleUpdateRotation = (rotation: number) =>
+    applyPrimaryFraming(primaryFramingWith({ rotation }));
+  const handleToggleFlip = () => applyPrimaryFraming(primaryFramingWith({ flipH: !isFlipped }));
 
   const handleFocalPointClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const x = Math.max(0, Math.min(100, Math.round(((e.clientX - rect.left) / rect.width) * 100)));
     const y = Math.max(0, Math.min(100, Math.round(((e.clientY - rect.top) / rect.height) * 100)));
-
-    const updatedImages = [...(formData.images || [])];
-    if (updatedImages[0]) {
-      updatedImages[0] = {
-        ...updatedImages[0],
-        focalX: x,
-        focalY: y,
-      };
-      setFormData({
-        ...formData,
-        imagePosition: `${x}% ${y}%`,
-        images: updatedImages,
-        cropVariation: cropWithOnModel(`${x}% ${y}%`, focalScale),
-      });
-    }
+    applyPrimaryFraming(primaryFramingWith({ focalX: x, focalY: y }));
   };
 
-  // Open modal adjuster for primary or hover image
+  const handleResetPrimaryFraming = () =>
+    applyPrimaryFraming(
+      primaryFramingWith({ focalX: 50, focalY: 20, zoom: 1.05, rotation: 0, flipH: false, flipV: false })
+    );
+
+  /** Opens the shared UniversalImageEditor for the primary or hover picture. */
   const handleOpenAdjuster = (target: 'primary' | 'hover') => {
-    setAdjustingTarget(target);
-    setIsAdjusterModalOpen(true);
-  };
-
-  // Apply results from modal adjuster
-  const handleApplyAdjusterResult = (res: FrameAdjusterResult) => {
-    if (adjustingTarget === 'primary') {
-      const updatedImages = [...(formData.images || [])];
-      if (updatedImages[0]) {
-        updatedImages[0] = {
-          ...updatedImages[0],
-          focalX: res.focalX,
-          focalY: res.focalY,
-          scale: res.scale,
-          rotation: res.rotation,
-        };
-      }
-      setFormData({
-        ...formData,
-        imagePosition: res.position,
-        imageScale: res.scale,
-        imageRotation: res.rotation,
-        images: updatedImages,
-        cropVariation: cropWithOnModel(res.position, res.scale, res.aspectRatio as any, res.flipped),
-      } as any);
-    } else {
-      setFormData({
-        ...formData,
-        hoverImagePosition: res.position,
-        hoverImageRotation: res.rotation,
-      } as any);
+    const url = target === 'primary' ? activeImage?.url || formData.image || '' : hoverUrl;
+    if (!url || isDataUrl(url)) {
+      notify('error', 'Choose a picture first — only media library images can be framed.');
+      return;
     }
+    setEditorTarget({ kind: target });
   };
 
-  const { saveProduct, deleteProduct } = useStorefrontData();
+  /** Gallery tiles are editable too (this used to be primary/hover only). */
+  const handleOpenGalleryEditor = (index: number) => {
+    const url = (formData.images || [])[index]?.url || '';
+    if (!url || isDataUrl(url)) {
+      notify('error', 'Choose a picture first — only media library images can be framed.');
+      return;
+    }
+    setEditorTarget(index === 0 ? { kind: 'primary' } : { kind: 'gallery', index });
+  };
+
+  /** Persists the UniversalImageEditor result instead of discarding it. */
+  const handleApplyEditorFraming = (framing: ImageFramingParams) => {
+    const target = editorTarget;
+    if (!target) return;
+    if (target.kind === 'primary') {
+      applyPrimaryFraming(framing);
+    } else if (target.kind === 'gallery') {
+      if (target.index === 0) applyPrimaryFraming(framing);
+      else applyGalleryFraming(target.index, framing);
+    } else {
+      applyHoverFraming(framing);
+    }
+    notify('success', 'Framing applied and stored on this record.');
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
 
     const productId = product?.id || `prod-${Date.now()}`;
+    const normalizedImages = galleryImages.map((img, idx) => ({
+      ...img,
+      order: idx,
+      isPrimary: idx === 0,
+    }));
+    const primaryEntry = normalizedImages[0];
+    const resolvedPrimary = primaryUrl === PLACEHOLDER_IMG ? '' : primaryUrl;
     const cleanProduct: Product = {
       ...(formData as Product),
       id: productId,
-      image: primaryUrl,
-      hoverImage: hoverUrl || primaryUrl,
+      images: normalizedImages,
+      image: resolvedPrimary,
+      hoverImage: hoverUrl || resolvedPrimary,
+      // Non-destructive ImageEditor result (primary picture).
+      framing: primaryEntry?.framing || formData.framing,
       imagePosition: `${focalX}% ${focalY}%`,
       imageScale: focalScale,
       imageRotation: focalRotation,
@@ -363,7 +868,17 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
     };
 
     try {
-      await saveProduct(cleanProduct);
+      let saved = await saveProduct(cleanProduct);
+      if (!saved) {
+        // The gallery framing lives inside `images` (jsonb) and always saves.
+        // Retry without the optional product-level columns so records still
+        // persist on a schema that has not been migrated for them yet.
+        const { framing, imageRotation, hoverImageRotation, ...rest } = cleanProduct;
+        saved = await saveProduct(rest as Product);
+      }
+      if (!saved) {
+        throw new Error('The product record could not be written to the database.');
+      }
 
       try {
         await logAuditEvent(
@@ -499,7 +1014,34 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           {saveSuccess && (
             <div className="p-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
-              <span>Product successfully updated in Firestore archive!</span>
+              <span>Product record saved to the archive.</span>
+            </div>
+          )}
+
+          {notice && (
+            <div
+              className={`p-3 text-xs border flex items-center gap-2 ${
+                notice.type === 'success'
+                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                  : 'text-rose-700 bg-rose-50 border-rose-200'
+              }`}
+            >
+              {notice.type === 'success' ? (
+                <Check className="w-4 h-4 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 shrink-0" />
+              )}
+              <span>{notice.text}</span>
+            </div>
+          )}
+
+          {dataUrlStripped && (
+            <div className="p-3 text-xs text-black bg-neutral-100 border border-black/20 flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>
+                Stored inline (base64) image data was cleared from this record — pick the pictures again
+                from the media library so nothing is saved as a data URL.
+              </span>
             </div>
           )}
 
@@ -655,38 +1197,6 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           {/* TAB 2: MEDIA, IMAGE URLS, DEVICE FILE UPLOADS & FRAME/ANGLE ADJUSTMENT */}
           {activeTab === 'media' && (
             <div className="space-y-6">
-              {/* Hidden file inputs for device file uploads */}
-              <input
-                ref={primaryFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  handleDeviceFileUpload(e.target.files?.[0], 'primary');
-                  e.target.value = '';
-                }}
-                className="hidden"
-              />
-              <input
-                ref={hoverFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  handleDeviceFileUpload(e.target.files?.[0], 'hover');
-                  e.target.value = '';
-                }}
-                className="hidden"
-              />
-              <input
-                ref={galleryFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  handleDeviceFileUpload(e.target.files?.[0], 'gallery');
-                  e.target.value = '';
-                }}
-                className="hidden"
-              />
-
               {/* 1. Primary Image Management Card */}
               <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between border-b border-black/10 pb-2.5">
@@ -699,11 +1209,11 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => primaryFileInputRef.current?.click()}
+                      onClick={() => setPickerTarget({ kind: 'primary' })}
                       className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                     >
                       <Upload className="w-3 h-3" />
-                      <span>Upload from Device</span>
+                      <span>Upload / Choose</span>
                     </button>
                     <button
                       type="button"
@@ -751,13 +1261,13 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   <div className="sm:col-span-9 space-y-3">
                     <div>
                       <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
-                        Primary Image URL (or upload local file above):
+                        Primary Image URL:
                       </label>
                       <input
                         type="text"
                         value={primaryUrl}
                         onChange={(e) => handleUpdateImageUrl(e.target.value)}
-                        placeholder="https://... or data:image/..."
+                        placeholder="https://..."
                         className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
                       />
                     </div>
@@ -797,11 +1307,11 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => hoverFileInputRef.current?.click()}
+                      onClick={() => setPickerTarget({ kind: 'hover' })}
                       className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
                     >
                       <Upload className="w-3 h-3" />
-                      <span>Upload from Device</span>
+                      <span>Upload / Choose</span>
                     </button>
                     {hoverUrl && (
                       <>
@@ -851,7 +1361,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       type="text"
                       value={hoverUrl}
                       onChange={(e) => handleUpdateHoverUrl(e.target.value)}
-                      placeholder="https://... or data:image/..."
+                      placeholder="https://..."
                       className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
                     />
                   </div>
@@ -871,48 +1381,163 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
                   <button
                     type="button"
-                    onClick={() => galleryFileInputRef.current?.click()}
+                    onClick={() => setPickerTarget({ kind: 'gallery-add' })}
                     className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-mono bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Upload Picture from Device</span>
+                    <span>Add Picture</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
-                  {(formData.images || []).map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="relative border border-black/15 bg-white p-1 group shadow-2xs"
-                    >
-                      <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 relative">
-                        <img src={img.url} alt={`Gallery ${idx + 1}`} className="w-full h-full object-cover" />
-                        <span className="absolute top-1 left-1 bg-black text-white text-[8px] font-mono px-1 py-0.5">
-                          {idx === 0 ? 'PRIMARY' : `#${idx + 1}`}
-                        </span>
+                {(formData.images || []).length === 0 ? (
+                  <p className="text-[11px] text-black/50 font-sans pt-2">
+                    No pictures on this record yet. Use Add Picture to upload from a device, pick from the
+                    media library or paste a URL.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
+                    {(formData.images || []).map((img, idx) => (
+                      <div
+                        key={`${img.url}-${idx}`}
+                        draggable={idx !== 0}
+                        onDragStart={() => setDragIndex(idx)}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          if (dragIndex !== null && dragIndex !== idx) setDragOverIndex(idx);
+                        }}
+                        onDragEnd={() => {
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (dragIndex !== null) reorderImages(dragIndex, idx);
+                          setDragIndex(null);
+                          setDragOverIndex(null);
+                        }}
+                        className={`relative border bg-white p-1 group shadow-2xs transition-colors ${
+                          dragOverIndex === idx ? 'border-black' : 'border-black/15'
+                        } ${idx === 0 ? '' : 'cursor-grab active:cursor-grabbing'}`}
+                      >
+                        <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 relative">
+                          <img
+                            src={img.url}
+                            alt={img.alt?.en || `Gallery ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-1 left-1 bg-black text-white text-[8px] font-mono px-1 py-0.5">
+                            {idx === 0 ? 'PRIMARY' : `#${idx + 1}`}
+                          </span>
+                          {img.isHover && (
+                            <span className="absolute top-1 right-1 bg-white text-black text-[8px] font-mono px-1 py-0.5 border border-black">
+                              HOVER
+                            </span>
+                          )}
+                          {/* Hover-only actions */}
+                          <div className="absolute inset-x-0 bottom-0 hidden group-hover:flex group-focus-within:flex flex-wrap items-center justify-center gap-1 bg-black/75 p-1">
+                            {idx !== 0 && (
+                              <button
+                                type="button"
+                                onClick={() => moveImageBy(idx, -1)}
+                                className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                                title="Move earlier"
+                                aria-label={`Move image ${idx + 1} earlier`}
+                              >
+                                <ChevronLeft className="w-3 h-3" />
+                              </button>
+                            )}
+                            {idx !== 0 && idx !== (formData.images || []).length - 1 && (
+                              <button
+                                type="button"
+                                onClick={() => moveImageBy(idx, 1)}
+                                className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                                title="Move later"
+                                aria-label={`Move image ${idx + 1} later`}
+                              >
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            )}
+                            {idx !== 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleSetAsPrimary(idx)}
+                                className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                                title="Swap into primary slot"
+                                aria-label={`Make image ${idx + 1} the primary picture`}
+                              >
+                                <Star className="w-3 h-3" />
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleSetAsHover(idx)}
+                              className={`p-1 transition-colors cursor-pointer ${
+                                img.isHover ? 'bg-white text-black' : 'text-white hover:bg-white hover:text-black'
+                              }`}
+                              title={img.isHover ? 'Clear hover picture' : 'Use as hover picture'}
+                              aria-label={
+                                img.isHover
+                                  ? `Clear hover picture from image ${idx + 1}`
+                                  : `Use image ${idx + 1} as hover picture`
+                              }
+                            >
+                              <Eye className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenGalleryEditor(idx)}
+                              className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                              title="Adjust frame"
+                              aria-label={`Adjust frame of image ${idx + 1}`}
+                            >
+                              <Compass className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setPickerTarget({ kind: 'gallery-replace', index: idx })}
+                              className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                              title="Replace picture"
+                              aria-label={`Replace image ${idx + 1}`}
+                            >
+                              <ImagePlus className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => openAltEditor(idx)}
+                              className="p-1 text-white hover:bg-white hover:text-black transition-colors cursor-pointer"
+                              title="Edit alt text"
+                              aria-label={`Edit alt text of image ${idx + 1}`}
+                            >
+                              <Type className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteGalleryImage(idx)}
+                              className="p-1 text-white hover:bg-white hover:text-red-600 transition-colors cursor-pointer"
+                              title="Delete image"
+                              aria-label={`Delete image ${idx + 1}`}
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between mt-1 pt-1 border-t border-black/10">
+                          <span className="flex items-center gap-1 text-[9px] uppercase tracking-wider font-mono text-black/60">
+                            <GripVertical className="w-3 h-3" />
+                            {idx === 0 ? 'Primary' : 'Drag'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => openAltEditor(idx)}
+                            className="text-[9px] uppercase tracking-wider font-mono text-black hover:underline cursor-pointer"
+                          >
+                            {img.alt?.en ? 'Alt ✓' : 'Alt'}
+                          </button>
+                        </div>
                       </div>
-                      <div className="flex items-center justify-between mt-1 pt-1 border-t border-black/10">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            handleUpdateImageUrl(img.url);
-                          }}
-                          className="text-[9px] uppercase tracking-wider font-mono text-black hover:underline cursor-pointer"
-                        >
-                          Make Main
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteGalleryImage(idx)}
-                          className="text-red-600 hover:text-red-800 p-0.5 cursor-pointer"
-                          title="Delete image"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* 4. Complete Inline Frame & Angle Adjuster Panel */}
@@ -1504,25 +2129,187 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         </div>
       </div>
 
-      {/* Fullscreen Interactive Best Frame & Angle Modal */}
-      <ImageFrameAdjusterModal
-        isOpen={isAdjusterModalOpen}
-        imageUrl={adjustingTarget === 'primary' ? primaryUrl : (hoverUrl || primaryUrl)}
-        title={adjustingTarget === 'primary' ? 'Adjust Primary Garment Frame & Angle' : 'Adjust Hover Model Picture Frame & Angle'}
-        initialFocalX={focalX}
-        initialFocalY={focalY}
-        initialScale={focalScale}
-        initialRotation={focalRotation}
-        initialAspectRatio={currentAspectRatio}
-        initialFlipped={isFlipped}
-        onClose={() => setIsAdjusterModalOpen(false)}
-        onApply={handleApplyAdjusterResult}
-        onUploadFile={(dataUrl) => {
-          if (adjustingTarget === 'primary') handleUpdateImageUrl(dataUrl);
-          else handleUpdateHoverUrl(dataUrl);
-        }}
-        onDeleteImage={adjustingTarget === 'primary' ? handleDeletePrimaryImage : handleDeleteHoverImage}
+      {/* Shared media picker: device upload (Supabase Storage), library, paste URL */}
+      <UniversalMediaPickerModal
+        isOpen={pickerTarget !== null}
+        onClose={() => setPickerTarget(null)}
+        onSelect={handlePickerSelect}
+        title={pickerTitle}
+        allowedKind="image"
+        currentUrl={pickerCurrentUrl}
       />
+
+      {/* Shared framing editor — the result is persisted on this record */}
+      <UniversalImageEditorModal
+        isOpen={editorTarget !== null}
+        imageUrl={editorImageUrl}
+        title={editorTitle}
+        initialFraming={editorInitialFraming}
+        onClose={() => setEditorTarget(null)}
+        onApply={handleApplyEditorFraming}
+      />
+
+      {/* Alt text for one gallery picture */}
+      {altEditIndex !== null && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit alt text"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setAltEditIndex(null);
+          }}
+        >
+          <div className="w-full max-w-md bg-white border border-black p-5 space-y-4 shadow-2xl">
+            <div className="border-b border-black/10 pb-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                <Type className="w-4 h-4" />
+                <span>Alt Text — Picture #{altEditIndex + 1}</span>
+              </h3>
+              <p className="text-[11px] text-black/60 mt-1">
+                Describes the picture for search engines and screen readers.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                  English (required)
+                </label>
+                <input
+                  type="text"
+                  value={altDraftEn}
+                  onChange={(e) => setAltDraftEn(e.target.value)}
+                  placeholder="e.g. Charcoal wool overcoat, front view"
+                  className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                  Finnish
+                </label>
+                <input
+                  type="text"
+                  value={altDraftFi}
+                  onChange={(e) => setAltDraftFi(e.target.value)}
+                  placeholder="e.g. Hiilenharmaa villapaita, etukuv"
+                  className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setAltEditIndex(null)}
+                className="px-3 py-2 text-[11px] uppercase font-mono border border-black/20 hover:border-black cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAlt}
+                disabled={isSavingAlt}
+                className="px-3 py-2 text-[11px] uppercase font-mono bg-black text-white hover:bg-neutral-800 disabled:opacity-50 cursor-pointer"
+              >
+                {isSavingAlt ? 'Saving…' : 'Save Alt Text'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Usage-aware removal: never break another storefront image by accident */}
+      {deleteTarget && (
+        <div
+          className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Remove picture"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) setDeleteTarget(null);
+          }}
+        >
+          <div className="w-full max-w-lg bg-white border border-black p-5 space-y-4 shadow-2xl">
+            <div className="border-b border-black/10 pb-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                <Trash2 className="w-4 h-4" />
+                <span>Remove This Picture?</span>
+              </h3>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <p className="text-black/70">
+                Choose how far the removal should go. Removing a reference never deletes the file, so no
+                other storefront image can break.
+              </p>
+
+              <div className="p-3 border border-black/10 bg-neutral-50/70">
+                <p className="text-[10px] uppercase tracking-wider text-black/60 mb-1">Where it is used</p>
+                {checkingUsage ? (
+                  <p className="text-black/60">Checking usage…</p>
+                ) : deleteUsage ? (
+                  deleteUsage.totalUses === 0 ? (
+                    <p className="text-black/70">No data yet — this file is not referenced anywhere else.</p>
+                  ) : (
+                    <ul className="space-y-1 text-black/70">
+                      {deleteUsage.productTitles.length > 0 && (
+                        <li>
+                          Products: {deleteUsage.productTitles.slice(0, 6).join(', ')}
+                          {deleteUsage.productTitles.length > 6 ? '…' : ''}
+                        </li>
+                      )}
+                      {deleteUsage.heroUsage && <li>Home hero section</li>}
+                      {deleteUsage.contentSections.length > 0 && (
+                        <li>Content sections: {deleteUsage.contentSections.join(', ')}</li>
+                      )}
+                    </ul>
+                  )
+                ) : (
+                  <p className="text-black/50">Could not load data</p>
+                )}
+              </div>
+
+              {deleteError && (
+                <p className="text-[11px] text-red-700 border border-red-200 bg-red-50 p-2">{deleteError}</p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-black/10">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="px-3 py-2 text-[11px] uppercase font-mono border border-black/20 hover:border-black cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveReference}
+                className="px-3 py-2 text-[11px] uppercase font-mono border border-black hover:bg-black hover:text-white cursor-pointer"
+              >
+                Remove From This Record
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveEverywhere}
+                disabled={deleteAction === 'working' || checkingUsage}
+                className="px-3 py-2 text-[11px] uppercase font-mono border border-black bg-black text-white hover:bg-neutral-800 disabled:opacity-50 cursor-pointer"
+              >
+                {deleteAction === 'working' ? 'Working…' : 'Remove Everywhere'}
+              </button>
+              <button
+                type="button"
+                onClick={handleDeletePermanently}
+                disabled={deleteAction === 'working' || checkingUsage}
+                className="px-3 py-2 text-[11px] uppercase font-mono border border-red-300 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 disabled:opacity-50 cursor-pointer"
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -128,19 +128,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             ? slide.mobileMedia || slide.desktopMedia
             : slide.desktopMedia || slide.mobileMedia;
 
-          const isVideo =
-            activeMedia?.kind === 'video' ||
-            slide.type === 'video' ||
-            Boolean(activeMedia?.url && activeMedia.url.match(/\.(mp4|webm)$/i));
-
           const mediaUrl =
             activeMedia?.url ||
             (slide as any).src ||
             NEUTRAL_PLACEHOLDER_IMG;
 
-          const posterUrl = activeMedia?.posterUrl || (slide as any).poster;
+          const videoUrlLike = /\.(mp4|webm)(\?.*)?$/i.test(mediaUrl);
 
-          const framing = activeMedia?.framing;
+          // Per-device media carries the authoritative kind (with the legacy
+          // slide type as fallback), so a desktop video is never rendered as a
+          // broken <img> on mobile and vice versa.
+          const isVideo =
+            videoUrlLike ||
+            (activeMedia?.kind ? activeMedia.kind === 'video' : slide.type === 'video');
+
+          const posterUrl = activeMedia?.poster || (slide as any).poster;
+
+          const framing = activeMedia?.framing || slide.framing;
           const placementOverride = framing?.overrides?.[isMobileViewport ? 'heroMobile' : 'heroDesktop'];
 
           const focalX = placementOverride?.focalX ?? framing?.focalX ?? slide.focalX ?? 50;
@@ -182,13 +186,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               ) : (
                 <img
                   src={mediaUrl}
-                  alt="Zejesh Hero Presentation"
+                  alt={activeMedia?.alt || 'Zejesh Hero Presentation'}
                   className="w-full h-full object-cover pointer-events-none transition-transform duration-700 ease-out"
                   style={{
                     objectPosition: `${focalX}% ${focalY}%`,
                     transform: transformStyle || undefined,
                   }}
                   draggable={false}
+                  onError={(e) => {
+                    // A configured URL that fails resolves to the neutral
+                    // placeholder — never a broken-image icon.
+                    const el = e.currentTarget;
+                    if (el.dataset.fallback !== '1') {
+                      el.dataset.fallback = '1';
+                      el.src = NEUTRAL_PLACEHOLDER_IMG;
+                    }
+                  }}
                 />
               )}
             </div>

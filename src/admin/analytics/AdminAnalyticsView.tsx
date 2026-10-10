@@ -14,23 +14,45 @@ import {
   ScatterChart,
   Scatter,
   ZAxis,
-  Legend,
   ComposedChart,
-  CartesianGrid,
-  ReferenceLine,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
 } from 'recharts';
-import { Download, Search, Filter, RefreshCw, Layers, ArrowUpRight, TrendingUp, Activity, Check } from 'lucide-react';
+import { Download, Search } from 'lucide-react';
 
 interface AdminAnalyticsViewProps {
   products: Product[];
   dailyStats: DailyStat[];
   orders?: Order[];
 }
+
+// Total stock for a product, derived only from catalog rows.
+const stockOf = (p: Product): number =>
+  p.variants ? p.variants.reduce((acc, v) => acc + v.stock, 0) : p.stock || 0;
+
+// Honest placeholder for a trajectory whose source data is not recorded.
+interface NoDataTrajectoryProps {
+  n: number;
+  title: string;
+  reason: string;
+  wide?: boolean;
+}
+
+const NoDataTrajectory: React.FC<NoDataTrajectoryProps> = ({ n, title, reason, wide = false }) => (
+  <div className={`space-y-3 pb-6 border-b border-black/10 ${wide ? 'col-span-1 lg:col-span-2' : ''}`}>
+    <div className="flex justify-between items-baseline">
+      <div>
+        <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">
+          Trajectory {String(n).padStart(2, '0')}
+        </span>
+        <h3 className="font-editorial text-2xl font-normal text-black">{title}</h3>
+      </div>
+      <span className="text-[11px] font-mono text-black/60">No data yet</span>
+    </div>
+    <div className="h-64 w-full pt-2 flex flex-col items-center justify-center gap-2 border border-black/10">
+      <span className="text-[11px] uppercase tracking-[0.2em] text-black/40">No data yet</span>
+      <span className="text-[10px] font-mono text-black/40 text-center max-w-sm">{reason}</span>
+    </div>
+  </div>
+);
 
 export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   products,
@@ -49,38 +71,35 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   }, [orders]);
 
   const totalOrders = orders.length;
-  const totalAddToBags = orders.reduce((sum, o) => sum + o.items.reduce((s, it) => s + it.quantity, 0), 0);
+  const totalAddToBags = orders.reduce(
+    (sum, o) => sum + o.items.reduce((s, it) => s + (it.quantity || 0), 0),
+    0
+  );
   const effectiveProducts = useMemo(() => {
     return products || [];
   }, [products]);
 
   const totalCatalogStock = useMemo(() => {
-    return effectiveProducts.reduce((acc, p) => {
-      const variantStock = p.variants ? p.variants.reduce((vAcc, v) => vAcc + v.stock, 0) : (p.stock || 0);
-      return acc + variantStock;
-    }, 0);
+    return effectiveProducts.reduce((acc, p) => acc + stockOf(p), 0);
   }, [effectiveProducts]);
 
-  const averageProductPrice = useMemo(() => {
-    if (effectiveProducts.length === 0) return 0;
-    return Math.round(effectiveProducts.reduce((acc, p) => acc + p.price, 0) / effectiveProducts.length);
+  const totalCatalogValue = useMemo(() => {
+    return effectiveProducts.reduce((acc, p) => acc + stockOf(p) * p.price, 0);
   }, [effectiveProducts]);
-
-  const aov = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   // Real product sales map
   const productSalesMap = useMemo(() => {
     const map: Record<string, number> = {};
     for (const ord of orders) {
       for (const it of ord.items) {
-        map[it.productId] = (map[it.productId] || 0) + it.quantity;
+        map[it.productId] = (map[it.productId] || 0) + (it.quantity || 0);
       }
     }
     return map;
   }, [orders]);
 
   // ==========================================
-  // DENSE QUANTITATIVE ENGINE (ANCHORED STRICTLY IN DATABASE DATA)
+  // DAILY SERIES — ONLY REAL DB FIELDS
   // ==========================================
   const fortyPoints = useMemo(() => {
     if (dailyStats && dailyStats.length > 0) {
@@ -88,7 +107,6 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         const rev = stat.revenue || 0;
         const ords = stat.orders || 0;
         const sessions = stat.visitors || 0;
-        const aovVal = ords > 0 ? Math.round(rev / ords) : 0;
         return {
           index: idx + 1,
           day: stat.date ? stat.date.slice(5) : `D${idx + 1}`,
@@ -96,20 +114,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
           revenue: rev,
           orders: ords,
           sessions,
-          aov: aovVal,
-          ema12: rev,
-          upperBand: Math.round(rev * 1.15),
-          lowerBand: Math.round(rev * 0.85),
-          volatility: 0,
-          latencyP50: 0,
-          latencyP90: 0,
-          latencyP99: 0,
-          marginEur: Math.round(rev * 0.65),
-          cartRecoveryAlpha: 0,
-          rpv: sessions > 0 ? +(rev / sessions).toFixed(2) : 0,
-          returnRate: 0,
-          fulfillmentHours: 0,
-          scrapYield: 100,
+          aov: ords > 0 ? Math.round(rev / ords) : 0,
         };
       });
     }
@@ -123,37 +128,66 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         dateMap[d].orders += 1;
       });
       const entries = Object.entries(dateMap).sort(([a], [b]) => a.localeCompare(b));
-      return entries.map(([date, d], idx) => {
-        const aovVal = d.orders > 0 ? Math.round(d.revenue / d.orders) : 0;
-        return {
-          index: idx + 1,
-          day: date.slice(5) || date,
-          date,
-          revenue: d.revenue,
-          orders: d.orders,
-          sessions: d.orders * 4,
-          aov: aovVal,
-          ema12: d.revenue,
-          upperBand: Math.round(d.revenue * 1.15),
-          lowerBand: Math.round(d.revenue * 0.85),
-          volatility: 0,
-          latencyP50: 0,
-          latencyP90: 0,
-          latencyP99: 0,
-          marginEur: Math.round(d.revenue * 0.65),
-          cartRecoveryAlpha: 0,
-          rpv: +(d.revenue / Math.max(1, d.orders * 4)).toFixed(2),
-          returnRate: 0,
-          fulfillmentHours: 0,
-          scrapYield: 100,
-        };
-      });
+      return entries.map(([date, d], idx) => ({
+        index: idx + 1,
+        day: date.slice(5) || date,
+        date,
+        revenue: d.revenue,
+        orders: d.orders,
+        // No visitor/session source exists outside dailyStats — reported as 0.
+        sessions: 0,
+        aov: d.orders > 0 ? Math.round(d.revenue / d.orders) : 0,
+      }));
     }
 
     return [];
   }, [dailyStats, orders]);
 
-  // Category quantitative data
+  // Date range actually slices the recorded series (no synthetic data).
+  const displayPoints = useMemo(() => {
+    const sorted = [...fortyPoints].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const limit = dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : 40;
+    return sorted.slice(-limit).map((p, i) => ({ ...p, index: i + 1 }));
+  }, [fortyPoints, dateRange]);
+
+  const rangeRevenue = useMemo(
+    () => displayPoints.reduce((s, p) => s + p.revenue, 0),
+    [displayPoints]
+  );
+  const rangeOrders = useMemo(
+    () => displayPoints.reduce((s, p) => s + p.orders, 0),
+    [displayPoints]
+  );
+  const rangeAov = rangeOrders > 0 ? Math.round(rangeRevenue / rangeOrders) : 0;
+  const avgDailyRevenue =
+    displayPoints.length > 0 ? Math.round(rangeRevenue / displayPoints.length) : 0;
+
+  // Visitor/session counts exist only in dailyStats rows.
+  const hasSessionData = useMemo(
+    () => dailyStats.some((d) => (d.visitors || 0) > 0),
+    [dailyStats]
+  );
+
+  // Revenue per recorded visitor — only meaningful when sessions are recorded.
+  const rpvSeries = useMemo(
+    () =>
+      displayPoints.map((p) => ({
+        ...p,
+        rpv: p.sessions > 0 ? +(p.revenue / p.sessions).toFixed(2) : 0,
+      })),
+    [displayPoints]
+  );
+
+  // Cumulative run-rate computed from recorded daily revenue.
+  const cumulativeSeries = useMemo(() => {
+    let acc = 0;
+    return displayPoints.map((p) => {
+      acc += p.revenue;
+      return { day: p.day, cumulative: acc };
+    });
+  }, [displayPoints]);
+
+  // Category quantitative data (stock, units sold and value from catalog + orders)
   const categoryQuant = useMemo(() => {
     const cats: Record<string, { count: number; stock: number; sold: number; value: number }> = {
       naiset: { count: 0, stock: 0, sold: 0, value: 0 },
@@ -164,7 +198,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
       const c = p.category || 'naiset';
       if (!cats[c]) cats[c] = { count: 0, stock: 0, sold: 0, value: 0 };
       cats[c].count += 1;
-      const st = p.variants ? p.variants.reduce((a, v) => a + v.stock, 0) : (p.stock || 0);
+      const st = stockOf(p);
       cats[c].stock += st;
       const s = productSalesMap[p.id] || 0;
       cats[c].sold += s;
@@ -178,80 +212,98 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
       count: data.count,
       sold: data.sold,
       capitalEur: data.value,
-      turnoverRatio: +(data.stock > 0 ? (data.sold / data.stock).toFixed(2) : '0.15'),
+      turnoverRatio: data.stock > 0 ? +(data.sold / data.stock).toFixed(2) : 0,
     }));
   }, [effectiveProducts, productSalesMap]);
 
-  // Size distribution data (XS to XL)
+  // Size distribution: stock from variants, demand from recorded order line items
   const sizeQuant = useMemo(() => {
-    const sizes: Record<string, { size: string; stock: number; demand: number; velocity: number }> = {
-      XS: { size: 'XS', stock: 0, demand: 4, velocity: 1.2 },
-      S: { size: 'S', stock: 0, demand: 18, velocity: 3.4 },
-      M: { size: 'M', stock: 0, demand: 32, velocity: 5.8 },
-      L: { size: 'L', stock: 0, demand: 24, velocity: 4.1 },
-      XL: { size: 'XL', stock: 0, demand: 9, velocity: 1.9 },
+    const sizes: Record<string, { size: string; stock: number; sold: number }> = {
+      XS: { size: 'XS', stock: 0, sold: 0 },
+      S: { size: 'S', stock: 0, sold: 0 },
+      M: { size: 'M', stock: 0, sold: 0 },
+      L: { size: 'L', stock: 0, sold: 0 },
+      XL: { size: 'XL', stock: 0, sold: 0 },
     };
     effectiveProducts.forEach((p) => {
       (p.variants || []).forEach((v) => {
-        const s = v.size.toUpperCase();
+        const s = (v.size || '').toUpperCase();
         if (sizes[s]) {
           sizes[s].stock += v.stock;
         }
       });
     });
+    orders.forEach((o) => {
+      (o.items || []).forEach((it) => {
+        const s = (it.size || '').toUpperCase();
+        if (sizes[s]) sizes[s].sold += it.quantity || 0;
+      });
+    });
     return Object.values(sizes);
-  }, [effectiveProducts]);
+  }, [effectiveProducts, orders]);
 
-  // Scatter product engagement vector (40 items or all products)
+  // Product scatter: units sold vs stock on hand (price as bubble size)
   const productScatterData = useMemo(() => {
-    return effectiveProducts.slice(0, 40).map((p, idx) => {
-      const sales = productSalesMap[p.id] || (idx % 4);
-      const views = Math.max(sales * 4 + (idx * 5) + 12, 10);
-      const dwell = Math.round(18 + (idx % 15) * 3.4);
-      const attention = Math.round(views * 0.3 + dwell * 1.4 + sales * 6);
-      return {
-        name: p.nr || p.name?.en?.slice(0, 16) || `SKU-${idx + 1}`,
-        x: attention,
-        y: sales,
-        z: p.price,
-      };
-    });
-  }, [products, productSalesMap]);
+    return effectiveProducts.slice(0, 40).map((p, idx) => ({
+      name: p.nr || p.name?.en?.slice(0, 16) || `SKU-${idx + 1}`,
+      x: productSalesMap[p.id] || 0,
+      y: stockOf(p),
+      z: p.price,
+    }));
+  }, [effectiveProducts, productSalesMap]);
 
-  // Hourly traffic matrix (24 intervals)
-  const hourlyTraffic = useMemo(() => {
-    return Array.from({ length: 24 }).map((_, h) => {
-      const hourStr = `${String(h).padStart(2, '0')}:00`;
-      const isPeak = (h >= 17 && h <= 22) || (h >= 11 && h <= 13);
-      const traffic = Math.round(isPeak ? 140 + Math.sin(h) * 80 : 25 + Math.cos(h) * 15);
-      const checkouts = Math.round(traffic * (isPeak ? 0.08 : 0.02));
-      return { hour: hourStr, traffic, checkouts };
+  // Lifetime value tiers grouped by the customer email recorded on each order
+  const ltvTiers = useMemo(() => {
+    const byCustomer: Record<string, number> = {};
+    orders.forEach((o) => {
+      const key = (o.customer?.email || '').toLowerCase().trim();
+      if (!key) return;
+      byCustomer[key] = (byCustomer[key] || 0) + (o.totals?.total || 0);
     });
-  }, []);
-
-  // Multi-tier price elasticity curve (40 price buckets)
-  const priceElasticityData = useMemo(() => {
-    return Array.from({ length: 40 }).map((_, idx) => {
-      const price = 250 + idx * 50;
-      const demand = Math.round(2200 / Math.pow(price / 250, 1.35));
-      const revenue = Math.round((demand * price) / 100);
-      return { price: `${price}€`, priceVal: price, demand, revenue };
-    });
-  }, []);
-
-  // Radar composite metrics (Trajectory 40)
-  const sovereignRadarData = useMemo(() => {
-    return [
-      { metric: 'Capital Liquidity', value: 92 },
-      { metric: 'Inventory Turnover', value: 84 },
-      { metric: 'Conversion Density', value: 76 },
-      { metric: 'Patron Retention', value: 89 },
-      { metric: 'Gross Margin Purity', value: 94 },
-      { metric: 'Dispatch Velocity', value: 91 },
-      { metric: 'Zero-Waste Yield', value: 88 },
-      { metric: 'System Reliability', value: 99 },
+    const tiers = [
+      { tier: 'Tier 1 (<500€)', patrons: 0 },
+      { tier: 'Tier 2 (500-1500€)', patrons: 0 },
+      { tier: 'Tier 3 (1500-3000€)', patrons: 0 },
+      { tier: 'Tier 4 (3000-5000€)', patrons: 0 },
+      { tier: 'Tier 5 (5000€+)', patrons: 0 },
     ];
-  }, []);
+    Object.values(byCustomer).forEach((value) => {
+      if (value < 500) tiers[0].patrons += 1;
+      else if (value < 1500) tiers[1].patrons += 1;
+      else if (value < 3000) tiers[2].patrons += 1;
+      else if (value < 5000) tiers[3].patrons += 1;
+      else tiers[4].patrons += 1;
+    });
+    return tiers;
+  }, [orders]);
+
+  // Full-price vs discounted gross volume, from recorded order totals
+  const discountSplit = useMemo(() => {
+    const gross = orders.reduce((s, o) => s + (o.totals?.total || 0), 0);
+    if (gross <= 0) return null;
+    const discounted = orders.reduce(
+      (s, o) => s + ((o.totals?.discount || 0) > 0 ? o.totals.total || 0 : 0),
+      0
+    );
+    const fullShare = Math.round(((gross - discounted) / gross) * 100);
+    return [
+      { channel: 'Full price orders', share: fullShare },
+      { channel: 'Orders with a discount', share: 100 - fullShare },
+    ];
+  }, [orders]);
+
+  // Orders placed per weekday, from recorded createdAt timestamps
+  const weekdayOrders = useMemo(() => {
+    if (orders.length === 0) return null;
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    orders.forEach((o) => {
+      const d = new Date(o.createdAt);
+      if (Number.isNaN(d.getTime())) return;
+      counts[(d.getDay() + 6) % 7] += 1;
+    });
+    return labels.map((day, i) => ({ day, placed: counts[i] }));
+  }, [orders]);
 
   // Tooltip custom style
   const tooltipStyle = {
@@ -277,25 +329,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   ];
 
   const handleExportFullCSV = () => {
-    const headers = ['Trajectory', 'Day', 'Revenue_EUR', 'Orders', 'Sessions', 'EMA12', 'Upper_Band', 'Lower_Band', 'Volatility_Pct', 'Latency_P99_ms', 'Margin_EUR'];
-    const rows = fortyPoints.map((p) => [
-      `T${p.index}`,
-      p.day,
-      p.revenue,
-      p.orders,
-      p.sessions,
-      p.ema12,
-      p.upperBand,
-      p.lowerBand,
-      p.volatility,
-      p.latencyP99,
-      p.marginEur,
-    ]);
+    const headers = ['Trajectory', 'Day', 'Revenue_EUR', 'Orders', 'AOV_EUR'];
+    const rows = displayPoints.map((p) => [p.index, p.day, p.revenue, p.orders, p.aov]);
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `zejesh_institutional_40_trajectories_${dateRange}.csv`);
+    link.setAttribute('download', `zejesh_recorded_store_data_${dateRange}.csv`);
     link.click();
   };
 
@@ -316,6 +356,9 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
     return true;
   };
 
+  const noProducts = effectiveProducts.length === 0;
+  const noSeries = displayPoints.length === 0;
+
   return (
     <div className="space-y-12 font-mono text-xs text-black bg-white select-text">
       {/* HEADER SECTION: Pure Institutional & Editorial Typography */}
@@ -323,19 +366,20 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         <div className="space-y-2">
           <div className="flex items-center gap-3">
             <span className="text-[10px] uppercase tracking-[0.3em] text-black/50 block">
-              Quantitative Atelier Intelligence // Matrix 40.0
+              Atelier Intelligence // Matrix 40.0
             </span>
             <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 bg-black text-white font-mono">
-              Aggressive Real Telemetry
+              Computed From Live Store Data
             </span>
           </div>
           <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-black tracking-tight">
             Atelier Analytics: 40 Trajectories
           </h1>
           <p className="text-xs text-black/60 font-sans font-light max-w-2xl">
-            Institutional algorithmic monitoring computed from active store stock ({totalCatalogStock} garments), 
-            settled transaction flows ({totalRevenue.toLocaleString()} € across {totalOrders} orders), 
-            and 40 real stochastic behavioral dimensions.
+            Every figure below is computed from live store records: {effectiveProducts.length} styles holding{' '}
+            {totalCatalogStock} units ({totalCatalogValue.toLocaleString()} € at list price),{' '}
+            {totalRevenue.toLocaleString()} € across {totalOrders} recorded orders, and {fortyPoints.length} recorded
+            reporting days. Charts without a recorded source show "No data yet".
           </p>
         </div>
 
@@ -365,27 +409,27 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             className="text-xs uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-medium ml-2"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export 40 Trajectories (CSV)</span>
+            <span>Export Recorded Data (CSV)</span>
           </button>
         </div>
       </div>
 
-      {/* EXECUTIVE KPI MATRIX (AGGRESSIVE HIGH-DENSITY METRICS) */}
+      {/* EXECUTIVE KPI MATRIX (REAL DB-DERIVED METRICS ONLY) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pb-8 border-b border-black/10">
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">40D Run-Rate Gross</span>
+          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Gross Revenue (Range)</span>
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
-            {totalRevenue > 0 ? totalRevenue.toLocaleString() : '84,290'} €
+            {rangeRevenue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">+18.4% YoY · σ=2.4</span>
+          <span className="text-[10px] text-black/60 font-mono">{rangeOrders} orders recorded</span>
         </div>
 
         <div className="space-y-1">
           <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Ticket Size AOV</span>
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
-            {aov} €
+            {rangeAov} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Nordic Atelier Tier</span>
+          <span className="text-[10px] text-black/60 font-mono">Average of recorded orders</span>
         </div>
 
         <div className="space-y-1">
@@ -393,31 +437,33 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
             {totalCatalogStock} pcs
           </div>
-          <span className="text-[10px] text-black/60 font-mono">{products.length} registered styles</span>
+          <span className="text-[10px] text-black/60 font-mono">{effectiveProducts.length} registered styles</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Cart Staging Delta</span>
+          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Units Sold</span>
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
-            {totalAddToBags > 0 ? totalAddToBags : '142'} units
+            {totalAddToBags} units
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Intent velocity 4.2x</span>
+          <span className="text-[10px] text-black/60 font-mono">From recorded order line items</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Checkout Latency (p90)</span>
+          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Average Daily Revenue</span>
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
-            42 ms
+            {avgDailyRevenue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Zero-friction edge routing</span>
+          <span className="text-[10px] text-black/60 font-mono">
+            Across {displayPoints.length} recorded days
+          </span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Gross Margin Spread</span>
+          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Inventory Value at Retail</span>
           <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
-            68.4 %
+            {totalCatalogValue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Direct atelier artisan model</span>
+          <span className="text-[10px] text-black/60 font-mono">Stock × list price</span>
         </div>
       </div>
 
@@ -457,7 +503,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
       </div>
 
       {/* ======================================================== */}
-      {/* 40 AGGRESSIVE ANALYTICAL TRAJECTORIES (EXPANDED SUITE) */}
+      {/* 40 ANALYTICAL TRAJECTORIES (REAL DATA OR HONEST EMPTY)   */}
       {/* ======================================================== */}
       <div className="space-y-16">
 
@@ -469,135 +515,147 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite I: Financial & Capital Liquidity (Trajectories 01–05)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">40 Institutional Real Coordinates</span>
+            <span className="text-[10px] font-mono text-black/50">Source: orders & daily stats</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 01 */}
-            {isVisible(1) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 01</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Gross Capital Inflow & Cumulative Run-Rate</h3>
+            {isVisible(1) &&
+              (noSeries ? (
+                <NoDataTrajectory
+                  n={1}
+                  title="Daily Gross Revenue & Order Count"
+                  reason="No revenue has been recorded for this store yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 01</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Daily Gross Revenue & Order Count</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Recorded € vs Orders</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Daily € vs Order Count</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={displayPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#000000" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#000000" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="revenue" stroke="#000000" strokeWidth={2} fill="url(#gRev)" name="Gross Revenue (€)" />
+                        <Line type="monotone" dataKey="orders" stroke="#666666" strokeWidth={1.5} dot={false} strokeDasharray="3 3" name="Orders" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="gRev" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#000000" stopOpacity={0.2} />
-                          <stop offset="95%" stopColor="#000000" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="revenue" stroke="#000000" strokeWidth={2} fill="url(#gRev)" name="Gross Revenue (€)" />
-                      <Line type="monotone" dataKey="orders" stroke="#666666" strokeWidth={1.5} dot={false} strokeDasharray="3 3" name="Orders" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 02 */}
-            {isVisible(2) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 02</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">40-Day Moving Average & Volatility Envelope</h3>
+            {isVisible(2) &&
+              (noSeries ? (
+                <NoDataTrajectory
+                  n={2}
+                  title="Cumulative Gross Revenue Run-Rate"
+                  reason="No revenue has been recorded for this store yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 02</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Cumulative Gross Revenue Run-Rate</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Running total of recorded revenue (€)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Upper/Lower Bollinger Band (€)</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={cumulativeSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Line type="monotone" dataKey="cumulative" stroke="#000000" strokeWidth={2} dot={false} name="Cumulative Revenue (€)" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="upperBand" stroke="#888888" strokeWidth={1} strokeDasharray="2 2" dot={false} name="Upper Band (+2σ)" />
-                      <Line type="monotone" dataKey="ema12" stroke="#000000" strokeWidth={2} dot={false} name="EMA-12 Trajectory" />
-                      <Line type="monotone" dataKey="lowerBand" stroke="#888888" strokeWidth={1} strokeDasharray="2 2" dot={false} name="Lower Band (-2σ)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 03 */}
             {isVisible(3) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 03</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">24-Hour Studio Traffic & Peak Buying Ingress</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Patron Visitors vs Checkout Intent</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={hourlyTraffic} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="hour" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="traffic" fill="#000000" name="Visitors" />
-                      <Bar dataKey="checkouts" fill="#888888" name="Settled Checkouts" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={3}
+                title="24-Hour Studio Traffic & Peak Buying Ingress"
+                reason="Only daily totals are recorded — no hourly traffic breakdown exists."
+              />
             )}
 
             {/* TRAJECTORY 04 */}
-            {isVisible(4) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 04</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Category Capital Allocation vs Units Sold</h3>
+            {isVisible(4) &&
+              (noProducts ? (
+                <NoDataTrajectory
+                  n={4}
+                  title="Category Capital Allocation vs Units Sold"
+                  reason="No products in the catalog yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 04</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Category Capital Allocation vs Units Sold</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Capital (€) & Stock Turnover</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Capital (€) & Stock Turnover</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ComposedChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="stock" fill="#000000" name="Stock Count" />
+                        <Line type="monotone" dataKey="sold" stroke="#555555" strokeWidth={2} name="Units Sold" />
+                      </ComposedChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="name" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="stock" fill="#000000" name="Stock Count" />
-                      <Line type="monotone" dataKey="sold" stroke="#555555" strokeWidth={2} name="Units Sold" />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 05 */}
-            {isVisible(5) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 05</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Ticket Size & Average Order Value (AOV) 40-Day Curve</h3>
+            {isVisible(5) &&
+              (noSeries ? (
+                <NoDataTrajectory
+                  n={5}
+                  title="Ticket Size & Average Order Value (AOV)"
+                  reason="No orders have been recorded for this store yet."
+                  wide
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 05</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Ticket Size & Average Order Value (AOV)</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Recorded AOV (€) per reporting day</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Moving Ticket (€) across 40 Intervals</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={displayPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="aov" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.06} name="AOV Ticket (€)" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="aov" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.06} name="AOV Ticket (€)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
           </div>
         </div>
 
@@ -614,121 +672,136 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 06 */}
-            {isVisible(6) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 06</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Garment Size Demand Distribution vs Stock Depth</h3>
+            {isVisible(6) &&
+              (noProducts ? (
+                <NoDataTrajectory
+                  n={6}
+                  title="Garment Size Stock Depth vs Units Sold"
+                  reason="No products in the catalog yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 06</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Garment Size Stock Depth vs Units Sold</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">XS through XL in stock vs sold</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">XS through XL In-Stock vs Demand</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={sizeQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="size" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="stock" fill="#000000" name="Atelier In-Stock" />
+                        <Bar dataKey="sold" fill="#888888" name="Units Sold" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={sizeQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="size" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="stock" fill="#000000" name="Atelier In-Stock" />
-                      <Bar dataKey="demand" fill="#888888" name="Demand / Staged" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 07 */}
-            {isVisible(7) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 07</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Attention Vector vs Actual Units Sold (Quadrant)</h3>
+            {isVisible(7) &&
+              (noProducts ? (
+                <NoDataTrajectory
+                  n={7}
+                  title="Units Sold vs Stock on Hand (Quadrant)"
+                  reason="No products in the catalog yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 07</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Units Sold vs Stock on Hand (Quadrant)</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Sold units vs remaining stock (bubble = price)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Engagement Score vs Units Purchased</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <ScatterChart margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
+                        <XAxis type="number" dataKey="x" stroke="#000000" tick={{ fontSize: 9 }} name="Units Sold" />
+                        <YAxis type="number" dataKey="y" stroke="#000000" tick={{ fontSize: 9 }} name="Stock" />
+                        <ZAxis range={[60, 60]} />
+                        <Tooltip contentStyle={tooltipStyle} cursor={{ strokeDasharray: '3 3' }} />
+                        <Scatter name="Garments" data={productScatterData} fill="#000000" />
+                      </ScatterChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ScatterChart margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
-                      <XAxis type="number" dataKey="x" stroke="#000000" tick={{ fontSize: 9 }} name="Attention" />
-                      <YAxis type="number" dataKey="y" stroke="#000000" tick={{ fontSize: 9 }} name="Sales" />
-                      <ZAxis range={[60, 60]} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Scatter name="Garments" data={productScatterData} fill="#000000" />
-                    </ScatterChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 08 */}
-            {isVisible(8) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 08</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">SKU Turnover Ratio & Days Inventory Outstanding</h3>
+            {isVisible(8) &&
+              (noProducts ? (
+                <NoDataTrajectory
+                  n={8}
+                  title="SKU Turnover Ratio"
+                  reason="No products in the catalog yet."
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 08</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">SKU Turnover Ratio</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Units sold ÷ units in stock</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Stock Velocity Index</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="key" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="turnoverRatio" fill="#000000" name="Turnover Ratio" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="key" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="turnoverRatio" fill="#000000" name="Turnover Ratio" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
 
             {/* TRAJECTORY 09 */}
             {isVisible(9) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 09</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Stockout Risk Curve & Safety Stock Buffer</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Buffer Pct across 40 Days</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="volatility" stroke="#000000" strokeWidth={2} dot={false} name="Stockout Risk Index" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={9}
+                title="Stockout Risk Curve & Safety Stock Buffer"
+                reason="Stockout risk and safety-stock thresholds are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 10 */}
-            {isVisible(10) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 10</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Inventory Capital Concentration Spread</h3>
+            {isVisible(10) &&
+              (noProducts ? (
+                <NoDataTrajectory
+                  n={10}
+                  title="Inventory Capital Concentration Spread"
+                  reason="No products in the catalog yet."
+                  wide
+                />
+              ) : (
+                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 10</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Inventory Capital Concentration Spread</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Stock × list price by category (€)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Total Valuation by Category Tier (€)</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="capitalEur" fill="#000000" name="Capital Tied (€)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={categoryQuant} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="name" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="capitalEur" fill="#000000" name="Capital Tied (€)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ))}
           </div>
         </div>
 
@@ -740,143 +813,119 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite III: Patron Acquisition & Conversion Flow (Trajectories 11–15)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">40-Interval Session Funnel</span>
+            <span className="text-[10px] font-mono text-black/50">Recorded sessions & orders</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 11 */}
-            {isVisible(11) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 11</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Returning Patron Cohort vs New Studio Ingress</h3>
+            {isVisible(11) &&
+              (hasSessionData && !noSeries ? (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 11</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Recorded Sessions vs Orders Settled</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Sessions & orders per reporting day</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Session Distribution</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={displayPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.15} name="Total Sessions" />
+                        <Line type="monotone" dataKey="orders" stroke="#555555" strokeWidth={1.5} dot={false} name="Orders Settled" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.15} name="Total Sessions" />
-                      <Line type="monotone" dataKey="orders" stroke="#555555" strokeWidth={1.5} dot={false} name="Orders Settled" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={11}
+                  title="Recorded Sessions vs Orders Settled"
+                  reason="No visitor or session counts have been recorded yet."
+                />
+              ))}
 
             {/* TRAJECTORY 12 */}
-            {isVisible(12) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 12</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Revenue Per Visitor (RPV) 40-Day Yield</h3>
+            {isVisible(12) &&
+              (hasSessionData && !noSeries ? (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 12</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Revenue Per Visitor (RPV)</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Recorded revenue ÷ recorded visitors (€)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Marginal Monetization (€/Session)</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={rpvSeries} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Line type="monotone" dataKey="rpv" stroke="#000000" strokeWidth={2} dot={{ r: 2 }} name="RPV (€)" />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="rpv" stroke="#000000" strokeWidth={2} dot={{ r: 2 }} name="RPV (€)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={12}
+                  title="Revenue Per Visitor (RPV)"
+                  reason="No visitor counts have been recorded, so RPV cannot be computed."
+                />
+              ))}
 
             {/* TRAJECTORY 13 */}
             {isVisible(13) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 13</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Cart Abandonment Recovery Propensity (Alpha)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Retention Reactivation (%)</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={fortyPoints.slice(0, 20)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="cartRecoveryAlpha" fill="#000000" name="Recovery Rate (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={13}
+                title="Cart Abandonment Recovery Propensity"
+                reason="Cart abandonment and recovery are not tracked."
+              />
             )}
 
             {/* TRAJECTORY 14 */}
             {isVisible(14) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 14</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Nordic Domestic vs Global Cross-Border Allocation</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Finland, Sweden, EU & International</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { region: 'Finland (Domestic)', pct: 44 },
-                        { region: 'Sweden & Norway', pct: 26 },
-                        { region: 'Central Europe', pct: 18 },
-                        { region: 'North America', pct: 8 },
-                        { region: 'Asia-Pacific', pct: 4 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="region" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="pct" fill="#000000" name="Capital Share (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={14}
+                title="Nordic Domestic vs Global Cross-Border Allocation"
+                reason="Customer regions are not recorded on orders."
+              />
             )}
 
             {/* TRAJECTORY 15 */}
-            {isVisible(15) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 15</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Customer Lifetime Value (LTV) Cohort Growth</h3>
+            {isVisible(15) &&
+              (orders.length > 0 ? (
+                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 15</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Customer Lifetime Value (LTV) Cohorts</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Customers grouped by total recorded spend</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Tiers from €500 Entry to €8,000 Private Patron</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={ltvTiers} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="tier" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} allowDecimals={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="patrons" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.12} name="Customers" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={[
-                        { tier: 'Tier 1 (<500€)', patrons: 84 },
-                        { tier: 'Tier 2 (500-1500€)', patrons: 142 },
-                        { tier: 'Tier 3 (1500-3000€)', patrons: 65 },
-                        { tier: 'Tier 4 (3000-5000€)', patrons: 28 },
-                        { tier: 'Tier 5 (5000€+ VIP)', patrons: 12 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="tier" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="patrons" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.12} name="Active Patrons" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={15}
+                  title="Customer Lifetime Value (LTV) Cohorts"
+                  reason="No orders have been recorded yet."
+                  wide
+                />
+              ))}
           </div>
         </div>
 
@@ -888,141 +937,76 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite IV: Behavioral Telemetry & Attention Dwell (Trajectories 16–20)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Edge Latency & Lookbook Dwell</span>
+            <span className="text-[10px] font-mono text-black/50">No telemetry source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 16 */}
             {isVisible(16) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 16</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Server Latency Percentiles (p50, p90, p99 ms)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">40-Day Infrastructure Health</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="latencyP99" stroke="#000000" strokeWidth={1.5} dot={false} strokeDasharray="3 3" name="p99 (ms)" />
-                      <Line type="monotone" dataKey="latencyP90" stroke="#555555" strokeWidth={1.5} dot={false} name="p90 (ms)" />
-                      <Line type="monotone" dataKey="latencyP50" stroke="#999999" strokeWidth={1.5} dot={false} name="p50 (ms)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={16}
+                title="Server Latency Percentiles (p50, p90, p99 ms)"
+                reason="Server latency is not measured or stored by this application."
+              />
             )}
 
             {/* TRAJECTORY 17 */}
             {isVisible(17) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 17</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Archival Plate Image Hover Dwell vs Clickthrough</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Seconds Dwell per Lookbook Plate</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={effectiveProducts.slice(0, 10).map((p, i) => ({
-                        sku: p.nr || `SKU-${i+1}`,
-                        dwell: Math.round(14 + (i * 3.2)),
-                        clicks: Math.round(4 + (i * 1.8)),
-                      }))}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="sku" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="dwell" fill="#000000" name="Dwell (sec)" />
-                      <Bar dataKey="clicks" fill="#888888" name="Clicks" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={17}
+                title="Archival Plate Image Hover Dwell vs Clickthrough"
+                reason="Per-product views and dwell time are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 18 */}
             {isVisible(18) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 18</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Wishlist-to-Cart Transition Half-Life</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Exponential Decay Function across 40 Days</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={Array.from({ length: 40 }).map((_, i) => ({
-                        day: `D+${i + 1}`,
-                        conversionPct: +(100 * Math.exp(-i * 0.08)).toFixed(1),
-                      }))}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="conversionPct" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.15} name="Active Conversion (%)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={18}
+                title="Wishlist-to-Cart Transition Half-Life"
+                reason="Wishlist activity is not recorded."
+              />
             )}
 
             {/* TRAJECTORY 19 */}
             {isVisible(19) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 19</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Search Intent Density & Query Zero-Hit Friction</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Search Queries & Match Success</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={1.5} dot={false} name="Search Queries" />
-                      <Line type="monotone" dataKey="orders" stroke="#777777" strokeWidth={1.5} dot={false} strokeDasharray="3 3" name="Instant Matches" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={19}
+                title="Search Intent Density & Query Zero-Hit Friction"
+                reason="Search queries are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 20 */}
-            {isVisible(20) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 20</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Real-Time Concurrent Atelier Patron Pulse (40 Data Nodes)</h3>
+            {isVisible(20) &&
+              (hasSessionData && !noSeries ? (
+                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 20</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Recorded Sessions per Day</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Sessions recorded in daily stats</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">High-Frequency Active Telemetry Nodes</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={displayPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Area type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.08} name="Sessions" />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.08} name="Live Concurrency" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={20}
+                  title="Recorded Sessions per Day"
+                  reason="No visitor or session counts have been recorded yet."
+                  wide
+                />
+              ))}
           </div>
         </div>
 
@@ -1034,139 +1018,75 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite V: Pricing Elasticity & Margin Ratios (Trajectories 21–25)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Mathematical Demand Curve</span>
+            <span className="text-[10px] font-mono text-black/50">Order totals only</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 21 */}
             {isVisible(21) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 21</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Price Elasticity of Demand across 40 Price Steps</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">€250 to €2,200 Step Function</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={priceElasticityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="price" stroke="#000000" tick={{ fontSize: 8 }} tickLine={false} interval={4} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="demand" stroke="#000000" strokeWidth={2} dot={false} name="Relative Demand Units" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={21}
+                title="Price Elasticity of Demand"
+                reason="Demand at alternative price points is not measured."
+              />
             )}
 
             {/* TRAJECTORY 22 */}
             {isVisible(22) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 22</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Net Margin Spread after Production & Packaging</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Cumulative Net Contribution (€)</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="marginEur" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.14} name="Net Margin (€)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={22}
+                title="Net Margin Spread after Production & Packaging"
+                reason="Product costs are not recorded, so margin cannot be computed."
+              />
             )}
 
             {/* TRAJECTORY 23 */}
-            {isVisible(23) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 23</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Discount Code Sensitivity vs Full-Price Inelasticity</h3>
+            {isVisible(23) &&
+              (discountSplit ? (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 23</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Full-Price vs Discounted Gross Volume</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Share of recorded gross volume (%)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Full Price vs Promotional Settlements</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={discountSplit} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="channel" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="share" fill="#000000" name="Share of Gross Volume (%)" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { channel: 'Full Archival Price', share: 88 },
-                        { channel: 'VIP Patron Key (-10%)', share: 9 },
-                        { channel: 'Private Salon (-15%)', share: 3 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="channel" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="share" fill="#000000" name="Share of Gross Volume (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={23}
+                  title="Full-Price vs Discounted Gross Volume"
+                  reason="No orders have been recorded yet."
+                />
+              ))}
 
             {/* TRAJECTORY 24 */}
             {isVisible(24) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 24</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Revenue Optimization Ridge (Price × Demand)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Global Profit Maximization Apex</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={priceElasticityData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="price" stroke="#000000" tick={{ fontSize: 8 }} tickLine={false} interval={4} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="revenue" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.12} name="Projected Yield Index" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={24}
+                title="Revenue Optimization Ridge (Price × Demand)"
+                reason="Demand at alternative price points is not measured."
+              />
             )}
 
             {/* TRAJECTORY 25 */}
             {isVisible(25) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 25</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Contribution Margin Progression by Garment Tier</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Outerwear, Suiting, Knitwear, Accessories</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { tier: 'Heavy Greatcoats (€1200+)', margin: 74 },
-                        { tier: 'Tailored Blazers (€850)', margin: 71 },
-                        { tier: 'Merino Knitwear (€480)', margin: 68 },
-                        { tier: 'Structured Bags (€620)', margin: 65 },
-                        { tier: 'Accessories (€180)', margin: 62 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="tier" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="margin" fill="#000000" name="Gross Margin (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={25}
+                title="Contribution Margin Progression by Garment Tier"
+                reason="Product costs are not recorded, so contribution margin cannot be computed."
+                wide
+              />
             )}
           </div>
         </div>
@@ -1179,141 +1099,75 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite VI: Logistics & Atelier Fulfillment (Trajectories 26–30)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Packaging & Courier Dispatch Telemetry</span>
+            <span className="text-[10px] font-mono text-black/50">Order records only</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 26 */}
             {isVisible(26) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 26</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Order Fulfillment Cycle Time (Hours)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Order Allocation to Courier Hand-off</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="fulfillmentHours" stroke="#000000" strokeWidth={2} dot={false} name="Cycle Time (Hours)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={26}
+                title="Order Fulfillment Cycle Time (Hours)"
+                reason="Fulfillment timing is not recorded on orders."
+              />
             )}
 
             {/* TRAJECTORY 27 */}
             {isVisible(27) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 27</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Courier Carrier Allocation & On-Time Arrival</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Posti, DHL Express, FedEx Nordic</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { carrier: 'Posti Priority (Nordic)', volume: 62, onTime: 98.4 },
-                        { carrier: 'DHL Express (EU)', volume: 28, onTime: 99.1 },
-                        { carrier: 'FedEx Global (Intl)', volume: 10, onTime: 97.8 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="carrier" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="volume" fill="#000000" name="Share (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={27}
+                title="Courier Carrier Allocation & On-Time Arrival"
+                reason="Carrier and on-time data are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 28 */}
             {isVisible(28) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 28</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Packaging Weight & Volumetric Density</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Zero-Plastic Archival Box Yield</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints.slice(0, 20)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="scrapYield" stroke="#000000" strokeWidth={2} dot={false} name="Eco Packaging Efficiency (%)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={28}
+                title="Packaging Weight & Volumetric Density"
+                reason="Packaging data is not recorded."
+              />
             )}
 
             {/* TRAJECTORY 29 */}
-            {isVisible(29) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 29</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Dispatch Throughput by Weekday</h3>
+            {isVisible(29) &&
+              (weekdayOrders ? (
+                <div className="space-y-3 pb-6 border-b border-black/10">
+                  <div className="flex justify-between items-baseline">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 29</span>
+                      <h3 className="font-editorial text-2xl font-normal text-black">Orders Placed by Weekday</h3>
+                    </div>
+                    <span className="text-[11px] font-mono text-black/60">Count of recorded orders (Mon–Sun)</span>
                   </div>
-                  <span className="text-[11px] font-mono text-black/60">Monday through Saturday Packout</span>
+                  <div className="h-64 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={weekdayOrders} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
+                        <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} allowDecimals={false} />
+                        <Tooltip contentStyle={tooltipStyle} />
+                        <Bar dataKey="placed" fill="#000000" name="Orders Placed" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { day: 'Mon', packages: 48 },
-                        { day: 'Tue', packages: 64 },
-                        { day: 'Wed', packages: 58 },
-                        { day: 'Thu', packages: 72 },
-                        { day: 'Fri', packages: 85 },
-                        { day: 'Sat', packages: 22 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="packages" fill="#000000" name="Dispatches Completed" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            )}
+              ) : (
+                <NoDataTrajectory
+                  n={29}
+                  title="Orders Placed by Weekday"
+                  reason="No orders have been recorded yet."
+                />
+              ))}
 
             {/* TRAJECTORY 30 */}
             {isVisible(30) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 30</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Inventory Reorder Point Proximity (Safety Stock Band)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Threshold Limits across 40 Days</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <ComposedChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="orders" fill="#000000" name="Depletion Velocity" />
-                      <Line type="monotone" dataKey="volatility" stroke="#777777" strokeWidth={2} name="Stock Buffer Level" />
-                    </ComposedChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={30}
+                title="Inventory Reorder Point Proximity (Safety Stock Band)"
+                reason="Reorder thresholds are not configured or recorded."
+                wide
+              />
             )}
           </div>
         </div>
@@ -1326,133 +1180,54 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite VII: Predictive Atelier Forecasting (Trajectories 31–35)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Stochastic Run-Rate Forecast</span>
+            <span className="text-[10px] font-mono text-black/50">No forecast source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 31 */}
             {isVisible(31) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 31</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">40-Day Forward Forecast with 95% Confidence Band</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Stochastic Model Projection</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="upperBand" stroke="#555555" strokeWidth={1} fill="#000000" fillOpacity={0.06} name="95% Upper Bound" />
-                      <Line type="monotone" dataKey="revenue" stroke="#000000" strokeWidth={2} dot={false} name="Forecast Revenue" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={31}
+                title="Forward Forecast with Confidence Band"
+                reason="No forecast model output is stored for this store."
+              />
             )}
 
             {/* TRAJECTORY 32 */}
             {isVisible(32) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 32</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Seasonal Fabric Demand Weighting</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Wool, Cashmere, Leather, Poplin</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { fabric: 'Heavy Nordic Wool', demandIndex: 94 },
-                        { fabric: 'Merino & Cashmere', demandIndex: 86 },
-                        { fabric: 'Italian Obsidian Leather', demandIndex: 78 },
-                        { fabric: 'Structured Poplin', demandIndex: 64 },
-                        { fabric: 'Silk & Cupro Lining', demandIndex: 58 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="fabric" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="demandIndex" fill="#000000" name="Demand Index (0-100)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={32}
+                title="Seasonal Fabric Demand Weighting"
+                reason="Fabric and material demand are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 33 */}
             {isVisible(33) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 33</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Next-Drop Waitlist Surge Density</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Registered Patrons Waiting for Allocation</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints.slice(0, 20)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="sessions" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.12} name="Waitlist Registrations" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={33}
+                title="Next-Drop Waitlist Surge Density"
+                reason="Waitlist signups are not reported into analytics."
+              />
             )}
 
             {/* TRAJECTORY 34 */}
             {isVisible(34) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 34</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Atelier Capacity Utilization Rate (%)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Artisan Tailoring Throughput Threshold</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} domain={[50, 100]} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="scrapYield" stroke="#000000" strokeWidth={2} dot={false} name="Capacity Utilization (%)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={34}
+                title="Atelier Capacity Utilization Rate (%)"
+                reason="Atelier capacity is not tracked."
+              />
             )}
 
             {/* TRAJECTORY 35 */}
             {isVisible(35) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 35</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Zero-Waste Pattern Cutting Yield Efficiency (%)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Material Conservation Tracking across 40 Days</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} domain={[85, 100]} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Area type="monotone" dataKey="scrapYield" stroke="#000000" strokeWidth={2} fill="#000000" fillOpacity={0.15} name="Fabric Yield (%)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={35}
+                title="Zero-Waste Pattern Cutting Yield Efficiency (%)"
+                reason="Material yield is not tracked."
+                wide
+              />
             )}
           </div>
         </div>
@@ -1465,141 +1240,54 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
               Suite VIII: Archival Risk, Returns & Volatility (Trajectories 36–40)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Sovereign Atelier Composite</span>
+            <span className="text-[10px] font-mono text-black/50">No risk source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 36 */}
             {isVisible(36) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 36</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Archival Return Rate (%) by Category</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Industry Leading Ultra-Low Return Rate</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { category: 'Outerwear', rate: 2.8 },
-                        { category: 'Tailoring', rate: 3.4 },
-                        { category: 'Knitwear', rate: 1.9 },
-                        { category: 'Leather Goods', rate: 0.8 },
-                        { category: 'Accessories', rate: 0.4 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="category" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="rate" fill="#000000" name="Return Rate (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={36}
+                title="Archival Return Rate (%) by Category"
+                reason="Returns are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 37 */}
             {isVisible(37) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 37</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Payment Gateway Authorization Success Rate</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Stripe, Klarna, Apple Pay Auth (%)</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart
-                      data={[
-                        { method: 'Card (Stripe)', success: 99.4 },
-                        { method: 'Klarna Nordic', success: 98.8 },
-                        { method: 'Apple Pay', success: 99.9 },
-                        { method: 'Nordic Bank Transfer', success: 100 },
-                      ]}
-                      margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                    >
-                      <XAxis dataKey="method" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} domain={[90, 100]} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="success" fill="#000000" name="Success Rate (%)" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={37}
+                title="Payment Gateway Authorization Success Rate"
+                reason="Payment authorisation results are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 38 */}
             {isVisible(38) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 38</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Chargeback Risk & Fraud Prevention Friction</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Zero Chargeback Integrity Score</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="returnRate" stroke="#000000" strokeWidth={1.5} dot={false} name="Risk Metric (%)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={38}
+                title="Chargeback Risk & Fraud Prevention Friction"
+                reason="Chargeback data is not recorded."
+              />
             )}
 
             {/* TRAJECTORY 39 */}
             {isVisible(39) && (
-              <div className="space-y-3 pb-6 border-b border-black/10">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 39</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Private Concierge Inquiries per 100 Orders</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">Resolution Velocity & Sizing Guidance</span>
-                </div>
-                <div className="h-64 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={fortyPoints.slice(0, 20)} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                      <XAxis dataKey="day" stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <YAxis stroke="#000000" tick={{ fontSize: 9 }} tickLine={false} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Line type="monotone" dataKey="fulfillmentHours" stroke="#000000" strokeWidth={2} dot={{ r: 3 }} name="Avg Resolution (Hrs)" />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={39}
+                title="Private Concierge Inquiries per 100 Orders"
+                reason="Concierge inquiries are not recorded."
+              />
             )}
 
             {/* TRAJECTORY 40 */}
             {isVisible(40) && (
-              <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
-                <div className="flex justify-between items-baseline">
-                  <div>
-                    <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 40</span>
-                    <h3 className="font-editorial text-2xl font-normal text-black">Atelier Sovereign Health Index (Composite Radar)</h3>
-                  </div>
-                  <span className="text-[11px] font-mono text-black/60">8 Fundamental Quantitative Pillars (0–100)</span>
-                </div>
-                <div className="h-72 w-full pt-2">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <RadarChart cx="50%" cy="50%" outerRadius="80%" data={sovereignRadarData}>
-                      <PolarGrid stroke="#E0E0E0" />
-                      <PolarAngleAxis dataKey="metric" tick={{ fill: '#000000', fontSize: 10 }} />
-                      <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="#000000" tick={{ fontSize: 9 }} />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Radar name="Sovereign Score" dataKey="value" stroke="#000000" fill="#000000" fillOpacity={0.2} />
-                    </RadarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
+              <NoDataTrajectory
+                n={40}
+                title="Atelier Sovereign Health Index (Composite Radar)"
+                reason="No verified source data exists to build this composite index."
+                wide
+              />
             )}
           </div>
         </div>

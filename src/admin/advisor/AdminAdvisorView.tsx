@@ -44,7 +44,7 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
       sender: 'ai',
       text: totalOrd > 0
         ? `Welcome. I have reviewed your live studio telemetry across your ${products.length} catalog items. You have generated ${totalRev.toLocaleString()} € in sales across ${totalOrd} completed orders. How may I advise your retail strategy today?`
-        : `Welcome. I have connected to your live Firestore archive. You currently have ${products.length} catalog garments and 0 settled orders. How may I assist in merchandising, price architecture, or catalog launch preparation?`,
+        : `Welcome. I am connected to your live store database. You currently have ${products.length} catalog garments and 0 settled orders. How may I assist in merchandising, price architecture, or catalog launch preparation?`,
     },
   ]);
   const [isAsking, setIsAsking] = useState(false);
@@ -64,7 +64,7 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
       await logAuditEvent(adminProfile?.name || 'admin', 'mark_insight_done', insightId);
       onRefresh();
     } catch {
-      // Offline fallback
+      // Update failed — reload the current database state instead of guessing.
       onRefresh();
     }
   };
@@ -155,7 +155,7 @@ Strictly valid JSON only.`,
           ...prev,
           {
             sender: 'ai',
-            text: res.text || 'Analysis completed based on your live studio records.',
+            text: res.text || 'The model returned no content. Please rephrase your question and ask again.',
           },
         ]);
       } else {
@@ -189,7 +189,8 @@ Strictly valid JSON only.`,
         <div>
           <h1 className="font-editorial text-3xl font-normal">AI Studio Advisor</h1>
           <p className="text-xs font-mono text-black/50 mt-0.5">
-            Real-time behavioral telemetry analyzed by Gemini for strategic merchandising, pricing, and drops.
+            Strategic analysis grounded in your recorded catalog, order and traffic data. When there is not
+            enough data, the advisor says so instead of guessing.
           </p>
         </div>
 
@@ -322,7 +323,8 @@ Strictly valid JSON only.`,
               Ask Your Data (Studio Intelligence)
             </h2>
             <p className="text-[11px] text-black/50 mt-0.5">
-              Ask strategic questions in English or Finnish. The model queries your aggregated 30-day metrics without hallucinating data.
+              Ask strategic questions in English or Finnish. The model answers from your recorded store totals;
+              when the data is missing it states that there is not enough data.
             </p>
           </div>
 
@@ -370,57 +372,23 @@ Strictly valid JSON only.`,
         </div>
       )}
 
-      {/* TAB 3: WEEKLY EXECUTIVE DIGEST */}
+      {/* TAB 3: WEEKLY EXECUTIVE DIGEST (no fabricated report is generated) */}
       {activeTab === 'digest' && (
-        <div className="border border-black/[0.08] bg-white p-6 space-y-6 max-w-2xl">
+        <div className="border border-black/[0.08] bg-white p-6 space-y-4 max-w-2xl">
           <div>
             <div className="text-[10px] uppercase text-black/50 tracking-wider">Executive Briefing</div>
-            <h2 className="font-editorial text-2xl font-normal text-black mt-1">
-              Week 40 Studio Performance & Prioritization
-            </h2>
+            <h2 className="font-editorial text-2xl font-normal text-black mt-1">Weekly Executive Digest</h2>
           </div>
 
-          <div className="space-y-4 border-t border-black/[0.08] pt-4">
-            <h3 className="text-xs uppercase font-bold text-black tracking-wider">
-              5 Key Takeaways From Past 7 Days:
-            </h3>
-            <ul className="space-y-2.5 text-xs text-black/80 list-disc pl-4 leading-relaxed">
-              <li>
-                <span className="font-bold text-black">Revenue Velocity:</span> Generated 8,420 € across 34 orders, outperforming forecast by +12%.
-              </li>
-              <li>
-                <span className="font-bold text-black">Core Hero:</span> Nº 001 Heavy Wool Coat generated 32% of weekly gross volume.
-              </li>
-              <li>
-                <span className="font-bold text-black">Inventory Pinch:</span> Size L is fully exhausted across 3 styles; reorder lead-time is 14 days.
-              </li>
-              <li>
-                <span className="font-bold text-black">Traffic Mix:</span> 64% of visitors arrived via direct editorial referrers, yielding high dwell (42s).
-              </li>
-              <li>
-                <span className="font-bold text-black">Unmet Demand:</span> 98 searches for Leather and 62 for Cashmere confirm expansion readiness.
-              </li>
-            </ul>
-          </div>
-
-          <div className="border-t border-black/[0.08] pt-4">
-            <h3 className="text-xs uppercase font-bold text-black tracking-wider mb-2">
-              Action Plan For This Week:
-            </h3>
-            <div className="space-y-2 text-xs text-black/80">
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-black">1.</span>
-                <span>Trigger factory restock of Size L for Nº 001 and Nº 002.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-black">2.</span>
-                <span>Send early-access VIP invite to 84 waitlist subscribers for Drop 03.</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <span className="font-bold text-black">3.</span>
-                <span>Update mobile checkout carrier default to eliminate Step 2 drop-off.</span>
-              </div>
-            </div>
+          <div className="p-8 border border-black/10 bg-neutral-50/50 text-center space-y-2">
+            <span className="text-xs uppercase font-semibold text-black tracking-wider block">No data yet</span>
+            <p className="text-xs text-black/60 max-w-md mx-auto font-sans leading-relaxed">
+              Not enough data yet — the advisor needs live store activity before it can write a digest.
+              Revenue, order and traffic figures will appear here once they are recorded in the database.
+            </p>
+            <p className="text-[11px] text-black/40 font-mono">
+              Recorded so far: {products.length} catalog items · {totalOrd} orders · {totalRev.toLocaleString()} €
+            </p>
           </div>
         </div>
       )}

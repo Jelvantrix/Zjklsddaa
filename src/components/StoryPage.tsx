@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStorefrontData } from '../context/StorefrontDataContext';
+import { ImageFramingParams, NEUTRAL_PLACEHOLDER_IMG } from '../types';
+import { imageFramingStyle } from './FashionImage';
+import type { ImagePlacement } from './FashionImage';
 import { ArrowLeft, ArrowRight, Compass, Feather, ShieldCheck } from 'lucide-react';
 
 interface StoryPageProps {
@@ -7,11 +10,60 @@ interface StoryPageProps {
   onExploreArchive: () => void;
 }
 
+interface StoryImageProps {
+  /** Configured storage URL. When empty the slot renders nothing at all. */
+  src?: string;
+  framing?: ImageFramingParams;
+  placement: ImagePlacement;
+  alt: string;
+  legacyPosition?: string;
+  className?: string;
+}
+
+/**
+ * Story page imagery: framing-aware, renders nothing for an empty slot and
+ * only falls back to the neutral placeholder when a configured URL fails.
+ */
+const StoryImage: React.FC<StoryImageProps> = ({
+  src,
+  framing,
+  placement,
+  alt,
+  legacyPosition,
+  className,
+}) => {
+  const [failed, setFailed] = useState(false);
+
+  if (!src) return null;
+
+  let style: React.CSSProperties | undefined;
+  if (!failed) {
+    if (framing) style = imageFramingStyle(framing, placement, legacyPosition);
+    else if (legacyPosition) style = { objectPosition: legacyPosition };
+  }
+
+  return (
+    <img
+      src={failed ? NEUTRAL_PLACEHOLDER_IMG : src}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={className}
+      style={style}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArchive }) => {
   const { content } = useStorefrontData();
-  const plate1 = content?.translations?.storyPlate1;
-  const plate2 = content?.translations?.storyPlate2;
-  const heroImage = content?.translations?.storyHeroImage || content?.heroMedia?.desktopSrc || content?.heroSlides?.[0]?.src || '/placeholder.svg';
+  const storyContent = content?.translations || {};
+  const heroImage: string | undefined = storyContent.storyHeroImage;
+  const heroFraming: ImageFramingParams | undefined = storyContent.storyHeroFraming;
+  const plate1: string | undefined = storyContent.storyPlate1;
+  const plate1Framing: ImageFramingParams | undefined = storyContent.storyPlate1Framing;
+  const plate2: string | undefined = storyContent.storyPlate2;
+  const plate2Framing: ImageFramingParams | undefined = storyContent.storyPlate2Framing;
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen select-none pt-20 sm:pt-28 lg:pt-32">
       {/* Top Breadcrumb Navigation */}
@@ -64,19 +116,24 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
         </div>
       </div>
 
-      {/* Large Featured Editorial Image */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-20 sm:mb-32">
-        <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden bg-neutral-100 relative">
-          <img
-            src={heroImage}
-            alt="Zejesh Campaign Still"
-            className="w-full h-full object-cover object-[center_28%]"
-          />
-          <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-white/90 backdrop-blur-xs px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-black">
-            Plate No. 00 · The Greatcoat in Obsidian Wool
+      {/* Large Featured Editorial Image — empty slot renders nothing */}
+      {heroImage && (
+        <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-20 sm:mb-32">
+          <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden bg-neutral-100 relative">
+            <StoryImage
+              src={heroImage}
+              framing={heroFraming}
+              placement="heroDesktop"
+              legacyPosition="center 28%"
+              alt="Zejesh Campaign Still"
+              className="w-full h-full object-cover object-[center_28%]"
+            />
+            <div className="absolute bottom-4 left-4 sm:bottom-6 sm:left-6 bg-white/90 backdrop-blur-xs px-3 py-1.5 font-mono text-[10px] uppercase tracking-widest text-black">
+              Plate No. 00 · The Greatcoat in Obsidian Wool
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Chapter 01: The Northern Axis */}
       <section className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-28 border-t border-black/[0.06]">
@@ -105,40 +162,38 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
           </div>
 
           <div className="lg:col-span-7">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-              {plate1 ? (
-                <div className="aspect-[3/4] overflow-hidden bg-neutral-100 group relative">
-                  <img
-                    src={plate1}
-                    alt="Atelier Silhouette"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
-                    Plate I · Monolithic Stance
+            {(plate1 || plate2) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                {plate1 && (
+                  <div className="aspect-[3/4] overflow-hidden bg-neutral-100 group relative">
+                    <StoryImage
+                      src={plate1}
+                      framing={plate1Framing}
+                      placement="archive"
+                      alt="Atelier Silhouette"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
+                      Plate I · Monolithic Stance
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="aspect-[3/4] border border-dashed border-black/15 bg-neutral-50/50 flex flex-col items-center justify-center p-6 text-center">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-black/40">Plate I · Studio Ingress</span>
-                </div>
-              )}
-              {plate2 ? (
-                <div className="aspect-[3/4] overflow-hidden bg-neutral-100 sm:translate-y-8 group relative">
-                  <img
-                    src={plate2}
-                    alt="Loom Tailoring"
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                  <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
-                    Plate II · Loom Architecture
+                )}
+                {plate2 && (
+                  <div className="aspect-[3/4] overflow-hidden bg-neutral-100 sm:translate-y-8 group relative">
+                    <StoryImage
+                      src={plate2}
+                      framing={plate2Framing}
+                      placement="archive"
+                      alt="Loom Tailoring"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 font-mono text-[9.5px] uppercase tracking-widest text-black">
+                      Plate II · Loom Architecture
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <div className="aspect-[3/4] border border-dashed border-black/15 bg-neutral-50/50 sm:translate-y-8 flex flex-col items-center justify-center p-6 text-center">
-                  <span className="font-mono text-[10px] uppercase tracking-widest text-black/40">Plate II · Textile Loom</span>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>

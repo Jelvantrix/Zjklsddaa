@@ -30,6 +30,8 @@ export interface ProductImage {
   order: number;
   isPrimary?: boolean;
   isHover?: boolean;
+  /** Non-destructive framing parameters authored in the ImageEditor. */
+  framing?: ImageFramingParams;
 }
 
 export interface Product {
@@ -85,6 +87,8 @@ export interface Product {
   images?: ProductImage[];
   image?: string;
   hoverImage?: string;
+  /** Product-level non-destructive framing (applies to every placement). */
+  framing?: ImageFramingParams;
   imagePosition?: string;
   hoverImagePosition?: string;
   imageScale?: number;
@@ -254,6 +258,18 @@ export interface Discount {
   active: boolean;
 }
 
+/**
+ * A single hero medium slot (desktop or mobile). `framing` holds the
+ * non-destructive ImageEditor parameters for that slot.
+ */
+export interface HeroSlideMedia {
+  url: string;
+  kind: 'image' | 'video';
+  poster?: string;
+  alt?: string;
+  framing?: ImageFramingParams;
+}
+
 export interface HeroSlide {
   id: string;
   type: 'video' | 'image';
@@ -272,8 +288,10 @@ export interface HeroSlide {
     sv?: string;
   };
   enabled?: boolean;
-  mobileMedia?: any;
-  desktopMedia?: any;
+  mobileMedia?: HeroSlideMedia;
+  desktopMedia?: HeroSlideMedia;
+  /** Non-destructive framing shared by both slots unless overridden per slot. */
+  framing?: ImageFramingParams;
   linkUrl?: string;
   title?: {
     fi?: string;
@@ -681,7 +699,7 @@ export interface MetricActual {
   stockSellThrough: number; // percentage
   productsListed: number;
   productsPhotographed: number;
-  isDemo: boolean; // T-xxx: demo mode flag
+  isDemo: boolean; // T-xxx: marks a legacy non-production row (filtered from metrics)
 }
 
 // ==================== DAILY COACH SYSTEM ====================
@@ -859,6 +877,8 @@ export interface MediaAsset {
   alt?: string;
   focalX?: number;
   focalY?: number;
+  /** Non-destructive framing parameters authored in the ImageEditor. */
+  framing?: ImageFramingParams;
   createdAt: string;
 }
 

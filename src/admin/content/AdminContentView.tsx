@@ -1,10 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StoreContent, HeroSlide, NEUTRAL_PLACEHOLDER_IMG } from '../../types';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  StoreContent,
+  HeroSlide,
+  HeroSlideMedia,
+  ImageFramingParams,
+  JournalArticle,
+  MediaAsset,
+  NEUTRAL_PLACEHOLDER_IMG,
+} from '../../types';
 import { useAuth } from '../../supabase/AuthContext';
 import { useStorefrontData } from '../../context/StorefrontDataContext';
 import { updateStoreContent, logAuditEvent } from '../../supabase/dbService';
-import { uploadMediaAsset } from '../../supabase/mediaService';
+import { isDataUrl } from '../../supabase/mediaService';
 import { UniversalMediaPickerModal } from '../components/UniversalMediaPickerModal';
+import { UniversalImageEditorModal } from '../components/UniversalImageEditorModal';
+import { imageFramingStyle } from '../../components/FashionImage';
 import {
   ArrowUp,
   ArrowDown,
@@ -17,114 +27,653 @@ import {
   Check,
   X,
   Eye,
-  Sparkles,
   ChevronLeft,
   ChevronRight,
-  ExternalLink,
+  GripVertical,
+  Monitor,
+  Tablet,
+  Smartphone,
   Upload,
   Compass,
-  ZoomIn,
   RotateCcw,
-  RotateCw,
-  Maximize2,
 } from 'lucide-react';
-import { ImageFrameAdjusterModal, FrameAdjusterResult } from '../components/ImageFrameAdjusterModal';
+
+/* ========================================================================== */
+/* Helpers                                                                     */
+/* ========================================================================== */
+
+/** JSON.stringify with stable key order that drops `undefined` members. */
+const stableStringify = (value: unknown): string => {
+  if (value === undefined) return 'undefined';
+  if (value === null) return 'null';
+  if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
+  if (typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    const keys = Object.keys(obj)
+      .filter((k) => obj[k] !== undefined)
+      .sort();
+    return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(obj[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(value) ?? 'undefined';
+};
+
+/** Fingerprint of every editable CMS field (id / updatedAt are excluded). */
+const contentFingerprint = (c?: StoreContent | null): string =>
+  stableStringify(
+    c
+      ? {
+          sectionOrder: c.sectionOrder,
+          heroMedia: c.heroMedia,
+          heroSlides: c.heroSlides,
+          announcementBar: c.announcementBar,
+          journalPosts: c.journalPosts,
+          translations: c.translations,
+        }
+      : null
+  );
+
+const isVideoUrl = (url?: string): boolean => Boolean(url && /\.(mp4|webm)(\?.*)?$/i.test(url));
+
+const resolveKind = (url: string, asset?: MediaAsset): 'image' | 'video' =>
+  asset?.kind || (isVideoUrl(url) ? 'video' : 'image');
+
+/** Recursively rejects any accidental data URL before it can reach the content row. */
+const containsDataUrl = (value: unknown): boolean => {
+  if (typeof value === 'string') return isDataUrl(value);
+  if (Array.isArray(value)) return value.some(containsDataUrl);
+  if (value && typeof value === 'object') {
+    return Object.values(value as Record<string, unknown>).some(containsDataUrl);
+  }
+  return false;
+};
+
+/** Journal entries carry editor framing inside `content.journalPosts[].framing`. */
+type JournalRecord = JournalArticle & { framing?: ImageFramingParams };
+
+const framingSummary = (f?: ImageFramingParams): string =>
+  f ? `focal ${f.focalX}%/${f.focalY}% · zoom ${f.zoom}x · ${f.rotation}°` : 'library default';
+
+/* ========================================================================== */
+/* Reusable CMS image slot (picker + frame editor + clear + optional poster)    */
+/* ========================================================================== */
+
+interface ImageSlotProps {
+  label: string;
+  value?: string;
+  kind?: 'image' | 'video';
+  framing?: ImageFramingParams;
+  allowedKind?: 'all' | 'image' | 'video';
+  allowPoster?: boolean;
+  poster?: string;
+  onSelect: (url: string, asset?: MediaAsset) => void;
+  onFraming?: (framing: ImageFramingParams) => void;
+  onClear: () => void;
+  onPosterSelect?: (url: string) => void;
+  onPosterClear?: () => void;
+}
+
+const ImageSlot: React.FC<ImageSlotProps> = ({
+  label,
+  value,
+  kind,
+  framing,
+  allowedKind = 'image',
+  allowPoster = false,
+  poster,
+  onSelect,
+  onFraming,
+  onClear,
+  onPosterSelect,
+  onPosterClear,
+}) => {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [posterPickerOpen, setPosterPickerOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+
+  const resolvedKind: 'image' | 'video' =
+    kind || (value ? (isVideoUrl(value) ? 'video' : 'image') : 'image');
+
+  return (
+    <div
+      onSubmit={(e) => e.stopPropagation()}
+      className="border border-black/10 bg-neutral-50/70 p-3 space-y-2.5"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+          {label}
+        </span>
+        <span
+          className={`text-[9px] uppercase px-1.5 py-0.5 font-mono font-semibold border ${
+            resolvedKind === 'video'
+              ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
+              : 'bg-neutral-50 text-neutral-800 border-neutral-200'
+          }`}
+        >
+          {resolvedKind === 'video' ? 'VIDEO' : 'IMAGE'}
+        </span>
+      </div>
+
+      <div className="flex items-start gap-3">
+        {/* Thumbnail */}
+        <div className="w-24 h-16 sm:w-28 sm:h-20 shrink-0 bg-white border border-black/10 overflow-hidden flex items-center justify-center">
+          {value ? (
+            resolvedKind === 'video' ? (
+              <video
+                src={value}
+                poster={poster}
+                muted
+                playsInline
+                preload="metadata"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src={value}
+                alt={label}
+                className="w-full h-full object-cover"
+                style={framing ? imageFramingStyle(framing, 'heroDesktop') : undefined}
+                onError={(e) => {
+                  const el = e.currentTarget;
+                  if (el.dataset.fallback !== '1') {
+                    el.dataset.fallback = '1';
+                    el.src = NEUTRAL_PLACEHOLDER_IMG;
+                  }
+                }}
+              />
+            )
+          ) : (
+            <span className="text-[9px] uppercase font-mono text-black/40 px-2 text-center leading-tight">
+              No media selected
+            </span>
+          )}
+        </div>
+
+        {/* Value + actions */}
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <div className="text-[10px] text-black/50 font-mono break-all line-clamp-2">
+            {value || 'Empty slot — nothing renders on the storefront.'}
+          </div>
+          {framing && (
+            <div className="text-[9.5px] text-black/40 font-mono">
+              Framing · {framingSummary(framing)}
+            </div>
+          )}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPickerOpen(true)}
+              className="px-2.5 py-1 text-[10px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Upload className="w-3 h-3" />
+              <span>Choose / Upload</span>
+            </button>
+            {value && resolvedKind === 'image' && onFraming && (
+              <button
+                type="button"
+                onClick={() => setEditorOpen(true)}
+                className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <Compass className="w-3 h-3" />
+                <span>Adjust Frame</span>
+              </button>
+            )}
+            {value && (
+              <button
+                type="button"
+                onClick={onClear}
+                className="px-2 py-1 text-[10px] uppercase font-mono text-red-600 border border-red-200 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-1"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span>Clear</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Poster (video slots only) */}
+      {allowPoster && resolvedKind === 'video' && (
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/10">
+          <span className="text-[10px] uppercase tracking-wider text-black/60">
+            Video poster image (optional)
+          </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPosterPickerOpen(true)}
+              className="px-2 py-1 text-[9.5px] uppercase font-mono border border-black/20 hover:border-black flex items-center gap-1 cursor-pointer"
+            >
+              <Upload className="w-2.5 h-2.5" />
+              <span>{poster ? 'Replace Poster' : 'Choose Poster'}</span>
+            </button>
+            {poster && (
+              <button
+                type="button"
+                onClick={onPosterClear}
+                className="p-1 text-red-600 border border-red-200 hover:bg-red-50 cursor-pointer"
+                title="Clear poster"
+                aria-label={`Clear poster image for ${label}`}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Media picker (device upload / library / https link) */}
+      <UniversalMediaPickerModal
+        isOpen={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(url, asset) => {
+          onSelect(url, asset);
+          setPickerOpen(false);
+        }}
+        title={label}
+        allowedKind={allowedKind}
+        currentUrl={value}
+      />
+
+      {allowPoster && (
+        <UniversalMediaPickerModal
+          isOpen={posterPickerOpen}
+          onClose={() => setPosterPickerOpen(false)}
+          onSelect={(url) => {
+            onPosterSelect?.(url);
+            setPosterPickerOpen(false);
+          }}
+          title={`${label} · poster`}
+          allowedKind="image"
+          currentUrl={poster}
+        />
+      )}
+
+      {/* Non-destructive frame / angle editor */}
+      {editorOpen && value && onFraming && (
+        <UniversalImageEditorModal
+          isOpen
+          imageUrl={value}
+          title={`Frame calibration · ${label}`}
+          initialFraming={framing}
+          onClose={() => setEditorOpen(false)}
+          onApply={(framingResult) => {
+            onFraming(framingResult);
+            setEditorOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+/* ========================================================================== */
+/* Preview device presets (inline scaled frame widths, no iframe)              */
+/* ========================================================================== */
+
+const PREVIEW_DEVICES = [
+  { id: 'desktop', label: 'Desktop', width: 1920, Icon: Monitor },
+  { id: 'tablet', label: 'Tablet', width: 834, Icon: Tablet },
+  { id: 'mobile', label: 'Mobile', width: 390, Icon: Smartphone },
+] as const;
+
+type PreviewDeviceId = (typeof PREVIEW_DEVICES)[number]['id'];
+
+/* ========================================================================== */
+/* View                                                                        */
+/* ========================================================================== */
 
 interface AdminContentViewProps {
   content: StoreContent;
   onRefresh: () => void;
 }
 
+type TabId = 'hero' | 'sections' | 'announcement' | 'journal' | 'story';
+
 export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onRefresh }) => {
   const { isEditor, adminProfile } = useAuth();
   const { updateStoreContentLocal } = useStorefrontData();
 
+  /* ------------------------------ Draft state ----------------------------- */
   const [formData, setFormData] = useState<StoreContent>(content);
-  const [activeTab, setActiveTab] = useState<'hero' | 'sections' | 'announcement' | 'journal'>('hero');
+  const [savedSnapshot, setSavedSnapshot] = useState<StoreContent>(content);
+  const [activeTab, setActiveTab] = useState<TabId>('hero');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [discardSuccess, setDiscardSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Hero Slides List State
-  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
-    return content?.heroSlides || [];
-  });
+  const heroSlides: HeroSlide[] = formData.heroSlides || [];
 
-  // Keep in sync if external content changes
+  const draftFingerprint = useMemo(() => contentFingerprint(formData), [formData]);
+  const savedFingerprint = useMemo(() => contentFingerprint(savedSnapshot), [savedSnapshot]);
+  const isDirty = draftFingerprint !== savedFingerprint;
+
+  const isDirtyRef = useRef(false);
   useEffect(() => {
-    if (content?.heroSlides && content.heroSlides.length > 0) {
-      setHeroSlides(content.heroSlides);
+    isDirtyRef.current = isDirty;
+  }, [isDirty]);
+
+  /**
+   * Realtime (`subscribeToContent`) echo. The latest server payload is always
+   * adopted as the published snapshot; the local draft is only replaced when
+   * there is nothing unsaved, so optimistic state never fights the channel.
+   */
+  useEffect(() => {
+    setSavedSnapshot(content);
+    if (!isDirtyRef.current) {
+      setFormData(content);
     }
   }, [content]);
 
-  // Modal / Drawer state for adding or editing a slide
+  /* --------------------------- Unsaved changes ---------------------------- */
+  useEffect(() => {
+    if (!isDirty) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isDirty]);
+
+  const handleSelectTab = (tab: TabId) => {
+    if (tab === activeTab) return;
+    if (
+      isDirty &&
+      !window.confirm(
+        'You have unsaved CMS changes. They do not reach the storefront until you press "Publish to Storefront". Switch section anyway?'
+      )
+    ) {
+      return;
+    }
+    setActiveTab(tab);
+  };
+
+  /* ---------------------------- Slide modal state ------------------------- */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSlideId, setEditingSlideId] = useState<string | null>(null);
 
-  // Slide form state
-  const [slideType, setSlideType] = useState<'video' | 'image'>('video');
-  const [slideSrc, setSlideSrc] = useState('');
-  const [slidePoster, setSlidePoster] = useState('');
+  const [slideDesktop, setSlideDesktop] = useState<HeroSlideMedia | null>(null);
+  const [slideMobile, setSlideMobile] = useState<HeroSlideMedia | null>(null);
   const [captionEn, setCaptionEn] = useState('');
   const [captionFi, setCaptionFi] = useState('');
-  const [positionDesktop, setPositionDesktop] = useState('center 20%');
-  const [positionMobile, setPositionMobile] = useState('center 15%');
-  const [slideScale, setSlideScale] = useState(1.0);
-  const [slideRotation, setSlideRotation] = useState(0);
-  const [slideFocalX, setSlideFocalX] = useState(50);
-  const [slideFocalY, setSlideFocalY] = useState(20);
+  const [slideLinkUrl, setSlideLinkUrl] = useState('');
+  const [slideEnabled, setSlideEnabled] = useState(true);
   const [slideFormError, setSlideFormError] = useState<string | null>(null);
 
-  // File upload refs
-  const slideFileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const slidePosterFileInputRef = React.useRef<HTMLInputElement | null>(null);
-  const [isSlideAdjusterModalOpen, setIsSlideAdjusterModalOpen] = useState(false);
+  /* ------------------------ Drag & reorder state -------------------------- */
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
+  const html5DragIdRef = useRef<string | null>(null);
+  const pointerDragIdRef = useRef<string | null>(null);
+  const pointerDragCleanupRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    return () => {
+      pointerDragCleanupRef.current?.();
+    };
+  }, []);
 
   // Deletion confirmation
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Interactive Live Preview in Admin
   const [previewIndex, setPreviewIndex] = useState(0);
+  const [previewDevice, setPreviewDevice] = useState<PreviewDeviceId>('desktop');
 
-  // Device file upload for slide
-  const handleSlideFileUpload = (file: File | undefined) => {
-    if (!file) return;
-    const isVid = file.type.startsWith('video');
-    setSlideType(isVid ? 'video' : 'image');
+  useEffect(() => {
+    if (heroSlides.length > 0 && previewIndex >= heroSlides.length) {
+      setPreviewIndex(heroSlides.length - 1);
+    }
+  }, [heroSlides.length, previewIndex]);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setSlideSrc(dataUrl);
+  /* --------------------------- Draft mutations ---------------------------- */
+
+  const updateHeroSlides = (next: HeroSlide[] | ((prev: HeroSlide[]) => HeroSlide[])) => {
+    setFormData((prev) => {
+      const list = prev.heroSlides || [];
+      const resolved = typeof next === 'function' ? next(list) : next;
+      return { ...prev, heroSlides: resolved };
+    });
+  };
+
+  const moveSlideToId = (draggedId: string, targetId: string) => {
+    updateHeroSlides((list) => {
+      const from = list.findIndex((s) => s.id === draggedId);
+      const to = list.findIndex((s) => s.id === targetId);
+      if (from < 0 || to < 0 || from === to) return list;
+      const copy = [...list];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  };
+
+  const reorderSlides = (from: number, to: number) => {
+    updateHeroSlides((list) => {
+      if (from === to || from < 0 || to < 0 || from >= list.length || to >= list.length) return list;
+      const copy = [...list];
+      const [moved] = copy.splice(from, 1);
+      copy.splice(to, 0, moved);
+      return copy;
+    });
+  };
+
+  /* HTML5 drag-and-drop reorder (mouse) */
+  const handleRowDragStart = (e: React.DragEvent, slideId: string) => {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea')) {
+      e.preventDefault();
+      return;
+    }
+    html5DragIdRef.current = slideId;
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', slideId);
+    } catch {
+      /* browsers that block dataTransfer in dragstart */
+    }
+    setDraggingId(slideId);
+  };
+
+  const handleRowDragOver = (e: React.DragEvent, slideId: string) => {
+    if (!html5DragIdRef.current) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (dragOverId !== slideId) setDragOverId(slideId);
+  };
+
+  const handleRowDrop = (e: React.DragEvent, slideId: string) => {
+    e.preventDefault();
+    const from = html5DragIdRef.current;
+    html5DragIdRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+    if (from && from !== slideId) moveSlideToId(from, slideId);
+  };
+
+  const handleRowDragEnd = () => {
+    html5DragIdRef.current = null;
+    setDraggingId(null);
+    setDragOverId(null);
+  };
+
+  /* Pointer-based reorder via the grip handle (mouse + touch friendly) */
+  const handleGripPointerDown = (e: React.PointerEvent<HTMLButtonElement>, slideId: string) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    e.preventDefault();
+    pointerDragCleanupRef.current?.();
+    pointerDragIdRef.current = slideId;
+    setDraggingId(slideId);
+
+    const handleMove = (ev: PointerEvent) => {
+      const dragged = pointerDragIdRef.current;
+      if (!dragged) return;
+      const under = document.elementFromPoint(ev.clientX, ev.clientY) as HTMLElement | null;
+      const row = under?.closest('[data-slide-id]') as HTMLElement | null;
+      const targetId = row?.getAttribute('data-slide-id');
+      if (!targetId || targetId === dragged) {
+        setDragOverId(null);
+        return;
       }
+      setDragOverId(targetId);
+      moveSlideToId(dragged, targetId);
     };
-    reader.readAsDataURL(file);
-  };
 
-  const handleSlidePosterUpload = (file: File | undefined) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setSlidePoster(dataUrl);
-      }
+    const handleEnd = () => {
+      pointerDragIdRef.current = null;
+      setDraggingId(null);
+      setDragOverId(null);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleEnd);
+      window.removeEventListener('pointercancel', handleEnd);
+      pointerDragCleanupRef.current = null;
     };
-    reader.readAsDataURL(file);
+
+    pointerDragCleanupRef.current = handleEnd;
+    window.addEventListener('pointermove', handleMove);
+    window.addEventListener('pointerup', handleEnd);
+    window.addEventListener('pointercancel', handleEnd);
   };
 
-  const handleDeleteSlideImage = () => {
-    setSlideSrc('');
+  /* ------------------------------ Slide modal ----------------------------- */
+
+  const normalizeMedia = (m: HeroSlideMedia | null | undefined): HeroSlideMedia | undefined => {
+    if (!m) return undefined;
+    const url = m.url.trim();
+    if (!url) return undefined;
+    return { ...m, url };
   };
 
-  const handleApplySlideAdjuster = (res: FrameAdjusterResult) => {
-    setSlideScale(res.scale);
-    setSlideRotation(res.rotation);
-    setSlideFocalX(res.focalX);
-    setSlideFocalY(res.focalY);
-    setPositionDesktop(res.position);
-    setPositionMobile(res.position);
+  const handleOpenAddModal = () => {
+    setEditingSlideId(null);
+    setSlideDesktop(null);
+    setSlideMobile(null);
+    setCaptionEn('');
+    setCaptionFi('');
+    setSlideLinkUrl('');
+    setSlideEnabled(true);
+    setSlideFormError(null);
+    setIsModalOpen(true);
   };
+
+  const handleOpenEditModal = (slide: HeroSlide) => {
+    setEditingSlideId(slide.id);
+    setSlideDesktop(normalizeMedia(slide.desktopMedia || null) || null);
+    setSlideMobile(normalizeMedia(slide.mobileMedia || null) || null);
+    setCaptionEn(slide.caption?.en || '');
+    setCaptionFi(slide.caption?.fi || '');
+    setSlideLinkUrl(slide.linkUrl || '');
+    setSlideEnabled(slide.enabled !== false);
+    setSlideFormError(null);
+    setIsModalOpen(true);
+  };
+
+  /** Save new or edited slide into the local draft (published via Save bar). */
+  const handleSaveSlideModal = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const desktop = normalizeMedia(slideDesktop);
+    const mobile = normalizeMedia(slideMobile);
+
+    if (!desktop && !mobile) {
+      setSlideFormError('Choose media for the desktop slot, the mobile slot, or both.');
+      return;
+    }
+    if (containsDataUrl(desktop) || containsDataUrl(mobile)) {
+      setSlideFormError(
+        'Base64 data URLs are never written to the content row. Upload the file to the media library instead.'
+      );
+      return;
+    }
+
+    const link = slideLinkUrl.trim();
+    if (link && !link.startsWith('https://') && !link.startsWith('/')) {
+      setSlideFormError('The link must begin with https:// or be a path beginning with "/".');
+      return;
+    }
+
+    const existing = editingSlideId ? heroSlides.find((s) => s.id === editingSlideId) : undefined;
+    const primary = desktop || mobile;
+    const primaryFraming = desktop?.framing || mobile?.framing;
+    const positionFrom = (f?: ImageFramingParams) => (f ? `${f.focalX}% ${f.focalY}%` : undefined);
+
+    const nextSlide: HeroSlide = {
+      ...(existing || {}),
+      id: existing?.id || `slide-${Date.now()}`,
+      type: primary?.kind === 'video' ? 'video' : 'image',
+      src: primary?.url || '',
+      poster: primary?.poster || undefined,
+      positionDesktop:
+        positionFrom(desktop?.framing) || existing?.positionDesktop || 'center 20%',
+      positionMobile: positionFrom(mobile?.framing) || existing?.positionMobile || 'center 15%',
+      scale: primaryFraming?.zoom ?? existing?.scale ?? 1.0,
+      rotation: primaryFraming?.rotation ?? existing?.rotation ?? 0,
+      focalX: primaryFraming?.focalX ?? existing?.focalX ?? 50,
+      focalY: primaryFraming?.focalY ?? existing?.focalY ?? 20,
+      caption: {
+        fi: captionFi.trim() || captionEn.trim(),
+        en: captionEn.trim(),
+        sv: captionEn.trim(),
+      },
+      enabled: slideEnabled,
+      desktopMedia: desktop,
+      mobileMedia: mobile,
+      framing: existing?.framing,
+      linkUrl: link || undefined,
+    };
+
+    if (editingSlideId) {
+      updateHeroSlides((list) => list.map((s) => (s.id === editingSlideId ? nextSlide : s)));
+    } else {
+      updateHeroSlides((list) => [...list, nextSlide]);
+    }
+
+    setIsModalOpen(false);
+  };
+
+  const handleRemoveSlide = (slideId: string) => {
+    if (heroSlides.length <= 1) {
+      alert('The hero carousel requires at least 1 active slide or video.');
+      setDeleteConfirmId(null);
+      return;
+    }
+    updateHeroSlides((list) => list.filter((s) => s.id !== slideId));
+    setDeleteConfirmId(null);
+  };
+
+  const toggleSlideEnabled = (slideId: string) => {
+    updateHeroSlides((list) =>
+      list.map((s) => (s.id === slideId ? { ...s, enabled: s.enabled === false } : s))
+    );
+  };
+
+  /** Up / Down buttons — keyboard accessible fallback to drag-and-drop. */
+  const handleMoveSlide = (index: number, direction: 'up' | 'down') => {
+    const targetIdx = direction === 'up' ? index - 1 : index + 1;
+    if (targetIdx < 0 || targetIdx >= heroSlides.length) return;
+    reorderSlides(index, targetIdx);
+  };
+
+  /* ----------------------------- CMS slots ------------------------------- */
+
+  const setTranslationValue = (key: string, value: unknown) => {
+    setFormData((prev) => ({
+      ...prev,
+      translations: { ...(prev.translations || {}), [key]: value },
+    }));
+  };
+
+  const updateJournalPost = (postId: string, patch: Partial<JournalRecord>) => {
+    setFormData((prev) => ({
+      ...prev,
+      journalPosts: (prev.journalPosts || []).map((p) =>
+        p.id === postId ? { ...p, ...patch } : p
+      ),
+    }));
+  };
+
+  /* -------------------------- Homepage sections -------------------------- */
 
   // Quick asset presets for studio quality
   const defaultSections = [
@@ -136,161 +685,6 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
     { id: 'journal_archive', label: 'Section 06: Quiet Nordic Studio Journal' },
   ];
 
-  // Open modal to add a brand new slide
-  const handleOpenAddModal = () => {
-    setEditingSlideId(null);
-    setSlideType('image');
-    setSlideSrc('');
-    setSlidePoster('');
-    setCaptionEn('');
-    setCaptionFi('');
-    setPositionDesktop('center 20%');
-    setPositionMobile('center 15%');
-    setSlideScale(1.0);
-    setSlideRotation(0);
-    setSlideFocalX(50);
-    setSlideFocalY(20);
-    setSlideFormError(null);
-    setIsModalOpen(true);
-  };
-
-  // Open modal to edit an existing slide
-  const handleOpenEditModal = (slide: HeroSlide) => {
-    setEditingSlideId(slide.id);
-    setSlideType(slide.type);
-    setSlideSrc(slide.src);
-    setSlidePoster(slide.poster || '');
-    setCaptionEn(slide.caption?.en || '');
-    setCaptionFi(slide.caption?.fi || '');
-    setPositionDesktop(slide.positionDesktop || 'center 20%');
-    setPositionMobile(slide.positionMobile || 'center 15%');
-    setSlideScale(slide.scale || 1.0);
-    setSlideRotation(slide.rotation || 0);
-    setSlideFocalX(slide.focalX || 50);
-    setSlideFocalY(slide.focalY || 20);
-    setSlideFormError(null);
-    setIsModalOpen(true);
-  };
-
-  // Save new or edited slide to heroSlides list
-  const handleSaveSlideModal = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!slideSrc.trim()) {
-      setSlideFormError('Please provide a valid media source URL or upload a file from your device.');
-      return;
-    }
-
-    if (editingSlideId) {
-      // Update existing slide
-      const updated = heroSlides.map((s) => {
-        if (s.id === editingSlideId) {
-          return {
-            ...s,
-            type: slideType,
-            src: slideSrc.trim(),
-            poster: slideType === 'video' ? slidePoster.trim() : undefined,
-            positionDesktop,
-            positionMobile,
-            scale: slideScale,
-            rotation: slideRotation,
-            focalX: slideFocalX,
-            focalY: slideFocalY,
-            caption: {
-              fi: captionFi.trim() || captionEn.trim(),
-              en: captionEn.trim(),
-              sv: captionEn.trim(),
-            },
-          };
-        }
-        return s;
-      });
-      setHeroSlides(updated);
-      persistHeroSlidesUpdate(updated);
-    } else {
-      // Add new slide
-      const newSlide: HeroSlide = {
-        id: `slide-${Date.now()}`,
-        type: slideType,
-        src: slideSrc.trim(),
-        poster: slideType === 'video' ? slidePoster.trim() || undefined : undefined,
-        positionDesktop,
-        positionMobile,
-        scale: slideScale,
-        rotation: slideRotation,
-        focalX: slideFocalX,
-        focalY: slideFocalY,
-        caption: {
-          fi: captionFi.trim() || captionEn.trim(),
-          en: captionEn.trim() || 'Zejesh Campaign Series',
-          sv: captionEn.trim() || 'Zejesh Campaign Series',
-        },
-      };
-      const updated = [...heroSlides, newSlide];
-      setHeroSlides(updated);
-      persistHeroSlidesUpdate(updated);
-    }
-
-    setIsModalOpen(false);
-  };
-
-  // Remove a slide
-  const handleRemoveSlide = (slideId: string) => {
-    if (heroSlides.length <= 1) {
-      alert('The hero carousel requires at least 1 active slide or video.');
-      setDeleteConfirmId(null);
-      return;
-    }
-
-    const updated = heroSlides.filter((s) => s.id !== slideId);
-    setHeroSlides(updated);
-    setDeleteConfirmId(null);
-    if (previewIndex >= updated.length) {
-      setPreviewIndex(Math.max(0, updated.length - 1));
-    }
-    persistHeroSlidesUpdate(updated);
-  };
-
-  // Reorder slides (up / down)
-  const handleMoveSlide = (index: number, direction: 'up' | 'down') => {
-    const targetIdx = direction === 'up' ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= heroSlides.length) return;
-
-    const copy = [...heroSlides];
-    const temp = copy[index];
-    copy[index] = copy[targetIdx];
-    copy[targetIdx] = temp;
-
-    setHeroSlides(copy);
-    persistHeroSlidesUpdate(copy);
-  };
-
-  // Save heroSlides immediately to context & firestore
-  const persistHeroSlidesUpdate = async (slides: HeroSlide[]) => {
-    const updatedContent: StoreContent = {
-      ...formData,
-      heroSlides: slides,
-      updatedAt: new Date().toISOString(),
-    };
-    setFormData(updatedContent);
-    updateStoreContentLocal(updatedContent);
-
-    try {
-      await updateStoreContent(updatedContent);
-      await logAuditEvent(
-        adminProfile?.name || 'admin',
-        'HERO_SLIDES_UPDATED',
-        'storefront_hero',
-        { slideCount: slides.length }
-      );
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2500);
-      onRefresh();
-    } catch (err) {
-      console.warn('Auto-save hero slides warning:', err);
-    }
-  };
-
-  // Move Homepage narrative section
   const handleMoveSection = (index: number, direction: 'up' | 'down') => {
     const sections = [...(formData.sectionOrder || defaultSections.map((s) => s.id))];
     const targetIdx = direction === 'up' ? index - 1 : index + 1;
@@ -300,24 +694,32 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
     sections[index] = sections[targetIdx];
     sections[targetIdx] = temp;
 
-    const updated = { ...formData, sectionOrder: sections };
-    setFormData(updated);
-    updateStoreContentLocal(updated);
+    setFormData((prev) => ({ ...prev, sectionOrder: sections }));
   };
 
-  // Global save of all content fields
+  /* ------------------------------ Save / Discard -------------------------- */
+
   const handleSaveAllContent = async () => {
-    if (!isEditor) return;
+    if (!isEditor || isSaving) return;
     setIsSaving(true);
+    setSaveError(null);
     try {
       const updated: StoreContent = {
         ...formData,
-        heroSlides,
         updatedAt: new Date().toISOString(),
       };
 
+      if (containsDataUrl(updated)) {
+        throw new Error(
+          'Base64 data URLs cannot be published. Choose the file from the media library instead.'
+        );
+      }
+
       await updateStoreContent(updated);
       updateStoreContentLocal(updated);
+
+      setFormData(updated);
+      setSavedSnapshot(updated);
 
       await logAuditEvent(
         adminProfile?.name || 'admin',
@@ -325,52 +727,116 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
         'homepage',
         {
           sections: updated.sectionOrder,
-          slidesCount: heroSlides.length,
+          slidesCount: updated.heroSlides?.length || 0,
         }
       );
 
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
+      window.setTimeout(() => setSaveSuccess(false), 3000);
       onRefresh();
     } catch (err) {
       console.warn('Content save error:', err);
+      setSaveError(
+        (err as Error)?.message || 'Publishing failed. Your edits stay in draft.'
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleDiscardChanges = () => {
+    if (isSaving) return;
+    setFormData(savedSnapshot);
+    setSaveError(null);
+    setSaveSuccess(false);
+    setDiscardSuccess(true);
+    window.setTimeout(() => setDiscardSuccess(false), 2500);
+  };
+
+  /* ------------------------------- Preview ------------------------------- */
+
   const currentPreviewSlide = heroSlides[previewIndex] || heroSlides[0];
+  const isPreviewMobile = previewDevice === 'mobile';
+  const previewMedia = currentPreviewSlide
+    ? isPreviewMobile
+      ? currentPreviewSlide.mobileMedia || currentPreviewSlide.desktopMedia
+      : currentPreviewSlide.desktopMedia || currentPreviewSlide.mobileMedia
+    : undefined;
+  const previewKind: 'image' | 'video' = previewMedia
+    ? previewMedia.kind || (isVideoUrl(previewMedia.url) ? 'video' : 'image')
+    : (currentPreviewSlide?.type === 'video' ? 'video' : 'image');
+  const previewUrl = previewMedia?.url || currentPreviewSlide?.src || '';
+  const previewPoster = previewMedia?.poster || currentPreviewSlide?.poster;
+  const previewFraming = previewMedia?.framing || currentPreviewSlide?.framing;
+  const previewStyle = imageFramingStyle(
+    previewFraming,
+    isPreviewMobile ? 'heroMobile' : 'heroDesktop',
+    isPreviewMobile
+      ? currentPreviewSlide?.positionMobile
+      : currentPreviewSlide?.positionDesktop,
+    {
+      scale: currentPreviewSlide?.scale,
+      rotation: currentPreviewSlide?.rotation,
+    }
+  );
 
   return (
     <div className="space-y-6">
       {/* Title & Save Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.08]">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h1 className="font-editorial text-2xl sm:text-3xl font-normal">Storefront CMS & Hero Media</h1>
             {saveSuccess && (
               <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
                 <Check className="w-3 h-3" /> Live on Storefront
               </span>
             )}
+            {discardSuccess && !saveSuccess && (
+              <span className="flex items-center gap-1 text-[11px] font-mono text-black/60 bg-black/[0.04] px-2 py-0.5 border border-black/20">
+                <RotateCcw className="w-3 h-3" /> Draft reverted
+              </span>
+            )}
+            {isDirty && (
+              <span className="flex items-center gap-1.5 text-[11px] font-mono text-black bg-black/[0.04] px-2 py-0.5 border border-black/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+                Unsaved changes
+              </span>
+            )}
           </div>
           <p className="text-xs font-mono text-black/50 mt-0.5">
-            Centrally manage hero video/slides carousel, narrative pacing, and announcement ticker.
+            Draft edits stay private until you publish. Centrally manage hero video/slides carousel, narrative pacing, and announcement ticker.
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <button
             type="button"
+            onClick={handleDiscardChanges}
+            disabled={!isDirty || isSaving}
+            className="text-xs font-mono uppercase tracking-wider text-black border border-black/25 hover:border-black px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Discard changes</span>
+          </button>
+          <button
+            type="button"
             onClick={handleSaveAllContent}
-            disabled={isSaving}
-            className="text-xs font-mono uppercase tracking-wider text-white bg-black hover:bg-black/80 px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-50 transition-colors"
+            disabled={isSaving || !isDirty}
+            title={!isEditor ? 'Editor role required to publish' : undefined}
+            className="text-xs font-mono uppercase tracking-wider text-white bg-black hover:bg-black/80 px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Publishing...' : 'Publish to Storefront'}</span>
           </button>
         </div>
       </div>
+
+      {saveError && (
+        <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-[11px] font-mono" role="alert">
+          {saveError}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-black/[0.08] text-xs font-mono uppercase tracking-wider overflow-x-auto">
@@ -379,10 +845,11 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
           { id: 'sections', label: '2. Homepage Sections Order' },
           { id: 'announcement', label: '3. Announcement Ticker' },
           { id: 'journal', label: '4. Editorial Journal' },
+          { id: 'story', label: '5. Story Page Plates' },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
+            onClick={() => handleSelectTab(tab.id as TabId)}
             className={`px-4 py-2.5 transition-colors cursor-pointer shrink-0 ${
               activeTab === tab.id
                 ? 'font-bold text-black border-b-2 border-black'
@@ -406,7 +873,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 Hero Video & Slide Management Studio
               </p>
               <p className="text-[11px] text-black/60 mt-0.5">
-                Slides and videos added or removed here immediately appear on the storefront. Public homepage controls have been restricted to protect store integrity.
+                Drag the grip (or use the arrows) to reorder, toggle slides on or off, and give every slide its own desktop and mobile media. Nothing reaches the storefront until you press Publish to Storefront.
               </p>
             </div>
             <button
@@ -421,21 +888,24 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
 
           {/* Interactive Live Hero Preview Widget */}
           <div className="border border-black/[0.1] bg-white p-4 sm:p-5 space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span className="text-[11px] font-semibold uppercase tracking-wider text-black">
                   Interactive Live Carousel Preview
                 </span>
                 <span className="text-[10px] text-black/40">
-                  (Slide {previewIndex + 1} of {heroSlides.length})
+                  {heroSlides.length > 0
+                    ? `(Slide ${previewIndex + 1} of ${heroSlides.length})`
+                    : '(No slides in draft)'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
+                  disabled={heroSlides.length < 2}
                   onClick={() => setPreviewIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors"
+                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
                   title="Previous Slide"
                   aria-label="Previous Slide"
                 >
@@ -443,8 +913,9 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 </button>
                 <button
                   type="button"
+                  disabled={heroSlides.length < 2}
                   onClick={() => setPreviewIndex((prev) => (prev + 1) % heroSlides.length)}
-                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors"
+                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
                   title="Next Slide"
                   aria-label="Next Slide"
                 >
@@ -453,52 +924,110 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
               </div>
             </div>
 
-            {/* Simulated Hero Viewport */}
-            <div className="relative w-full h-56 sm:h-72 bg-white overflow-hidden border border-black/[0.08] flex items-center justify-center">
-              {currentPreviewSlide?.type === 'video' ? (
-                <video
-                  key={currentPreviewSlide.id}
-                  src={currentPreviewSlide.src}
-                  poster={currentPreviewSlide.poster}
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover object-[center_20%]"
-                />
-              ) : (
-                <img
-                  key={currentPreviewSlide?.id}
-                  src={currentPreviewSlide?.src}
-                  alt={currentPreviewSlide?.caption?.en || 'Hero Preview'}
-                  className="w-full h-full object-cover object-[center_20%]"
-                />
-              )}
-
-              {/* Overlay slide label */}
-              <div className="absolute top-3 left-3 bg-black/80 text-white px-2 py-0.5 text-[9.5px] uppercase tracking-widest font-mono flex items-center gap-1.5">
-                {currentPreviewSlide?.type === 'video' ? (
-                  <>
-                    <Video className="w-3 h-3 text-indigo-400" />
-                    <span>CINEMATIC VIDEO</span>
-                  </>
-                ) : (
-                  <>
-                    <ImageIcon className="w-3 h-3 text-amber-300" />
-                    <span>STUDIO PHOTO</span>
-                  </>
-                )}
-              </div>
-
-              {/* Bottom counter overlay */}
-              <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-mono border border-black/10">
-                <span className="font-bold text-black">0{previewIndex + 1}</span>
-                <span className="text-black/40"> / </span>
-                <span className="text-black/60">0{heroSlides.length}</span>
-                <span className="text-black/30"> · </span>
-                <span className="text-black/70 uppercase">
-                  {currentPreviewSlide?.caption?.en || 'Atelier Campaign'}
+            {/* Preview device toggle: 1920 / 834 / 390 px inline frames */}
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5" role="group" aria-label="Preview device width">
+                <span className="text-[10px] uppercase tracking-wider text-black/50 mr-1">
+                  Preview:
                 </span>
+                {PREVIEW_DEVICES.map((device) => (
+                  <button
+                    key={device.id}
+                    type="button"
+                    onClick={() => setPreviewDevice(device.id)}
+                    aria-pressed={previewDevice === device.id}
+                    className={`px-2.5 py-1 text-[10px] uppercase font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
+                      previewDevice === device.id
+                        ? 'bg-black text-white border-black'
+                        : 'bg-white text-black/60 border-black/20 hover:border-black hover:text-black'
+                    }`}
+                  >
+                    <device.Icon className="w-3 h-3" />
+                    <span>
+                      {device.label} · {device.width}px
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <span className="text-[10px] text-black/40">
+                Scroll horizontally to inspect the full frame
+              </span>
+            </div>
+
+            {/* Simulated Hero Viewport (fixed-width frame inside an overflow container) */}
+            <div className="w-full overflow-x-auto border border-black/[0.08]">
+              <div
+                style={{
+                  width: PREVIEW_DEVICES.find((d) => d.id === previewDevice)?.width || 1920,
+                  height: 480,
+                }}
+                className="relative bg-white overflow-hidden"
+              >
+                {previewUrl ? (
+                  previewKind === 'video' ? (
+                    <video
+                      key={`${currentPreviewSlide?.id || 'preview'}-${previewDevice}`}
+                      src={previewUrl}
+                      poster={previewPoster}
+                      autoPlay
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                      style={previewStyle}
+                    />
+                  ) : (
+                    <img
+                      key={`${currentPreviewSlide?.id || 'preview'}-${previewDevice}`}
+                      src={previewUrl}
+                      alt={currentPreviewSlide?.caption?.en || 'Hero Preview'}
+                      className="w-full h-full object-cover"
+                      style={previewStyle}
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        if (el.dataset.fallback !== '1') {
+                          el.dataset.fallback = '1';
+                          el.src = NEUTRAL_PLACEHOLDER_IMG;
+                        }
+                      }}
+                    />
+                  )
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[11px] uppercase tracking-widest text-black/40">
+                    No media configured for this slide
+                  </div>
+                )}
+
+                {/* Overlay slide label */}
+                <div className="absolute top-3 left-3 bg-black/80 text-white px-2 py-0.5 text-[9.5px] uppercase tracking-widest font-mono flex items-center gap-1.5">
+                  {previewKind === 'video' ? (
+                    <>
+                      <Video className="w-3 h-3 text-indigo-400" />
+                      <span>CINEMATIC VIDEO</span>
+                    </>
+                  ) : (
+                    <>
+                      <ImageIcon className="w-3 h-3 text-amber-300" />
+                      <span>STUDIO PHOTO</span>
+                    </>
+                  )}
+                  <span className="text-white/60">· {previewDevice.toUpperCase()}</span>
+                </div>
+
+                {/* Bottom counter overlay */}
+                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-mono border border-black/10">
+                  <span className="font-bold text-black">
+                    {String(Math.min(previewIndex + 1, Math.max(heroSlides.length, 1))).padStart(2, '0')}
+                  </span>
+                  <span className="text-black/40"> / </span>
+                  <span className="text-black/60">
+                    {String(heroSlides.length).padStart(2, '0')}
+                  </span>
+                  <span className="text-black/30"> · </span>
+                  <span className="text-black/70 uppercase">
+                    {currentPreviewSlide?.caption?.en || 'Atelier Campaign'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -510,165 +1039,251 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 Configured Hero Carousel Slides ({heroSlides.length})
               </span>
               <span className="text-[11px] text-black/50">
-                Order determines sequence on storefront
+                Drag the grip or use Up / Down — order determines storefront sequence
               </span>
             </div>
 
             <div className="space-y-3">
-              {heroSlides.map((slide, idx) => (
-                <div
-                  key={slide.id}
-                  className={`p-3.5 sm:p-4 border transition-colors bg-white flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                    previewIndex === idx ? 'border-black ring-1 ring-black/10' : 'border-black/[0.1] hover:border-black/30'
-                  }`}
-                >
-                  {/* Left: Thumbnail & Details */}
-                  <div className="flex items-start gap-3.5">
-                    {/* Thumbnail preview */}
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 bg-neutral-100 border border-black/10 overflow-hidden relative flex items-center justify-center">
-                      {slide.type === 'video' ? (
-                        <>
-                          <video
-                            src={slide.src}
-                            poster={slide.poster}
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                            <Video className="w-5 h-5 text-white drop-shadow" />
-                          </div>
-                        </>
-                      ) : (
-                        <img
-                          src={slide.src}
-                          alt={slide.caption?.en || 'Slide'}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                      <span className="absolute bottom-1 right-1 bg-black text-white text-[8.5px] px-1 font-mono uppercase font-bold">
-                        0{idx + 1}
-                      </span>
-                    </div>
+              {heroSlides.map((slide, idx) => {
+                const thumbMedia = slide.desktopMedia || slide.mobileMedia;
+                const thumbUrl = thumbMedia?.url || slide.src;
+                const thumbKind =
+                  thumbMedia?.kind || (isVideoUrl(thumbUrl) ? 'video' : slide.type === 'video' ? 'video' : 'image');
+                const isEnabled = slide.enabled !== false;
 
-                    {/* Metadata */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border ${
-                            slide.type === 'video'
-                              ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                              : 'bg-neutral-50 text-neutral-800 border-neutral-200'
-                          }`}
-                        >
-                          {slide.type === 'video' ? 'VIDEO (.MP4)' : 'STUDIO PHOTO'}
-                        </span>
-                        <span className="text-[10px] text-black/40 font-mono">
-                          ID: {slide.id}
-                        </span>
-                      </div>
-
-                      <h4 className="font-semibold text-black text-xs">
-                        {slide.caption?.en || 'Untitled Campaign Slide'}
-                      </h4>
-
-                      <div className="text-[10.5px] text-black/50 font-mono break-all line-clamp-1 max-w-md">
-                        URL: {slide.src}
-                      </div>
-
-                      {slide.type === 'video' && slide.poster && (
-                        <div className="text-[10px] text-black/40 font-mono break-all line-clamp-1 max-w-md">
-                          Poster: {slide.poster}
-                        </div>
-                      )}
-
-                      <div className="text-[9.5px] text-black/40 font-mono">
-                        Focal Position: Desktop ({slide.positionDesktop || 'center 20%'}) · Mobile ({slide.positionMobile || 'center 15%'})
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Actions */}
-                  <div className="flex items-center gap-2 self-end md:self-center shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => setPreviewIndex(idx)}
-                      className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
-                      title="Preview this slide"
-                    >
-                      <Eye className="w-3 h-3" />
-                      <span className="hidden sm:inline">Preview</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={idx === 0}
-                      onClick={() => handleMoveSlide(idx, 'up')}
-                      className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
-                      title="Move Up"
-                      aria-label="Move Up"
-                    >
-                      <ArrowUp className="w-3.5 h-3.5" />
-                    </button>
-
-                    <button
-                      type="button"
-                      disabled={idx === heroSlides.length - 1}
-                      onClick={() => handleMoveSlide(idx, 'down')}
-                      className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
-                      title="Move Down"
-                      aria-label="Move Down"
-                    >
-                      <ArrowDown className="w-3.5 h-3.5" />
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleOpenEditModal(slide)}
-                      className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
-                    >
-                      <Edit2 className="w-3 h-3" />
-                      <span>Edit</span>
-                    </button>
-
-                    {deleteConfirmId === slide.id ? (
-                      <div className="flex items-center gap-1 bg-red-50 p-1 border border-red-200">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSlide(slide.id)}
-                          className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold hover:bg-red-700 cursor-pointer"
-                        >
-                          Confirm
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteConfirmId(null)}
-                          className="px-1.5 py-1 text-black/60 hover:text-black text-[10px] cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
+                return (
+                  <div
+                    key={slide.id}
+                    data-slide-id={slide.id}
+                    draggable
+                    onDragStart={(e) => handleRowDragStart(e, slide.id)}
+                    onDragOver={(e) => handleRowDragOver(e, slide.id)}
+                    onDrop={(e) => handleRowDrop(e, slide.id)}
+                    onDragEnd={handleRowDragEnd}
+                    className={`p-3.5 sm:p-4 border transition-colors bg-white flex flex-col md:flex-row md:items-start justify-between gap-4 cursor-grab active:cursor-grabbing ${
+                      dragOverId === slide.id
+                        ? 'border-black ring-2 ring-black/20'
+                        : previewIndex === idx
+                          ? 'border-black ring-1 ring-black/10'
+                          : 'border-black/[0.1] hover:border-black/30'
+                    }${draggingId === slide.id ? ' opacity-60' : ''}`}
+                  >
+                    {/* Left: Grip, Thumbnail & Details */}
+                    <div className="flex items-start gap-3 min-w-0">
+                      {/* Drag handle (mouse + touch reorder) */}
                       <button
                         type="button"
-                        onClick={() => setDeleteConfirmId(slide.id)}
-                        className="p-1.5 border border-red-200 hover:border-red-600 text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
-                        title="Remove Slide from Hero"
-                        aria-label="Remove Slide"
+                        aria-label={`Reorder slide ${idx + 1} of ${heroSlides.length}. Drag, or use the Move Up and Move Down buttons.`}
+                        title="Drag to reorder"
+                        onPointerDown={(e) => handleGripPointerDown(e, slide.id)}
+                        className="p-1 -ml-1 text-black/35 hover:text-black cursor-grab active:cursor-grabbing touch-none select-none shrink-0"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <GripVertical className="w-4 h-4" />
                       </button>
-                    )}
+
+                      {/* Thumbnail preview */}
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 bg-neutral-100 border border-black/10 overflow-hidden relative flex items-center justify-center">
+                        {thumbUrl ? (
+                          thumbKind === 'video' ? (
+                            <>
+                              <video
+                                src={thumbUrl}
+                                poster={slide.poster || thumbMedia?.poster}
+                                muted
+                                playsInline
+                                preload="metadata"
+                                className="w-full h-full object-cover"
+                              />
+                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                                <Video className="w-5 h-5 text-white drop-shadow" />
+                              </div>
+                            </>
+                          ) : (
+                            <img
+                              src={thumbUrl}
+                              alt={slide.caption?.en || 'Slide'}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const el = e.currentTarget;
+                                if (el.dataset.fallback !== '1') {
+                                  el.dataset.fallback = '1';
+                                  el.src = NEUTRAL_PLACEHOLDER_IMG;
+                                }
+                              }}
+                            />
+                          )
+                        ) : (
+                          <span className="text-[9px] uppercase font-mono text-black/40 px-2 text-center">
+                            Empty slot
+                          </span>
+                        )}
+                        <span className="absolute bottom-1 right-1 bg-black text-white text-[8.5px] px-1 font-mono uppercase font-bold">
+                          {String(idx + 1).padStart(2, '0')}
+                        </span>
+                      </div>
+
+                      {/* Metadata */}
+                      <div className="space-y-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span
+                            className={`text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border ${
+                              slide.type === 'video'
+                                ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
+                                : 'bg-neutral-50 text-neutral-800 border-neutral-200'
+                            }`}
+                          >
+                            {slide.type === 'video' ? 'VIDEO (.MP4)' : 'STUDIO PHOTO'}
+                          </span>
+                          <span className="text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border border-black/20 bg-white text-black/70">
+                            Desktop: {(slide.desktopMedia?.kind || 'empty').toUpperCase()}
+                          </span>
+                          <span className="text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border border-black/20 bg-white text-black/70">
+                            Mobile: {(slide.mobileMedia?.kind || 'empty').toUpperCase()}
+                          </span>
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={isEnabled}
+                            aria-label={`${isEnabled ? 'Disable' : 'Enable'} slide ${idx + 1}`}
+                            onClick={() => toggleSlideEnabled(slide.id)}
+                            className={`px-2 py-0.5 text-[9.5px] uppercase font-mono font-semibold border flex items-center gap-1.5 cursor-pointer transition-colors ${
+                              isEnabled
+                                ? 'bg-black text-white border-black'
+                                : 'bg-white text-black/60 border-black/30 hover:border-black'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-white' : 'bg-black/40'}`}
+                            />
+                            <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
+                          </button>
+                          <span className="text-[10px] text-black/40 font-mono">ID: {slide.id}</span>
+                        </div>
+
+                        <h4 className="font-semibold text-black text-xs">
+                          {slide.caption?.en || 'Untitled Campaign Slide'}
+                        </h4>
+
+                        <div className="text-[10.5px] text-black/50 font-mono break-all line-clamp-1 max-w-md">
+                          Desktop: {slide.desktopMedia?.url || '—'}
+                        </div>
+                        <div className="text-[10.5px] text-black/50 font-mono break-all line-clamp-1 max-w-md">
+                          Mobile: {slide.mobileMedia?.url || '—'}
+                        </div>
+
+                        {slide.type === 'video' && (slide.desktopMedia?.poster || slide.mobileMedia?.poster || slide.poster) && (
+                          <div className="text-[10px] text-black/40 font-mono break-all line-clamp-1 max-w-md">
+                            Poster: {slide.desktopMedia?.poster || slide.mobileMedia?.poster || slide.poster}
+                          </div>
+                        )}
+
+                        <div className="text-[9.5px] text-black/40 font-mono">
+                          Framing: Desktop ({framingSummary(slide.desktopMedia?.framing)}) · Mobile (
+                          {framingSummary(slide.mobileMedia?.framing)})
+                        </div>
+
+                        <div className="text-[9.5px] text-black/40 font-mono">
+                          Legacy positions: Desktop ({slide.positionDesktop || 'center 20%'}) · Mobile (
+                          {slide.positionMobile || 'center 15%'})
+                        </div>
+
+                        {slide.linkUrl && (
+                          <div className="text-[10px] text-black/40 font-mono break-all line-clamp-1 max-w-md">
+                            Link: {slide.linkUrl}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="flex items-center gap-2 self-end md:self-center shrink-0 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPreviewIndex(idx);
+                          setPreviewDevice('desktop');
+                        }}
+                        className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
+                        title="Preview this slide"
+                      >
+                        <Eye className="w-3 h-3" />
+                        <span className="hidden sm:inline">Preview</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={idx === 0}
+                        onClick={() => handleMoveSlide(idx, 'up')}
+                        className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                        title="Move Up"
+                        aria-label={`Move slide ${idx + 1} up`}
+                      >
+                        <ArrowUp className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={idx === heroSlides.length - 1}
+                        onClick={() => handleMoveSlide(idx, 'down')}
+                        className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                        title="Move Down"
+                        aria-label={`Move slide ${idx + 1} down`}
+                      >
+                        <ArrowDown className="w-3.5 h-3.5" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditModal(slide)}
+                        className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
+                      >
+                        <Edit2 className="w-3 h-3" />
+                        <span>Edit</span>
+                      </button>
+
+                      {deleteConfirmId === slide.id ? (
+                        <div className="flex items-center gap-1 bg-red-50 p-1 border border-red-200">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSlide(slide.id)}
+                            className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold hover:bg-red-700 cursor-pointer"
+                          >
+                            Confirm
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setDeleteConfirmId(null)}
+                            className="px-1.5 py-1 text-black/60 hover:text-black text-[10px] cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteConfirmId(slide.id)}
+                          className="p-1.5 border border-red-200 hover:border-red-600 text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                          title="Remove Slide from Hero"
+                          aria-label={`Remove slide ${idx + 1}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Actions for Hero Carousel */}
-          <div className="border border-black/[0.08] p-4 bg-neutral-50 flex items-center justify-between">
+          <div className="border border-black/[0.08] p-4 bg-neutral-50 flex items-center justify-between gap-3 flex-wrap">
             <span className="text-xs uppercase font-medium text-black/70">
-              {heroSlides.length === 0 ? 'No slides in carousel' : `${heroSlides.length} slide(s) active in carousel`}
+              {heroSlides.length === 0
+                ? 'No slides in carousel'
+                : `${heroSlides.length} slide(s) in carousel · ${
+                    heroSlides.filter((s) => s.enabled !== false).length
+                  } enabled`}
             </span>
             <button
               type="button"
@@ -688,7 +1303,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {activeTab === 'sections' && (
         <div className="space-y-4 max-w-2xl font-mono text-xs">
           <p className="text-black/60 text-[11px]">
-            Reorder homepage narrative sections. Changes reflect live on the storefront immediately upon saving.
+            Reorder homepage narrative sections. Changes reflect live on the storefront upon saving.
           </p>
 
           <div className="border border-black/[0.08] divide-y divide-black/[0.06] bg-white">
@@ -726,7 +1341,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       )}
 
       {/* ============================================================== */}
-      {/* TAB 3: ANNOUNCEMENT TICKER */}
+      {/* TAB 3: ANNOUNCEMENT TICKER (text only — no image slot exists)  */}
       {/* ============================================================== */}
       {activeTab === 'announcement' && (
         <div className="space-y-6 max-w-2xl font-mono text-xs">
@@ -763,36 +1378,114 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       )}
 
       {/* ============================================================== */}
-      {/* TAB 4: JOURNAL POSTS */}
+      {/* TAB 4: JOURNAL POSTS (editable cover image + framing)          */}
       {/* ============================================================== */}
       {activeTab === 'journal' && (
         <div className="space-y-4 font-mono text-xs">
           <p className="text-black/60 text-[11px]">
-            Archival articles and editorial journals published to the community feed.
+            Archival articles and editorial journals published to the community feed. Clearing a cover removes the image from the storefront article entirely.
           </p>
 
           <div className="border border-black/[0.08] divide-y divide-black/[0.06] bg-white">
-            {(formData.journalPosts || []).map((post) => (
-              <div key={post.id} className="p-4 flex items-center justify-between hover:bg-black/[0.015]">
-                <div>
-                  <div className="font-semibold text-black">{post.title.en || post.title.fi}</div>
-                  <div className="text-[10px] text-black/40">
-                    {post.date} · {post.readTime} · Tag: {post.tag}
+            {(formData.journalPosts || []).map((post) => {
+              const record = post as JournalRecord;
+              return (
+                <div key={post.id} className="p-4 flex flex-col lg:flex-row lg:items-start justify-between gap-4 hover:bg-black/[0.015]">
+                  <div className="min-w-0">
+                    <div className="font-semibold text-black">{post.title.en || post.title.fi}</div>
+                    <div className="text-[10px] text-black/40">
+                      {post.date} · {post.readTime} · Tag: {post.tag}
+                    </div>
+                    <div className="mt-2">
+                      <span className="text-[10px] uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                        Live
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="w-full lg:w-[26rem] shrink-0">
+                    <ImageSlot
+                      label="Journal cover image"
+                      value={record.image}
+                      framing={record.framing}
+                      allowedKind="image"
+                      onSelect={(url, asset) =>
+                        updateJournalPost(post.id, { image: url, framing: asset?.framing })
+                      }
+                      onFraming={(f) => updateJournalPost(post.id, { framing: f })}
+                      onClear={() => updateJournalPost(post.id, { image: '', framing: undefined })}
+                    />
                   </div>
                 </div>
-                <div className="text-right">
-                  <span className="text-[10px] uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-                    Live
-                  </span>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
 
       {/* ============================================================== */}
-      {/* MODAL: ADD / EDIT HERO SLIDE OR VIDEO */}
+      {/* TAB 5: STORY PAGE PLATES                                       */}
+      {/* ============================================================== */}
+      {activeTab === 'story' && (
+        <div className="space-y-6 max-w-3xl font-mono text-xs">
+          <p className="text-black/60 text-[11px]">
+            Image slots for the Story page. Every slot is optional — an empty slot renders nothing on the storefront.
+          </p>
+
+          <ImageSlot
+            label="Story hero image (wide)"
+            value={formData.translations?.storyHeroImage || ''}
+            framing={formData.translations?.storyHeroFraming}
+            allowedKind="image"
+            onSelect={(url, asset) => {
+              setTranslationValue('storyHeroImage', url);
+              setTranslationValue('storyHeroFraming', asset?.framing);
+            }}
+            onFraming={(f) => setTranslationValue('storyHeroFraming', f)}
+            onClear={() => {
+              setTranslationValue('storyHeroImage', '');
+              setTranslationValue('storyHeroFraming', undefined);
+            }}
+          />
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <ImageSlot
+              label="Story plate I"
+              value={formData.translations?.storyPlate1 || ''}
+              framing={formData.translations?.storyPlate1Framing}
+              allowedKind="image"
+              onSelect={(url, asset) => {
+                setTranslationValue('storyPlate1', url);
+                setTranslationValue('storyPlate1Framing', asset?.framing);
+              }}
+              onFraming={(f) => setTranslationValue('storyPlate1Framing', f)}
+              onClear={() => {
+                setTranslationValue('storyPlate1', '');
+                setTranslationValue('storyPlate1Framing', undefined);
+              }}
+            />
+
+            <ImageSlot
+              label="Story plate II"
+              value={formData.translations?.storyPlate2 || ''}
+              framing={formData.translations?.storyPlate2Framing}
+              allowedKind="image"
+              onSelect={(url, asset) => {
+                setTranslationValue('storyPlate2', url);
+                setTranslationValue('storyPlate2Framing', asset?.framing);
+              }}
+              onFraming={(f) => setTranslationValue('storyPlate2Framing', f)}
+              onClear={() => {
+                setTranslationValue('storyPlate2', '');
+                setTranslationValue('storyPlate2Framing', undefined);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* MODAL: ADD / EDIT HERO SLIDE OR VIDEO                          */}
       {/* ============================================================== */}
       {isModalOpen && (
         <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
@@ -804,14 +1497,15 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 </h3>
                 <p className="text-[11px] text-black/50">
                   {editingSlideId
-                    ? 'Modify the existing slide attributes and update the carousel sequence.'
-                    : 'Append a new cinematic video or photography slide to the storefront hero carousel.'}
+                    ? 'Update the desktop and mobile media slots, framing and link of this slide.'
+                    : 'Attach desktop and mobile media to a new carousel slide. Publish when ready.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="p-1 text-black/50 hover:text-black cursor-pointer"
+                aria-label="Close slide editor"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -824,248 +1518,103 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             )}
 
             <form onSubmit={handleSaveSlideModal} className="space-y-4">
-              {/* Media Type Selection */}
-              <div>
-                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1.5 font-semibold">
-                  Media Type:
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <label
-                    className={`p-3 border cursor-pointer flex items-center gap-2 transition-colors ${
-                      slideType === 'video'
-                        ? 'border-black bg-black text-white font-bold'
-                        : 'border-black/20 hover:border-black/50 bg-white text-black'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="slideTypeRadio"
-                      checked={slideType === 'video'}
-                      onChange={() => setSlideType('video')}
-                      className="sr-only"
-                    />
-                    <Video className="w-4 h-4" />
-                    <span>Cinematic Video (.mp4)</span>
-                  </label>
-
-                  <label
-                    className={`p-3 border cursor-pointer flex items-center gap-2 transition-colors ${
-                      slideType === 'image'
-                        ? 'border-black bg-black text-white font-bold'
-                        : 'border-black/20 hover:border-black/50 bg-white text-black'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="slideTypeRadio"
-                      checked={slideType === 'image'}
-                      onChange={() => setSlideType('image')}
-                      className="sr-only"
-                    />
-                    <ImageIcon className="w-4 h-4" />
-                    <span>Studio Photography (Image)</span>
-                  </label>
+              {/* Visibility */}
+              <div className="flex items-center justify-between gap-3 p-3 border border-black/10 bg-neutral-50/70">
+                <div>
+                  <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold block">
+                    Slide visibility
+                  </span>
+                  <span className="text-[10px] text-black/40">
+                    Disabled slides stay in the draft but are hidden from the storefront.
+                  </span>
                 </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={slideEnabled}
+                  onClick={() => setSlideEnabled((v) => !v)}
+                  className={`px-2.5 py-1 text-[10px] uppercase font-mono font-semibold border flex items-center gap-1.5 cursor-pointer transition-colors shrink-0 ${
+                    slideEnabled
+                      ? 'bg-black text-white border-black'
+                      : 'bg-white text-black/60 border-black/30 hover:border-black'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${slideEnabled ? 'bg-white' : 'bg-black/40'}`}
+                  />
+                  <span>{slideEnabled ? 'Enabled' : 'Disabled'}</span>
+                </button>
               </div>
 
-              {/* Hidden file inputs for device file uploads */}
-              <input
-                ref={slideFileInputRef}
-                type="file"
-                accept={slideType === 'video' ? 'video/*,image/*' : 'image/*'}
-                onChange={(e) => {
-                  handleSlideFileUpload(e.target.files?.[0]);
-                  e.target.value = '';
-                }}
-                className="hidden"
-              />
-              <input
-                ref={slidePosterFileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  handleSlidePosterUpload(e.target.files?.[0]);
-                  e.target.value = '';
-                }}
-                className="hidden"
+              {/* Desktop media slot */}
+              <ImageSlot
+                label="Desktop media (image or video)"
+                value={slideDesktop?.url}
+                kind={slideDesktop?.kind}
+                framing={slideDesktop?.framing}
+                allowedKind="all"
+                allowPoster
+                poster={slideDesktop?.poster}
+                onSelect={(url, asset) =>
+                  setSlideDesktop({
+                    url,
+                    kind: resolveKind(url, asset),
+                    framing: asset?.framing,
+                    alt: asset?.alt,
+                  })
+                }
+                onFraming={(f) => setSlideDesktop((prev) => (prev ? { ...prev, framing: f } : prev))}
+                onClear={() => setSlideDesktop(null)}
+                onPosterSelect={(url) =>
+                  setSlideDesktop((prev) => (prev ? { ...prev, poster: url } : prev))
+                }
+                onPosterClear={() =>
+                  setSlideDesktop((prev) => (prev ? { ...prev, poster: undefined } : prev))
+                }
               />
 
-              {/* Media Source URL + Device Upload Bar */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 font-semibold">
-                    {slideType === 'video' ? 'Video Stream URL (.mp4 / WebM):' : 'Image URL or Local File:'}
-                  </label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => slideFileInputRef.current?.click()}
-                      className="px-2.5 py-1 text-[10px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1 cursor-pointer shadow-2xs"
-                    >
-                      <Upload className="w-3 h-3" />
-                      <span>Upload from Device</span>
-                    </button>
-                    {slideSrc && (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setIsSlideAdjusterModalOpen(true)}
-                          className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
-                        >
-                          <Compass className="w-3 h-3" />
-                          <span>Adjust Best Frame & Angle</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleDeleteSlideImage}
-                          className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
-                          title="Delete / Clear picture"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
+              {/* Mobile media slot */}
+              <ImageSlot
+                label="Mobile media (image or video)"
+                value={slideMobile?.url}
+                kind={slideMobile?.kind}
+                framing={slideMobile?.framing}
+                allowedKind="all"
+                allowPoster
+                poster={slideMobile?.poster}
+                onSelect={(url, asset) =>
+                  setSlideMobile({
+                    url,
+                    kind: resolveKind(url, asset),
+                    framing: asset?.framing,
+                    alt: asset?.alt,
+                  })
+                }
+                onFraming={(f) => setSlideMobile((prev) => (prev ? { ...prev, framing: f } : prev))}
+                onClear={() => setSlideMobile(null)}
+                onPosterSelect={(url) =>
+                  setSlideMobile((prev) => (prev ? { ...prev, poster: url } : prev))
+                }
+                onPosterClear={() =>
+                  setSlideMobile((prev) => (prev ? { ...prev, poster: undefined } : prev))
+                }
+              />
+
+              {/* Optional link */}
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
+                  Link (optional — https:// or /path):
+                </label>
                 <input
                   type="text"
-                  required
-                  value={slideSrc}
-                  onChange={(e) => setSlideSrc(e.target.value)}
-                  placeholder={
-                    slideType === 'video'
-                      ? 'https://.../video.mp4'
-                      : 'https://.../media.webp or /placeholder.svg'
-                  }
+                  value={slideLinkUrl}
+                  onChange={(e) => setSlideLinkUrl(e.target.value)}
+                  placeholder="https://... or /archive"
                   className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
                 />
               </div>
 
-              {/* Poster Image for Video */}
-              {slideType === 'video' && (
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-[10px] uppercase tracking-wider text-black/60 font-semibold">
-                      Video Fallback Poster Image:
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => slidePosterFileInputRef.current?.click()}
-                      className="px-2 py-0.5 text-[9.5px] uppercase font-mono border border-black/20 hover:border-black flex items-center gap-1 cursor-pointer"
-                    >
-                      <Upload className="w-2.5 h-2.5" />
-                      <span>Upload Poster from Device</span>
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={slidePoster}
-                    onChange={(e) => setSlidePoster(e.target.value)}
-                    placeholder="https://.../poster.webp or /placeholder.svg"
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
-                  />
-                </div>
-              )}
-
-              {/* Frame, Zoom & Angle Controls */}
-              <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase tracking-wider text-black font-semibold flex items-center gap-1">
-                    <Compass className="w-3 h-3 text-black" />
-                    <span>Best Frame & Angle Calibration</span>
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[9.5px] font-mono text-black/60">
-                      Scale: {slideScale.toFixed(2)}x · Angle: {slideRotation}°
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSlideScale(1.0);
-                        setSlideRotation(0);
-                        setPositionDesktop('center 20%');
-                        setPositionMobile('center 15%');
-                      }}
-                      className="text-[9px] uppercase font-mono underline hover:opacity-60 cursor-pointer"
-                    >
-                      Reset 0°
-                    </button>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <div className="flex justify-between text-[10px] text-black/70 mb-1">
-                      <span>Angle / Tilt</span>
-                      <span className="font-bold">{slideRotation}°</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={-45}
-                      max={45}
-                      step={1}
-                      value={slideRotation}
-                      onChange={(e) => setSlideRotation(parseInt(e.target.value, 10))}
-                      className="w-full accent-black cursor-pointer"
-                    />
-                    <div className="flex items-center justify-between gap-1 pt-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setSlideRotation((r) => Math.max(-45, r - 5))}
-                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
-                      >
-                        -5°
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSlideRotation(0)}
-                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
-                      >
-                        Level 0°
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSlideRotation((r) => Math.min(45, r + 5))}
-                        className="px-1.5 py-0.5 text-[8.5px] border border-black/15 bg-white cursor-pointer"
-                      >
-                        +5°
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-[10px] text-black/70 mb-1">
-                      <span>Zoom / Scale</span>
-                      <span className="font-bold">{slideScale.toFixed(2)}x</span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0.8}
-                      max={2.5}
-                      step={0.01}
-                      value={slideScale}
-                      onChange={(e) => setSlideScale(parseFloat(e.target.value))}
-                      className="w-full accent-black cursor-pointer"
-                    />
-                    <div className="flex items-center justify-between gap-1 pt-0.5">
-                      {[1.0, 1.15, 1.3, 1.5].map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => setSlideScale(s)}
-                          className={`px-1.5 py-0.5 text-[8.5px] border cursor-pointer ${
-                            Math.abs(slideScale - s) < 0.02 ? 'border-black bg-black text-white' : 'border-black/15 bg-white'
-                          }`}
-                        >
-                          {s}x
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Caption / Title */}
+              {/* Caption / Title (metadata only — never rendered over the media) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
@@ -1092,84 +1641,116 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   />
                 </div>
               </div>
+              <p className="text-[10px] text-black/40 -mt-2">
+                Captions are internal metadata only. The storefront hero never renders text over the media.
+              </p>
 
-              {/* Focal Alignment Position */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
-                    Desktop Object-Position:
-                  </label>
-                  <select
-                    value={positionDesktop}
-                    onChange={(e) => setPositionDesktop(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-white"
-                  >
-                    <option value="center 20%">center 20% (Recommended for Fashion Models)</option>
-                    <option value="center 15%">center 15% (High framing)</option>
-                    <option value="center center">center center (Neutral)</option>
-                    <option value="center top">center top (Focus on Headwear/Collars)</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
-                    Mobile Object-Position:
-                  </label>
-                  <select
-                    value={positionMobile}
-                    onChange={(e) => setPositionMobile(e.target.value)}
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-white"
-                  >
-                    <option value="center 15%">center 15% (Mobile Vertical Framing)</option>
-                    <option value="center 18%">center 18% (Standard Mobile)</option>
-                    <option value="center 25%">center 25% (Lower Framing)</option>
-                  </select>
-                </div>
-              </div>
+              {/* Live per-device preview */}
+              {(slideDesktop?.url || slideMobile?.url) && (
+                <div className="space-y-1.5">
+                  <span className="text-[10px] uppercase tracking-wider text-black/50">
+                    Live Slot Preview:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[9.5px] font-mono uppercase text-black/50">
+                        Desktop {slideDesktop?.url ? '' : '(empty)'}
+                      </span>
+                      <div className="w-full h-36 bg-neutral-100 border border-black/20 overflow-hidden relative">
+                        {slideDesktop?.url ? (
+                          slideDesktop.kind === 'video' ? (
+                            <video
+                              src={slideDesktop.url}
+                              poster={slideDesktop.poster}
+                              controls
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover"
+                              style={imageFramingStyle(
+                                slideDesktop.framing,
+                                'heroDesktop',
+                                'center 20%'
+                              )}
+                            />
+                          ) : (
+                            <img
+                              src={slideDesktop.url}
+                              alt="Desktop slot preview"
+                              className="w-full h-full object-cover"
+                              style={imageFramingStyle(
+                                slideDesktop.framing,
+                                'heroDesktop',
+                                'center 20%'
+                              )}
+                              onError={(e) => {
+                                const el = e.currentTarget;
+                                if (el.dataset.fallback !== '1') {
+                                  el.dataset.fallback = '1';
+                                  el.src = NEUTRAL_PLACEHOLDER_IMG;
+                                }
+                              }}
+                            />
+                          )
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center text-[9.5px] uppercase text-black/40">
+                            Nothing renders
+                          </span>
+                        )}
+                      </div>
+                    </div>
 
-              {/* Live Preview Inside Modal */}
-              {slideSrc && (
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase tracking-wider text-black/50">
-                      Live Hero Frame Preview:
-                    </span>
-                    <span className="text-[9.5px] font-mono text-black/40">
-                      Scale: {slideScale.toFixed(2)}x · Angle: {slideRotation}°
-                    </span>
-                  </div>
-                  <div className="w-full h-44 bg-neutral-100 border border-black/20 overflow-hidden relative flex items-center justify-center">
-                    {slideType === 'video' ? (
-                      <video
-                        src={slideSrc}
-                        poster={slidePoster}
-                        controls
-                        muted
-                        className="w-full h-full object-cover"
-                        style={{
-                          objectPosition: positionDesktop,
-                          transform: `scale(${slideScale}) rotate(${slideRotation}deg)`,
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={slideSrc || NEUTRAL_PLACEHOLDER_IMG}
-                        alt="Preview"
-                        className="w-full h-full object-cover transition-transform duration-100"
-                        style={{
-                          objectPosition: positionDesktop,
-                          transform: `scale(${slideScale}) rotate(${slideRotation}deg)`,
-                        }}
-                        onError={(e) => {
-                          (e.target as any).src = NEUTRAL_PLACEHOLDER_IMG;
-                        }}
-                      />
-                    )}
+                    <div className="space-y-1">
+                      <span className="text-[9.5px] font-mono uppercase text-black/50">
+                        Mobile {slideMobile?.url ? '' : '(empty)'}
+                      </span>
+                      <div className="w-full h-36 bg-neutral-100 border border-black/20 overflow-hidden relative">
+                        {slideMobile?.url ? (
+                          slideMobile.kind === 'video' ? (
+                            <video
+                              src={slideMobile.url}
+                              poster={slideMobile.poster}
+                              controls
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover"
+                              style={imageFramingStyle(
+                                slideMobile.framing,
+                                'heroMobile',
+                                'center 15%'
+                              )}
+                            />
+                          ) : (
+                            <img
+                              src={slideMobile.url}
+                              alt="Mobile slot preview"
+                              className="w-full h-full object-cover"
+                              style={imageFramingStyle(
+                                slideMobile.framing,
+                                'heroMobile',
+                                'center 15%'
+                              )}
+                              onError={(e) => {
+                                const el = e.currentTarget;
+                                if (el.dataset.fallback !== '1') {
+                                  el.dataset.fallback = '1';
+                                  el.src = NEUTRAL_PLACEHOLDER_IMG;
+                                }
+                              }}
+                            />
+                          )
+                        ) : (
+                          <span className="absolute inset-0 flex items-center justify-center text-[9.5px] uppercase text-black/40">
+                            Nothing renders
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               {/* Buttons */}
-              <div className="pt-3 border-t border-black/10 flex items-center justify-between">
+              <div className="pt-3 border-t border-black/10 flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   {editingSlideId && (
                     <button
@@ -1206,25 +1787,6 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
           </div>
         </div>
       )}
-
-      {/* Frame & Angle Modal for Hero Slide */}
-      <ImageFrameAdjusterModal
-        isOpen={isSlideAdjusterModalOpen}
-        imageUrl={slideSrc || NEUTRAL_PLACEHOLDER_IMG}
-        title="Adjust Hero Slide Best Frame & Angle"
-        initialFocalX={slideFocalX}
-        initialFocalY={slideFocalY}
-        initialScale={slideScale}
-        initialRotation={slideRotation}
-        initialAspectRatio="16/9"
-        onClose={() => setIsSlideAdjusterModalOpen(false)}
-        onApply={handleApplySlideAdjuster}
-        onUploadFile={(dataUrl) => {
-          setSlideType('image');
-          setSlideSrc(dataUrl);
-        }}
-        onDeleteImage={handleDeleteSlideImage}
-      />
     </div>
   );
 };

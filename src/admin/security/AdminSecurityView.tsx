@@ -4,11 +4,9 @@ import {
   Lock,
   Key,
   Clock,
-  Globe,
   Download,
   AlertCircle,
   CheckCircle2,
-  RefreshCw,
   Fingerprint,
 } from 'lucide-react';
 import { AuditLog } from '../../types';
@@ -27,15 +25,13 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
   onLockTerminalNow,
   auditLogs,
 }) => {
-  const { changePassword, adminProfile } = useAuth();
+  const { changePassword, adminProfile, role } = useAuth();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passkeySuccess, setPasskeySuccess] = useState(false);
   const [passkeyError, setPasskeyError] = useState('');
   const [isSavingPassword, setIsSavingPassword] = useState(false);
-  const [isIpEnforced, setIsIpEnforced] = useState(true);
-  const [is2FaEnforced, setIs2FaEnforced] = useState(true);
 
   const handleSavePasskey = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -86,7 +82,8 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
             Security & Terminal Governance
           </h1>
           <p className="text-xs text-black/50 mt-1">
-            Access control protocols, encryption standards, and immutable administrative audit logs.
+            Session controls, password management and the audit log recorded for this terminal. Only verified
+            checks are reported.
           </p>
         </div>
         <button
@@ -104,19 +101,25 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
         <div className="p-4 border border-black/[0.08] bg-white">
           <div className="flex items-center gap-2 text-xs text-black/50 uppercase tracking-wider mb-2">
             <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Clearance Rating</span>
+            <span>Assigned Role</span>
           </div>
-          <div className="text-base font-semibold text-black">LEVEL 4 — CRYPTO HARDENED</div>
-          <div className="text-[11px] text-black/40 mt-1">Brute-force protection & session timeouts active</div>
+          <div className="text-base font-semibold text-black uppercase break-words">
+            {adminProfile?.role || role || 'No role assigned'}
+          </div>
+          <div className="text-[11px] text-black/40 mt-1">
+            Granted by your Supabase sign-in — inactivity auto-lock is {autoLockMinutes === 0 ? 'disabled' : `${autoLockMinutes}m`}
+          </div>
         </div>
 
         <div className="p-4 border border-black/[0.08] bg-white">
           <div className="flex items-center gap-2 text-xs text-black/50 uppercase tracking-wider mb-2">
-            <Globe className="w-4 h-4 text-black/60" />
-            <span>Authorized IP Station</span>
+            <Fingerprint className="w-4 h-4 text-black/60" />
+            <span>Signed-In Operator</span>
           </div>
-          <div className="text-base font-semibold text-black">193.166.0.12 (Helsinki HQ)</div>
-          <div className="text-[11px] text-black/40 mt-1">Direct encrypted tunnel to Firestore</div>
+          <div className="text-sm font-semibold text-black break-words">
+            {adminProfile?.email || 'Not signed in'}
+          </div>
+          <div className="text-[11px] text-black/40 mt-1">Identity comes from the Supabase session</div>
         </div>
 
         <div className="p-4 border border-black/[0.08] bg-white">
@@ -231,29 +234,29 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
             </div>
 
             <div className="pt-3 border-t border-black/[0.08] space-y-3">
-              <label className="flex items-center justify-between cursor-pointer">
+              <label className="flex items-center justify-between">
                 <div>
                   <div className="text-xs font-medium text-black">Geofenced IP Restriction</div>
-                  <div className="text-[10px] text-black/50">Allow only Helsinki Studio & Porto Atelier IP ranges</div>
+                  <div className="text-[10px] text-black/50">Not available — no IP allow-list is configured or enforced.</div>
                 </div>
                 <input
                   type="checkbox"
-                  checked={isIpEnforced}
-                  onChange={(e) => setIsIpEnforced(e.target.checked)}
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  disabled
+                  aria-label="Geofenced IP restriction — not available"
+                  className="accent-black w-4 h-4 cursor-not-allowed opacity-50"
                 />
               </label>
 
-              <label className="flex items-center justify-between cursor-pointer">
+              <label className="flex items-center justify-between">
                 <div>
                   <div className="text-xs font-medium text-black">Two-Factor Hardware Verification</div>
-                  <div className="text-[10px] text-black/50">Require biometric or WebAuthn hardware key</div>
+                  <div className="text-[10px] text-black/50">Not available — two-factor verification is not configured.</div>
                 </div>
                 <input
                   type="checkbox"
-                  checked={is2FaEnforced}
-                  onChange={(e) => setIs2FaEnforced(e.target.checked)}
-                  className="accent-black w-4 h-4 cursor-pointer"
+                  disabled
+                  aria-label="Two-factor hardware verification — not available"
+                  className="accent-black w-4 h-4 cursor-not-allowed opacity-50"
                 />
               </label>
             </div>
@@ -267,7 +270,7 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
           <div className="flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-black/70" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-black">
-              Immutable Security Audit Trail ({auditLogs.length} Events)
+              Security Audit Trail ({auditLogs.length} Events)
             </h2>
           </div>
           <button
@@ -276,7 +279,7 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
             className="text-xs uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 self-start sm:self-auto"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Export Encrypted Log (JSON)</span>
+            <span>Export Audit Log (JSON)</span>
           </button>
         </div>
 
@@ -292,29 +295,49 @@ export const AdminSecurityView: React.FC<AdminSecurityViewProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-black/[0.04]">
-              {auditLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-black/[0.015]">
-                  <td className="py-2.5 text-black/50 text-[11px] whitespace-nowrap">
-                    {new Date(log.at).toLocaleString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      second: '2-digit',
-                    })}
-                  </td>
-                  <td className="py-2.5 font-medium text-black">{log.who}</td>
-                  <td className="py-2.5">
-                    <span className="px-1.5 py-0.5 bg-black/[0.04] text-black text-[10px] uppercase tracking-wider">
-                      {log.action}
-                    </span>
-                  </td>
-                  <td className="py-2.5 text-black/70 truncate max-w-[200px]">{log.target}</td>
-                  <td className="py-2.5">
-                    <span className="text-[10px] text-emerald-700 uppercase font-semibold">VERIFIED</span>
+              {auditLogs.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-xs text-black/40">
+                    No activity yet — audit entries appear here as soon as a real action is recorded.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                auditLogs.map((log) => {
+                  const status =
+                    typeof log.details?.status === 'string' && log.details.status
+                      ? log.details.status
+                      : 'Unverified';
+                  return (
+                    <tr key={log.id} className="hover:bg-black/[0.015]">
+                      <td className="py-2.5 text-black/50 text-[11px] whitespace-nowrap">
+                        {new Date(log.at).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-2.5 font-medium text-black">{log.who}</td>
+                      <td className="py-2.5">
+                        <span className="px-1.5 py-0.5 bg-black/[0.04] text-black text-[10px] uppercase tracking-wider">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="py-2.5 text-black/70 truncate max-w-[200px]">{log.target}</td>
+                      <td className="py-2.5">
+                        <span
+                          className={`text-[10px] uppercase font-semibold ${
+                            status.toLowerCase() === 'verified' ? 'text-emerald-700' : 'text-black/50'
+                          }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>

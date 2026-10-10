@@ -11,7 +11,7 @@
 -- ============================================================================
 
 begin;
-select plan(12);
+select plan(20);
 
 -- Test 1: get_owner_email() function returns exact designated owner
 select is(
@@ -99,6 +99,76 @@ select results_eq(
   'select owner_email from public.owner_config where id = 1',
   $$ values ('huxaifa0fficial@gmail.com'::text) $$,
   'owner_config table contains huxaifa0fficial@gmail.com'
+);
+
+-- ===========================================================================
+-- Media storage (migration 0006): public read, owner-only write
+-- ===========================================================================
+
+-- Test 13: the "media" bucket exists and is public
+select is(
+  (select public from storage.buckets where id = 'media'),
+  true,
+  'media bucket exists and is public (read)'
+);
+
+-- Test 14: the bucket enforces the 15 MB limit
+select is(
+  (select file_size_limit from storage.buckets where id = 'media'),
+  15728640::bigint,
+  'media bucket file size limit is 15 MB'
+);
+
+-- Test 15: the bucket allows exactly the six approved mime types
+select is(
+  (select array_length(allowed_mime_types, 1) from storage.buckets where id = 'media'),
+  6,
+  'media bucket allows exactly 6 mime types'
+);
+
+-- Test 16: anonymous users can READ media_assets
+set role anon;
+reset request.jwt.claims;
+select lives_ok(
+  'select count(*) from public.media_assets',
+  'anon can read public.media_assets'
+);
+
+-- Test 17: anonymous users CANNOT write media_assets
+select throws_ok(
+  $$ insert into public.media_assets (id, path, url, kind) values ('x1', 'media/x.webp', 'https://x/media/x.webp', 'image') $$,
+  '42501',
+  null,
+  'anon insert into media_assets must be rejected by RLS'
+);
+
+-- Test 18: a non-owner authenticated user CANNOT write media_assets
+set role authenticated;
+set request.jwt.claims to '{"sub": "11111111-1111-1111-1111-111111111111", "email": "attacker@example.com", "email_confirmed_at": "2026-01-01T00:00:00Z"}';
+select throws_ok(
+  $$ insert into public.media_assets (id, path, url, kind) values ('x2', 'media/y.webp', 'https://x/media/y.webp', 'image') $$,
+  '42501',
+  null,
+  'non-owner insert into media_assets must be rejected by RLS'
+);
+
+-- Test 19: anonymous users CANNOT put objects into the media bucket
+set role anon;
+reset request.jwt.claims;
+select throws_ok(
+  $$ insert into storage.objects (bucket_id, name) values ('media', 'test/not-allowed.webp') $$,
+  '42501',
+  null,
+  'anon upload into the media bucket must be rejected by storage RLS'
+);
+
+-- Test 20: base64/data URLs can never be stored on an asset
+set role service_role;
+select throws_ok(
+  $$ insert into public.media_assets (id, path, url, kind) values ('x3', 'media/z.webp', 'data:image/webp;base64,AAAA', 'image') $$,
+  '23514',
+  null,
+  'media_assets rejects inline data URLs (https or / path only)'
 );
 
 select * from finish();

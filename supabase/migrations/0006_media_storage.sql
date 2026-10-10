@@ -69,8 +69,28 @@ create table if not exists public.media_assets (
   alt           text,
   "focalX"      double precision default 50,
   "focalY"      double precision default 50,
+  "framing"     jsonb,
   "createdAt"   text not null default to_char(now(), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
 );
+
+-- Non-destructive ImageEditor parameters (focal, zoom, rotation, flips,
+-- aspect and per-placement overrides). Idempotent so 0006 can be re-run.
+alter table public.media_assets add column if not exists "framing" jsonb;
+
+-- Refuse inline base64/data URLs: every asset must live in Storage.
+-- DO block keeps the migration safe to re-run.
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'media_assets_url_http_check'
+      and conrelid = 'public.media_assets'::regclass
+  ) then
+    alter table public.media_assets
+      add constraint media_assets_url_http_check
+      check (url like 'https://%' or url like '/%');
+  end if;
+end $$;
 
 -- Index for rapid lookup
 create index if not exists idx_media_assets_created on public.media_assets ("createdAt" desc);
