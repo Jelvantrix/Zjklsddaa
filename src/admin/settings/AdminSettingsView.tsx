@@ -8,13 +8,11 @@ import { Save, RotateCcw, Download, Shield, User, Clock, AlertTriangle, Plus, Tr
 interface AdminSettingsViewProps {
   settings: StoreSettings;
   onRefresh: () => void;
-  onResetDemoData: () => Promise<boolean>;
 }
 
 export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
   settings,
   onRefresh,
-  onResetDemoData,
 }) => {
   const { isOwner, adminProfile } = useAuth();
   const [formData, setFormData] = useState<StoreSettings>(() => {
@@ -57,8 +55,6 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
-  const [isResetting, setIsResetting] = useState(false);
-  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     // Load recent audit logs
@@ -155,7 +151,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
     if (!newPlatformUrl.trim()) return;
 
     const newPlat: SocialPlatformLink = {
-      id: `plat-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      id: `plat-${Date.now()}-${crypto.randomUUID ? crypto.randomUUID().slice(0, 6) : Date.now().toString(36)}`,
       name: newPlatformName.trim(),
       url: newPlatformUrl.trim(),
       handle: newPlatformHandle.trim() || undefined,
@@ -174,23 +170,6 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
     setNewPlatformUrl('');
     setNewPlatformHandle('');
     setShowAddPlatform(false);
-  };
-
-  const handleResetData = async () => {
-    if (!isOwner) return;
-    const confirmed = window.confirm(
-      'Are you sure you want to reset all demo data? This will overwrite products, collections, orders, and stats with pristine seed data.'
-    );
-    if (!confirmed) return;
-
-    setIsResetting(true);
-    const success = await onResetDemoData();
-    setIsResetting(false);
-    if (success) {
-      setResetSuccessMessage('Demo data successfully restored to factory state.');
-      setTimeout(() => setResetSuccessMessage(null), 4000);
-      onRefresh();
-    }
   };
 
   const handleExportAllData = async () => {
@@ -238,11 +217,6 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
         </div>
       )}
 
-      {resetSuccessMessage && (
-        <div className="p-3 border-b border-black bg-black/[0.02] text-black font-semibold">
-          {resetSuccessMessage}
-        </div>
-      )}
 
       {/* SECTION 1: ADMINISTRATIVE & COMMUNICATIONS EMAILS */}
       <div className="space-y-4 border border-black/[0.1] p-5 bg-neutral-50/50">
@@ -553,7 +527,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
       {/* SECTION 4: DATA GOVERNANCE & BACKUP */}
       <div className="space-y-4 border-t border-black/[0.08] pt-6">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-black">
-          4. Studio Data Governance & Factory Reset
+          4. Studio Data Governance & Backup
         </h2>
         <div className="flex flex-wrap gap-6 items-center">
           <button
@@ -563,17 +537,6 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({
             <Download className="w-3.5 h-3.5" />
             <span>Export Full Studio Backup (JSON)</span>
           </button>
-
-          {isOwner && (
-            <button
-              disabled={isResetting}
-              onClick={handleResetData}
-              className="text-xs font-mono uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-bold disabled:opacity-50"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>{isResetting ? 'Resetting Data...' : 'Reset Factory Demo Data'}</span>
-            </button>
-          )}
         </div>
       </div>
 

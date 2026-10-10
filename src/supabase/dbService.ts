@@ -608,6 +608,26 @@ export function subscribeToWaitlist(onWaitlist: (waitlist: WaitlistEntry[]) => v
   }
 }
 
+export async function joinWaitlist(
+  email: string,
+  target?: string,
+  source?: string
+): Promise<boolean> {
+  try {
+    const id = `wait-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 6) : Date.now().toString(36)}`;
+    const { error } = await supabase.from('waitlist').insert({
+      id,
+      email,
+      target: target || 'newsletter',
+      source: source || 'storefront',
+      createdAt: new Date().toISOString(),
+    });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Real-time listener for Daily Stats (Admin)
  */
@@ -738,3 +758,115 @@ export async function getProductById(id: string): Promise<Product | null> {
     return null;
   }
 }
+
+/**
+ * Update store content document (alias for saveContent)
+ */
+export async function updateStoreContent(content: StoreContent): Promise<void> {
+  return saveContent(content);
+}
+
+/**
+ * Create a new store order
+ */
+export async function createStoreOrder(orderData: Partial<Order>): Promise<Order> {
+  const id = orderData.id || `ord-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
+  const orderNumber = orderData.number || `#ZE-${Date.now().toString().slice(-6)}`;
+  const now = new Date().toISOString();
+
+  const fullOrder: Order = {
+    id,
+    number: orderNumber,
+    customer: orderData.customer || {
+      email: 'customer@zejesh.com',
+      name: 'Archive Patron',
+    },
+    items: orderData.items || [],
+    totals: orderData.totals || {
+      subtotal: 0,
+      shipping: 0,
+      vat: 0,
+      discount: 0,
+      total: 0,
+    },
+    status: orderData.status || 'paid',
+    shippingMethod: orderData.shippingMethod || 'Express Courier Tracked',
+    tracking: orderData.tracking,
+    notes: orderData.notes,
+    timeline: orderData.timeline || [
+      {
+        at: now,
+        status: orderData.status || 'paid',
+        note: 'Order placed and logged in archive database',
+        by: 'Storefront Checkout',
+      },
+    ],
+    createdAt: orderData.createdAt || now,
+    updatedAt: now,
+  };
+
+  const { error } = await supabase.from('orders').insert(fullOrder);
+  if (error) {
+    console.warn('createStoreOrder error:', error);
+  }
+
+  if (fullOrder.customer?.email) {
+    const custId = fullOrder.customer.id || fullOrder.customer.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    supabase.from('customers').upsert({
+      id: custId,
+      email: fullOrder.customer.email,
+      name: fullOrder.customer.name,
+      lastSeen: now,
+    }).then(() => {}, () => {});
+  }
+
+  return fullOrder;
+}
+
+/**
+ * Submit community design or archival reproduction suggestion
+ */
+export async function submitCommunitySuggestion(
+  data: Omit<CommunitySuggestion, 'id' | 'votes' | 'votedUserIds' | 'createdAt'>
+): Promise<{ success: boolean; id?: string; error?: string }> {
+  try {
+    const id = `sug-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
+    const now = new Date().toISOString();
+    const newSug: CommunitySuggestion = {
+      ...data,
+      id,
+      votes: 1,
+      votedUserIds: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const { error } = await supabase.from('suggestions').insert(newSug);
+    if (error) {
+      return { success: false, error: error.message };
+    }
+    return { success: true, id };
+  } catch (err: any) {
+    return { success: false, error: err?.message || 'Failed to submit proposal' };
+  }
+}
+
+/**
+ * Cast a community vote for a co-creation suggestion
+ */
+export async function voteForSuggestion(id: string, voterId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase.from('suggestions').select('votes, votedUserIds').eq('id', id).maybeSingle();
+    const currentVotes = (data?.votes || 0) + 1;
+    const currentVoters = Array.isArray(data?.votedUserIds) ? [...data.votedUserIds, voterId] : [voterId];
+    const { error } = await supabase.from('suggestions').update({
+      votes: currentVotes,
+      votedUserIds: currentVoters,
+      updatedAt: new Date().toISOString(),
+    }).eq('id', id);
+    return !error;
+  } catch {
+    return false;
+  }
+}
+

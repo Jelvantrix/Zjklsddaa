@@ -160,7 +160,11 @@ export const Header: React.FC<HeaderProps> = ({
       }
     }
     const mockSubs = SUB_CATEGORIES[hoveredNav as keyof typeof SUB_CATEGORIES] || [];
-    return mockSubs.map((s) => ({ name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }));
+    return mockSubs.map((s: any) =>
+      typeof s === 'string'
+        ? { name: s, slug: s.toLowerCase().replace(/\s+/g, '-') }
+        : { name: typeof s.name === 'string' ? s.name : (s.name[language] || s.name.en || ''), slug: s.slug }
+    );
   }, [hoveredNav, categories, language]);
 
   const isOverHeroAtTop = Boolean(isHeroVisible);

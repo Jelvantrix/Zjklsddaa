@@ -104,7 +104,8 @@ class BehaviorTracker {
     // Anonymous random visitorId
     let vId = localStorage.getItem('zejesh_visitor_id');
     if (!vId) {
-      vId = `vis_${Math.random().toString(36).substring(2, 12)}_${Date.now()}`;
+      const u = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 10) : Date.now().toString(36);
+      vId = `vis_${u}_${Date.now()}`;
       localStorage.setItem('zejesh_visitor_id', vId);
     }
     this.visitorId = vId;
@@ -112,7 +113,8 @@ class BehaviorTracker {
     // SessionId (refreshes per tab/session)
     let sId = sessionStorage.getItem('zejesh_session_id');
     if (!sId) {
-      sId = `ses_${Math.random().toString(36).substring(2, 10)}_${Date.now()}`;
+      const u = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
+      sId = `ses_${u}_${Date.now()}`;
       sessionStorage.setItem('zejesh_session_id', sId);
     }
     this.sessionId = sId;
@@ -130,8 +132,9 @@ class BehaviorTracker {
     const height = window.innerHeight;
     const deviceClass = width < 640 ? 'mobile' : width < 1024 ? 'tablet' : 'desktop';
 
+    const evtUid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
     const event: TrackingEvent = {
-      id: `evt_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      id: `evt_${Date.now()}_${evtUid}`,
       type,
       timestamp: Date.now(),
       sessionId: this.sessionId,

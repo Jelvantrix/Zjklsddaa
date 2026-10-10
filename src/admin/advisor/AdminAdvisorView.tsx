@@ -49,79 +49,7 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
   ]);
   const [isAsking, setIsAsking] = useState(false);
 
-  // Fast Rule-Based + Synthesized Insights
-  const defaultInsights: AiInsight[] = [
-    {
-      id: 'ins-01',
-      title: 'High Attention but Low Cart Intent on Nº 003 Heavy Overcoat',
-      priority: 'high',
-      category: 'merchandising',
-      evidence: 'Nº 003 has 840 page views and 48s average dwell (top 5%), yet only 8 adds-to-bag (cvr: 0.95%).',
-      recommendation:
-        'Audit packshot crop and consider adding a model movement video. The 620 € price point requires greater perceived textile weight and drape proof.',
-      expectedImpact: '+15% cart additions for outerwear',
-      effort: 'Low (Update studio crop / add detail images)',
-      suggestedAction: {
-        type: 'open_product',
-        targetId: 'ze-003',
-        deepLink: 'products',
-      },
-      status: 'new',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'ins-02',
-      title: 'Size L Selling Out 3x Faster in Mikkelin Winter Coats',
-      priority: 'high',
-      category: 'inventory',
-      evidence: 'Sizes M and L account for 68% of all outerwear purchases. Size L is currently under 2 units on 4 styles.',
-      recommendation: 'Shift size distribution curve for Drop 04 from [15, 25, 30, 20, 10] to [10, 20, 35, 25, 10].',
-      expectedImpact: 'Prevent ~4,800 € in lost stockouts next month',
-      effort: 'Medium (Reallocate production run)',
-      suggestedAction: {
-        type: 'open_inventory',
-        deepLink: 'inventory',
-      },
-      status: 'new',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'ins-03',
-      title: 'Unmet Demand: 98 Searches for Leather Outerwear (Nahkatakki)',
-      priority: 'medium',
-      category: 'drop_strategy',
-      evidence: 'Zero-result search telemetry logged 98 unique searches for leather and vegetable-tanned pieces.',
-      recommendation:
-        'Schedule an artisanal limited capsule (e.g. 50 numbered pieces) using Finnish vegetable-tanned reindeer leather.',
-      expectedImpact: '~28,000 € incremental drop GMV',
-      effort: 'High (Sourcing and prototyping)',
-      suggestedAction: {
-        type: 'open_collections',
-        deepLink: 'collections',
-      },
-      status: 'new',
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: 'ins-04',
-      title: 'Mobile Checkout Step 2 Abrupt Drop-off (-52 %)',
-      priority: 'medium',
-      category: 'ux',
-      evidence: 'Mobile shoppers drop at double the desktop rate when selecting shipping methods.',
-      recommendation:
-        'Pre-select Matkahuolto Lähellä-paketti as default domestic carrier and surface the free-shipping progress indicator earlier.',
-      expectedImpact: '+0.8% mobile checkout conversion',
-      effort: 'Low (Settings / Checkout refinement)',
-      suggestedAction: {
-        type: 'open_settings',
-        deepLink: 'settings',
-      },
-      status: 'in_progress',
-      createdAt: new Date().toISOString(),
-    },
-  ];
-
-  const activeInsightsList = insights && insights.length > 0 ? insights : defaultInsights;
+  const activeInsightsList = insights || [];
 
   const handleMarkInsightDone = async (insightId: string) => {
     if (!isEditor) return;
@@ -142,9 +70,13 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
   };
 
   const handleAnalyzeNow = async () => {
+    if (products.length === 0 && dailyStats.length === 0) {
+      alert('There is not enough data in the database to generate strategic insights. Please add products and record store traffic first.');
+      return;
+    }
+
     setIsAnalyzing(true);
     try {
-      // Try generating fresh intelligence via Gemini API if key is available, or fall back seamlessly
       const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
       if (apiKey) {
         const ai = new GoogleGenAI({ apiKey });
@@ -152,25 +84,24 @@ export const AdminAdvisorView: React.FC<AdminAdvisorViewProps> = ({
           productsCount: products.length,
           totalSalesVolume: dailyStats.reduce((a, s) => a + (s.revenue || 0), 0),
           ordersCount: dailyStats.reduce((a, s) => a + (s.orders || 0), 0),
-          topSelling: products.slice(0, 3).map((p) => p.nr),
-          lowStock: products.filter((p) => p.stock < 4).map((p) => p.nr),
+          topSelling: products.slice(0, 3).map((p) => p.nr || p.name?.en),
+          lowStock: products.filter((p) => p.stock < 4).map((p) => p.nr || p.name?.en),
         };
 
         const response = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: `You are a senior retail strategist for Zejesh, a high-end quiet Nordic luxury fashion atelier in Helsinki.
-Analyze this studio data: ${JSON.stringify(summaryData)}.
-Return a JSON array of 3 strategic recommendations with fields: title, priority (high/medium/low), category, evidence, recommendation, expectedImpact, effort.
+          contents: `You are a senior retail strategist for Zejesh, a quiet Nordic luxury fashion atelier.
+Analyze this real studio data: ${JSON.stringify(summaryData)}.
+Return a JSON array of strategic recommendations based strictly on the provided real data with fields: title, priority (high/medium/low), category, evidence, recommendation, expectedImpact, effort.
 Strictly valid JSON only.`,
         });
 
         const text = response.text || '';
-        // Parse and store to insights collection
         const cleaned = text.replace(/```json|```/g, '').trim();
         const parsed = JSON.parse(cleaned);
 
         for (const item of parsed) {
-          const id = `ins-ai-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
+          const id = `ins-ai-${Date.now()}-${crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
           await supabase.from('insights').upsert({
             ...item,
             id,
@@ -180,7 +111,7 @@ Strictly valid JSON only.`,
         }
       }
     } catch (err) {
-      console.warn('AI Advisor live analysis note (using high-fidelity deterministic engine):', err);
+      console.warn('AI Advisor analysis note:', err);
     } finally {
       setIsAnalyzing(false);
       onRefresh();
@@ -194,16 +125,31 @@ Strictly valid JSON only.`,
     const userText = chatQuery.trim();
     setChatMessages((prev) => [...prev, { sender: 'user', text: userText }]);
     setChatQuery('');
+
+    if (products.length === 0 && dailyStats.length === 0) {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: 'ai',
+          text: 'There is not enough data recorded in the database to answer this question. Please publish products and generate sales traffic first.',
+        },
+      ]);
+      return;
+    }
+
     setIsAsking(true);
 
     try {
       const apiKey = process.env.GEMINI_API_KEY || (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      const totalSales = dailyStats.reduce((a, s) => a + (s.revenue || 0), 0);
+      const totalOrders = dailyStats.reduce((a, s) => a + (s.orders || 0), 0);
+      const contextSummary = `Studio context: ${products.length} catalog items. Total recorded revenue: ${totalSales} €. Total orders: ${totalOrders}.`;
+
       if (apiKey) {
         const ai = new GoogleGenAI({ apiKey });
-        const contextSummary = `Studio context: 24 numbered pieces. 30 days revenue: 36,480 €. Conversion rate: 3.42%. Top category: Naiset (Women) at 54% interest. Mobile share: 62% traffic.`;
         const res = await ai.models.generateContent({
           model: 'gemini-2.5-flash',
-          contents: `${contextSummary}\nUser question: ${userText}\nProvide a concise, sophisticated, numbers-driven strategic answer. Cite specific metrics.`,
+          contents: `${contextSummary}\nUser question: ${userText}\nProvide a concise strategic answer grounded strictly in these real numbers. If there is insufficient data to answer, state clearly that there is not enough data.`,
         });
         setChatMessages((prev) => [
           ...prev,
@@ -213,29 +159,22 @@ Strictly valid JSON only.`,
           },
         ]);
       } else {
-        // High-precision heuristic contextual answers
         setTimeout(() => {
-          let reply = '';
-          const lower = userText.toLowerCase();
-          if (lower.includes('category') || lower.includes('kategoria') || lower.includes('mobile')) {
-            reply =
-              'Mobile visitors spend 58% of their browsing time in the Naiset (Women) category, with Nº 001 and Nº 004 leading in dwell time (average 36s). Accessories (Asusteet) have the highest mobile add-to-bag conversion rate at 6.4%.';
-          } else if (lower.includes('next') || lower.includes('launch') || lower.includes('drop')) {
-            reply =
-              'Based on unmet demand telemetry (98 searches for leather and 62 for cashmere), your highest ROI initiative for Drop 04 is a limited capsule of 50 numbered pieces in heavier gauge natural fibers, priced in the 380 € – 550 € range.';
-          } else {
-            reply =
-              'Based on your 30-day telemetry, overall studio revenue is up +18.4% with an AOV of 248 €. Outerwear yields 62% of margin, but Size L stockouts are capping peak sales velocity by an estimated 12%.';
-          }
-          setChatMessages((prev) => [...prev, { sender: 'ai', text: reply }]);
-        }, 600);
+          setChatMessages((prev) => [
+            ...prev,
+            {
+              sender: 'ai',
+              text: `Studio records show ${products.length} products and ${totalOrders} orders (${totalSales} € recorded revenue). Connect GEMINI_API_KEY for conversational strategic intelligence.`,
+            },
+          ]);
+        }, 300);
       }
     } catch (err) {
       setChatMessages((prev) => [
         ...prev,
         {
           sender: 'ai',
-          text: 'Outerwear (Takit) and Heavy Wool remain your top grossing product clusters, accounting for 62% of studio volume.',
+          text: 'Could not complete analysis at this time. Please verify network connectivity.',
         },
       ]);
     } finally {
@@ -287,13 +226,25 @@ Strictly valid JSON only.`,
       {activeTab === 'insights' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
-            {activeInsightsList.map((ins) => (
-              <div
-                key={ins.id}
-                className={`p-5 border border-black/[0.08] bg-white space-y-3 transition-colors ${
-                  ins.status === 'done' ? 'opacity-50' : ''
-                }`}
-              >
+            {activeInsightsList.length === 0 ? (
+              <div className="p-8 border border-black/10 bg-neutral-50/50 text-center space-y-2">
+                <span className="text-xs uppercase font-semibold text-black tracking-wider block">
+                  No Strategic Insights Yet
+                </span>
+                <p className="text-xs text-black/60 max-w-md mx-auto font-sans">
+                  {products.length === 0
+                    ? 'No products found in the catalog. Add products and record store traffic to enable strategic intelligence analysis.'
+                    : 'Click "Analyze Catalog & Traffic" above to generate strategic recommendations from live store telemetry.'}
+                </p>
+              </div>
+            ) : (
+              activeInsightsList.map((ins) => (
+                <div
+                  key={ins.id}
+                  className={`p-5 border border-black/[0.08] bg-white space-y-3 transition-colors ${
+                    ins.status === 'done' ? 'opacity-50' : ''
+                  }`}
+                >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/[0.06] pb-2.5">
                   <div className="flex items-center gap-2.5">
                     <span
@@ -358,7 +309,7 @@ Strictly valid JSON only.`,
                   </div>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}

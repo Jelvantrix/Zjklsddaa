@@ -125,7 +125,7 @@ export async function uploadMediaAsset(
   const now = new Date();
   const year = now.getFullYear();
   const month = String(now.getMonth() + 1).padStart(2, '0');
-  const uuid = crypto.randomUUID ? crypto.randomUUID() : `asset-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+  const uuid = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `asset-${Date.now()}-${Date.now().toString(36)}`;
 
   let uploadBlob: Blob = file;
   let width: number | undefined;

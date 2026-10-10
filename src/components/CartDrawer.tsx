@@ -45,9 +45,21 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     0
   );
 
-  const freeShippingThreshold = t.freeShippingThreshold; // 100 EUR
+  const freeShippingThreshold = 100; // 100 EUR
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const freeShippingProgress = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+
+  const emptySubtitle =
+    language === 'fi'
+      ? 'Valitse arkistokappaleita tutustumalla valikoimaan.'
+      : language === 'sv'
+      ? 'Välj arkivplagg genom att utforska kollektionen.'
+      : 'Select archival pieces by exploring the collection.';
+
+  const sizeLabel = language === 'fi' ? 'Koko' : language === 'sv' ? 'Storlek' : 'Size';
+  const promoPlaceholder = language === 'fi' ? 'Kampanjakoodi' : language === 'sv' ? 'Kampanjkod' : 'Promo code';
+  const applyLabel = language === 'fi' ? 'Käytä' : language === 'sv' ? 'Tillämpa' : 'Apply';
+  const vatNote = language === 'fi' ? 'Sis. ALV 24%' : language === 'sv' ? 'Inkl. 24% moms' : 'Incl. 24% VAT';
 
   return (
     <div className="fixed inset-0 z-[90] flex justify-end">
@@ -88,10 +100,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <span className="text-black font-medium">{t.freeShippingEligible}</span>
             ) : (
               <span className="text-black/70">
-                {t.freeShippingRemaining.replace(
-                  '{remaining}',
-                  formatPrice(remainingForFreeShipping)
-                )}
+                {t.freeShippingRemaining(remainingForFreeShipping)}
               </span>
             )}
             <span className="text-black/40">100,00 €</span>
@@ -111,7 +120,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               <ShoppingBag className="w-10 h-10 stroke-[1] text-black/20 mb-4" />
               <h4 className="font-editorial text-2xl mb-1">{t.empty}</h4>
               <p className="text-xs font-sans text-black/50 max-w-xs mb-6">
-                {t.emptySubtitle}
+                {emptySubtitle}
               </p>
               <button
                 type="button"
@@ -121,7 +130,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 }}
                 className="px-6 py-3 btn-primary text-xs uppercase tracking-[0.16em] cursor-pointer"
               >
-                {t.exploreArchive}
+                {t.continueShopping}
               </button>
             </div>
           ) : (
@@ -163,7 +172,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                   </h5>
 
                   <p className="font-mono text-[10.5px] sm:text-[11px] text-black/60 mt-0.5">
-                    {t.size}: {item.size}
+                    {sizeLabel}: {item.size}
                   </p>
 
                   <div className="mt-2.5 sm:mt-3 flex items-center justify-between">
@@ -209,7 +218,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 type="text"
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
-                placeholder={t.promoCode}
+                placeholder={promoPlaceholder}
                 className="flex-1 py-1.5 px-1 text-xs font-mono border-b border-black/20 focus:border-black focus:outline-none uppercase bg-transparent"
               />
               <button
@@ -217,7 +226,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 onClick={() => setPromoApplied(true)}
                 className="py-1.5 px-2 text-xs font-mono uppercase tracking-wider text-black border-b border-black hover:opacity-60 transition-opacity cursor-pointer shrink-0"
               >
-                {t.apply}
+                {applyLabel}
               </button>
             </div>
             {promoApplied && (
@@ -233,7 +242,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <span className="text-sm sm:text-base font-medium">{formatPrice(subtotal)}</span>
               </div>
               <p className="text-[10px] sm:text-[10.5px] font-mono text-black/50 text-right">
-                {t.vatNote}
+                {vatNote}
               </p>
             </div>
 
@@ -246,7 +255,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               }}
               className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.2em] btn-primary flex items-center justify-center gap-2 font-medium cursor-pointer"
             >
-              <span>{t.checkoutBtn}</span>
+              <span>{t.checkout}</span>
               <ArrowRight className="w-4 h-4 stroke-[1.5]" />
             </button>
           </div>

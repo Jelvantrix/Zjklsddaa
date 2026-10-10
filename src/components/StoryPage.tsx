@@ -11,6 +11,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
   const { content } = useStorefrontData();
   const plate1 = content?.translations?.storyPlate1;
   const plate2 = content?.translations?.storyPlate2;
+  const heroImage = content?.translations?.storyHeroImage || content?.heroMedia?.desktopSrc || content?.heroSlides?.[0]?.src || '/placeholder.svg';
   return (
     <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen select-none pt-20 sm:pt-28 lg:pt-32">
       {/* Top Breadcrumb Navigation */}
@@ -67,7 +68,7 @@ export const StoryPage: React.FC<StoryPageProps> = ({ onBackToHome, onExploreArc
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 mb-20 sm:mb-32">
         <div className="aspect-[16/9] sm:aspect-[21/9] w-full overflow-hidden bg-neutral-100 relative">
           <img
-            src="/src/assets/images/hero_nordic_campaign_1790736679172.jpg"
+            src={heroImage}
             alt="Zejesh Campaign Still"
             className="w-full h-full object-cover object-[center_28%]"
           />

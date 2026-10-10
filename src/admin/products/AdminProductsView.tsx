@@ -37,7 +37,7 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
   onDeleteProducts: propDeleteProducts,
 }) => {
   const { adminProfile } = useAuth();
-  const { deleteProduct: ctxDeleteProduct, deleteProducts: ctxDeleteProducts, resetDemoData } = useStorefrontData();
+  const { deleteProduct: ctxDeleteProduct, deleteProducts: ctxDeleteProducts } = useStorefrontData();
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -238,19 +238,6 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
         <div className="flex items-center gap-6 self-start sm:self-auto">
           <button
             type="button"
-            onClick={async () => {
-              await resetDemoData();
-              showNotification('Restored all 24 baseline archival garments into catalog.');
-              if (onRefresh) onRefresh();
-            }}
-            className="text-xs font-mono uppercase tracking-[0.18em] text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-8 font-normal"
-            title="Populate catalog with all 24 standard atelier garment plates"
-          >
-            <span>Restore Archival Collection (24)</span>
-          </button>
-
-          <button
-            type="button"
             onClick={onCreateProduct}
             className="text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-2 text-black hover:opacity-60 transition-opacity cursor-pointer underline underline-offset-8 font-medium"
           >
@@ -437,9 +424,9 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                         src={prod.images?.[0]?.url || prod.image || '/placeholder.svg'}
                         alt={prod.name.fi}
                         style={{
-                          objectPosition: `${prod.images?.[0]?.focalX ?? prod.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? prod.focalY ?? 20}%`,
+                          objectPosition: `${prod.images?.[0]?.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? 20}%`,
                           transform: `scale(${prod.images?.[0]?.scale ?? prod.imageScale ?? 1.0})`,
-                          transformOrigin: `${prod.images?.[0]?.focalX ?? prod.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? prod.focalY ?? 20}%`,
+                          transformOrigin: `${prod.images?.[0]?.focalX ?? 50}% ${prod.images?.[0]?.focalY ?? 20}%`,
                         }}
                         className="w-full h-full object-cover"
                       />
@@ -560,17 +547,6 @@ export const AdminProductsView: React.FC<AdminProductsViewProps> = ({
                 className="text-xs uppercase font-mono tracking-wider underline underline-offset-4 cursor-pointer hover:opacity-60 text-black font-medium"
               >
                 + Add Garment to Slot 1
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  await resetDemoData();
-                  showNotification('Restored all 24 baseline archival garments into catalog.');
-                  if (onRefresh) onRefresh();
-                }}
-                className="text-xs uppercase font-mono tracking-wider underline underline-offset-4 cursor-pointer hover:opacity-60 text-black/70"
-              >
-                Restore 24 Archival Garments
               </button>
             </div>
           </div>

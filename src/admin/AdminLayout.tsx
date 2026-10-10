@@ -72,7 +72,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
     categories,
     content,
     settings,
-    resetDemoData,
     deleteProduct,
     deleteProducts,
     saveProduct,
@@ -590,7 +589,6 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             <AdminSettingsView
               settings={settings}
               onRefresh={() => {}}
-              onResetDemoData={resetDemoData}
             />
           )}
         </main>

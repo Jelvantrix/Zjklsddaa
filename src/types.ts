@@ -271,6 +271,25 @@ export interface HeroSlide {
     en: string;
     sv?: string;
   };
+  enabled?: boolean;
+  mobileMedia?: any;
+  desktopMedia?: any;
+  linkUrl?: string;
+  title?: {
+    fi?: string;
+    en?: string;
+    sv?: string;
+  };
+  subtitle?: {
+    fi?: string;
+    en?: string;
+    sv?: string;
+  };
+  ctaLabel?: {
+    fi?: string;
+    en?: string;
+    sv?: string;
+  };
 }
 
 export interface StoreContent {
@@ -306,6 +325,7 @@ export interface StoreSettings {
   storeInfo: {
     name: string;
     email: string;
+    phone?: string;
     dispatchEmail?: string;
     conciergeEmail?: string;
     address: string;
@@ -325,8 +345,10 @@ export interface StoreSettings {
   consentText: {
     fi: string;
     en: string;
+    sv?: string;
   };
   lowStockThreshold: number;
+  updatedAt?: string;
 }
 
 export interface InventoryLog {
@@ -995,6 +1017,42 @@ export const translations = {
       accept: 'Hyväksy',
       settings: 'Asetukset',
     },
+    archive: {
+      tag: 'ARKISTO',
+      title: 'Pysyvä Arkisto',
+      subtitle: 'Numeroitu hiljaisen ylellisyyden arkisto.',
+      allProducts: 'Kaikki Teokset',
+      filters: 'Suodattimet',
+      sortBy: 'Järjestys',
+      sortPriceAsc: 'Hinta: nouseva',
+      sortPriceDesc: 'Hinta: laskeva',
+      sortNewest: 'Uusimmat',
+      filterAll: 'Kaikki',
+      filterLimited: 'Numeroitu sarja',
+      filterAvailable: 'Vain saatavilla',
+      quickLook: 'Pikanäkymä',
+      loadMore: 'Lataa lisää teoksia',
+      resultsCount: '{count} teosta näkymässä',
+      filterTitle: 'Tarkenna hakua',
+      categoryAll: 'Kaikki kategoriat',
+      editionAll: 'Kaikki painokset',
+      editionNumbered: 'Numeroitu erä',
+      editionStandard: 'Peruskokoelma',
+      clearFilters: 'Tyhjennä suodattimet',
+      applyFilters: 'Käytä suodattimia',
+      noProducts: 'Ei teoksia valituilla ehdoilla',
+      showingCount: 'Näytetään {current} / {total} teosta',
+      viewProduct: 'Tarkastele teosta',
+      viewLook: 'Tutustu kokonaisuuteen',
+      empty: 'Ei teoksia valituilla kriteereillä',
+      limited: 'Rajoitettu painos',
+      stockLeft: 'Jäljellä',
+      showingProgress: 'Näytetään {current} / {total} teosta',
+      filterSize: 'Koko',
+      filterMaterial: 'Materiaali',
+      filterAvailability: 'Saatavuus',
+      onlyInStock: 'Vain varastossa',
+    },
   },
   en: {
     languageName: 'English',
@@ -1120,6 +1178,42 @@ export const translations = {
       accept: 'Accept',
       settings: 'Preferences',
     },
+    archive: {
+      tag: 'ARCHIVE',
+      title: 'Permanent Archive',
+      subtitle: 'Permanent numbered library of quiet luxury garments.',
+      allProducts: 'All Works',
+      filters: 'Filters',
+      sortBy: 'Sort By',
+      sortPriceAsc: 'Price: Low to High',
+      sortPriceDesc: 'Price: High to Low',
+      sortNewest: 'Sequence',
+      filterAll: 'All Pieces',
+      filterLimited: 'Numbered Edition',
+      filterAvailable: 'Available Only',
+      quickLook: 'Quick Look',
+      loadMore: 'Load More Works',
+      resultsCount: '{count} Works in View',
+      filterTitle: 'Refine Archive',
+      categoryAll: 'All Categories',
+      editionAll: 'All Editions',
+      editionNumbered: 'Numbered Edition',
+      editionStandard: 'Permanent Catalog',
+      clearFilters: 'Clear Filters',
+      applyFilters: 'Apply Selection',
+      noProducts: 'No products in this view',
+      showingCount: 'Showing {current} of {total} pieces',
+      viewProduct: 'View Piece',
+      viewLook: 'View Look',
+      empty: 'No pieces match your criteria',
+      limited: 'Numbered Edition',
+      stockLeft: 'Units left',
+      showingProgress: 'Showing {current} of {total} pieces',
+      filterSize: 'Size',
+      filterMaterial: 'Material',
+      filterAvailability: 'Availability',
+      onlyInStock: 'In Stock Only',
+    },
   },
   sv: {
     languageName: 'Svenska',
@@ -1244,6 +1338,42 @@ export const translations = {
       text: 'Vi använder nödvändiga kakor för att säkerställa arkivets prestanda.',
       accept: 'Acceptera',
       settings: 'Inställningar',
+    },
+    archive: {
+      tag: 'ARKIV',
+      title: 'Permanent Arkiv',
+      subtitle: 'Numrerat arkiv av tyst lyx.',
+      allProducts: 'Alla Verk',
+      filters: 'Filter',
+      sortBy: 'Sortera',
+      sortPriceAsc: 'Pris: Lägst först',
+      sortPriceDesc: 'Pris: Högst först',
+      sortNewest: 'Senaste',
+      filterAll: 'Alla',
+      filterLimited: 'Numrerad upplaga',
+      filterAvailable: 'Endast tillgängliga',
+      quickLook: 'Snabbtitt',
+      loadMore: 'Ladda fler verk',
+      resultsCount: '{count} verk i vy',
+      filterTitle: 'Filtrera arkiv',
+      categoryAll: 'Alla kategorier',
+      editionAll: 'Alla upplagor',
+      editionNumbered: 'Numrerad upplaga',
+      editionStandard: 'Basarkiv',
+      clearFilters: 'Rensa filter',
+      applyFilters: 'Tillämpa val',
+      noProducts: 'Inga plagg hittades',
+      showingCount: 'Visar {current} av {total} verk',
+      viewProduct: 'Visa plagg',
+      viewLook: 'Visa look',
+      empty: 'Inga plagg matchar dina kriterier',
+      limited: 'Numrerad upplaga',
+      stockLeft: 'Kvar',
+      showingProgress: 'Visar {current} av {total} plagg',
+      filterSize: 'Storlek',
+      filterMaterial: 'Material',
+      filterAvailability: 'Tillgänglighet',
+      onlyInStock: 'Endast i lager',
     },
   },
 };

@@ -87,29 +87,49 @@ export const FashionImage: React.FC<FashionImageProps> = ({
     .filter(Boolean)
     .join(' ');
 
+  const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(resolvedSrc);
+
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden bg-neutral-100 ${aspectClasses[aspectRatio] || ''} ${className}`}
+      className={`relative overflow-hidden bg-[#f4f4f4] ${aspectClasses[aspectRatio] || ''} ${className}`}
     >
-      <img
-        src={hasError ? NEUTRAL_PLACEHOLDER_IMG : resolvedSrc}
-        alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        referrerPolicy="no-referrer"
-        onLoad={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
-        style={{
-          objectPosition: resolvedPosition,
-          transform: transformStyle || undefined,
-        }}
-        className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
-          enableMultiply ? 'mix-blend-multiply' : ''
-        } ${onHoverZoom ? 'group-hover:scale-[1.03]' : ''} ${
-          isLoaded ? 'opacity-100' : 'opacity-80'
-        } ${imageClassName}`}
-      />
+      {isVideo ? (
+        <video
+          src={resolvedSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            objectPosition: resolvedPosition,
+            transform: transformStyle || undefined,
+            transformOrigin: resolvedPosition,
+          }}
+          className={`w-full h-full object-cover ${imageClassName}`}
+        />
+      ) : (
+        <img
+          src={hasError ? NEUTRAL_PLACEHOLDER_IMG : resolvedSrc}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          {...(priority ? { fetchPriority: 'high' } : {})}
+          referrerPolicy="no-referrer"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+          style={{
+            objectPosition: resolvedPosition,
+            transform: transformStyle || undefined,
+            transformOrigin: resolvedPosition,
+          }}
+          className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
+            enableMultiply ? 'mix-blend-multiply' : ''
+          } ${onHoverZoom ? 'group-hover:scale-[1.03]' : ''} ${
+            isLoaded ? 'opacity-100' : 'opacity-80'
+          } ${imageClassName}`}
+        />
+      )}
     </div>
   );
 };
