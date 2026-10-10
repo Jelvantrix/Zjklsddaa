@@ -927,18 +927,18 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-neutral-950/40 backdrop-blur-[2px] transition-opacity"
+        className="fixed inset-0 backdrop-blur-[2px] transition-opacity"
       />
 
       {/* Slide-over Container */}
-      <div className="relative w-full max-w-2xl bg-white h-full shadow-2xl flex flex-col z-10 animate-slideLeft border-l border-black/10 select-none font-mono">
+      <div className="relative w-full max-w-2xl bg-white h-full flex flex-col z-10 animate-slideLeft select-none">
         {/* Top Header */}
-        <div className="p-4 sm:p-6 border-b border-black/10 flex items-center justify-between bg-white shrink-0">
+        <div className="p-4 sm:p-6 flex items-center justify-between bg-white shrink-0">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-black/40">
+            <div className="text-small uppercase tracking-[0.2em] text-black/40">
               {product ? 'Edit Archival Item' : 'Create New Archival Item'}
             </div>
-            <h3 className="font-editorial text-xl sm:text-2xl font-normal text-black mt-0.5 truncate max-w-md">
+            <h3 className="font-serif text-title sm:text-title font-normal text-black mt-0.5 truncate max-w-md">
               {formData.name?.en || 'Untitled Archival Piece'}
             </h3>
           </div>
@@ -948,7 +948,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               <button
                 type="button"
                 onClick={handleDelete}
-                className="text-xs uppercase tracking-wider text-black/50 hover:text-black underline underline-offset-4 cursor-pointer mr-2 flex items-center gap-1.5"
+                className="text-small uppercase tracking-wider text-black/50 hover:text-black underline underline-offset-4 cursor-pointer mr-2 flex items-center gap-1.5"
                 title="Delete this garment permanently"
               >
                 <Trash2 className="w-3.5 h-3.5" />
@@ -958,7 +958,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             <button
               onClick={handleSave}
               disabled={isSaving}
-              className="py-2 px-4 bg-black text-white hover:bg-neutral-800 text-xs font-mono uppercase tracking-[0.2em] flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
+              className="py-2 px-4 text-white text-small uppercase tracking-[0.2em] flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-colors"
             >
               <Save className="w-3.5 h-3.5" />
               <span>{isSaving ? 'Saving...' : 'Save Record'}</span>
@@ -974,7 +974,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-black/[0.08] bg-white overflow-x-auto no-scrollbar text-xs font-mono uppercase tracking-wider shrink-0">
+        <div className="flex bg-white overflow-x-auto no-scrollbar text-small uppercase tracking-wider shrink-0">
           {[
             { id: 'basic', label: '1. Basic Info', icon: Tag },
             { id: 'media', label: '2. Media & Crops', icon: ImageIcon },
@@ -989,9 +989,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-3 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer relative ${
-                  isActive
-                    ? 'font-semibold text-black border-b-2 border-black'
+                className={`px-4 py-3 flex items-center gap-1.5 transition-colors whitespace-nowrap cursor-pointer relative ${ isActive ?'font-semibold text-black'
                     : 'text-black/50 hover:text-black'
                 }`}
               >
@@ -1005,14 +1003,14 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
         {/* Main Content Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {saveError && (
-            <div className="p-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 flex items-center gap-2">
+            <div className="p-3 text-small text-rose-700 flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{saveError}</span>
             </div>
           )}
 
           {saveSuccess && (
-            <div className="p-3 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 flex items-center gap-2">
+            <div className="p-3 text-small text-emerald-700 flex items-center gap-2">
               <Check className="w-4 h-4 shrink-0" />
               <span>Product record saved to the archive.</span>
             </div>
@@ -1020,10 +1018,9 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
           {notice && (
             <div
-              className={`p-3 text-xs border flex items-center gap-2 ${
-                notice.type === 'success'
-                  ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
-                  : 'text-rose-700 bg-rose-50 border-rose-200'
+              className={`p-3 text-small flex items-center gap-2 ${ notice.type ==='success'
+                  ? 'text-emerald-700'
+                  : 'text-rose-700'
               }`}
             >
               {notice.type === 'success' ? (
@@ -1036,7 +1033,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           )}
 
           {dataUrlStripped && (
-            <div className="p-3 text-xs text-black bg-neutral-100 border border-black/20 flex items-center gap-2">
+            <div className="p-3 text-small text-black flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>
                 Stored inline (base64) image data was cleared from this record — pick the pictures again
@@ -1050,83 +1047,83 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Product Title (English)
                   </label>
                   <input
                     type="text"
                     value={formData.name?.en || ''}
                     onChange={(e) => setFormData({ ...formData, name: { ...formData.name!, en: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Product Title (Finnish)
                   </label>
                   <input
                     type="text"
                     value={formData.name?.fi || ''}
                     onChange={(e) => setFormData({ ...formData, name: { ...formData.name!, fi: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Description (English)
                   </label>
                   <textarea
                     rows={4}
                     value={formData.description?.en || ''}
                     onChange={(e) => setFormData({ ...formData, description: { ...formData.description!, en: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs font-sans border border-black/[0.12] focus:border-black focus:outline-none leading-relaxed"
+                    className="w-full px-3 py-2 text-small leading-relaxed"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Description (Finnish)
                   </label>
                   <textarea
                     rows={4}
                     value={formData.description?.fi || ''}
                     onChange={(e) => setFormData({ ...formData, description: { ...formData.description!, fi: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs font-sans border border-black/[0.12] focus:border-black focus:outline-none leading-relaxed"
+                    className="w-full px-3 py-2 text-small leading-relaxed"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Material & Weight (EN)
                   </label>
                   <input
                     type="text"
                     value={formData.material?.en || ''}
                     onChange={(e) => setFormData({ ...formData, material: { ...formData.material!, en: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Material & Weight (FI)
                   </label>
                   <input
                     type="text"
                     value={formData.material?.fi || ''}
                     onChange={(e) => setFormData({ ...formData, material: { ...formData.material!, fi: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
               </div>
 
               {/* COMING SOON CONFIGURATION */}
-              <div className="p-4 border border-black/[0.12] bg-neutral-50 space-y-3">
+              <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-black cursor-pointer">
+                  <label className="flex items-center gap-2 text-small font-semibold text-black cursor-pointer">
                     <input
                       type="checkbox"
                       checked={Boolean(formData.isComingSoon || formData.status === 'coming_soon')}
@@ -1143,17 +1140,17 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     <span>Mark as "Coming Soon" (Waitlist Mode)</span>
                   </label>
                   {(formData.isComingSoon || formData.status === 'coming_soon') && (
-                    <span className="text-[10px] uppercase font-mono px-2 py-0.5 bg-black text-white font-semibold">
+                    <span className="text-small uppercase px-2 py-0.5 text-white font-semibold">
                       Coming Soon Active
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-black/60 font-sans leading-relaxed">
+                <p className="text-small text-black/60 leading-relaxed">
                   When enabled, this piece displays an editorial "COMING SOON" tag on the catalogue and swaps the "Add to Bag" action for a priority waitlist registration form.
                 </p>
                 {(formData.isComingSoon || formData.status === 'coming_soon') && (
                   <div>
-                    <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                       Announcement / Arrival Notice (Optional)
                     </label>
                     <input
@@ -1161,7 +1158,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       value={formData.comingSoonNotice || ''}
                       onChange={(e) => setFormData({ ...formData, comingSoonNotice: e.target.value })}
                       placeholder="e.g. Arriving Autumn 2026 · Crafting in Helsinki"
-                      className="w-full px-3 py-2 text-xs border border-black/[0.2] bg-white focus:border-black focus:outline-none"
+                      className="w-full px-3 py-2 text-small bg-white"
                     />
                   </div>
                 )}
@@ -1169,25 +1166,25 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Origin & Workshop (EN)
                   </label>
                   <input
                     type="text"
                     value={formData.origin?.en || ''}
                     onChange={(e) => setFormData({ ...formData, origin: { ...formData.origin!, en: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Origin & Workshop (FI)
                   </label>
                   <input
                     type="text"
                     value={formData.origin?.fi || ''}
                     onChange={(e) => setFormData({ ...formData, origin: { ...formData.origin!, fi: e.target.value } })}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
               </div>
@@ -1198,11 +1195,11 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           {activeTab === 'media' && (
             <div className="space-y-6">
               {/* 1. Primary Image Management Card */}
-              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between border-b border-black/10 pb-2.5">
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between pb-2.5">
                   <div className="flex items-center gap-2">
                     <ImageIcon className="w-4 h-4 text-black" />
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                    <h4 className="text-small font-semibold uppercase tracking-wider text-black">
                       Primary Garment Picture
                     </h4>
                   </div>
@@ -1210,7 +1207,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     <button
                       type="button"
                       onClick={() => setPickerTarget({ kind: 'primary' })}
-                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 text-small uppercase font-medium text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Upload className="w-3 h-3" />
                       <span>Upload / Choose</span>
@@ -1218,7 +1215,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     <button
                       type="button"
                       onClick={() => handleOpenAdjuster('primary')}
-                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-2.5 py-1 text-small uppercase hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Compass className="w-3 h-3" />
                       <span>Adjust Best Frame & Angle</span>
@@ -1227,7 +1224,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       <button
                         type="button"
                         onClick={handleDeletePrimaryImage}
-                        className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                        className="p-1 text-red-600 transition-colors cursor-pointer"
                         title="Delete primary picture"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -1238,7 +1235,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                   <div className="sm:col-span-3">
-                    <div className="w-full aspect-[3/4] border border-black/20 overflow-hidden relative bg-black/5 shadow-2xs">
+                    <div className="w-full aspect-[3/4] overflow-hidden relative">
                       {primaryUrl ? (
                         <img
                           src={primaryUrl}
@@ -1250,7 +1247,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                           className="w-full h-full object-cover transition-transform duration-100"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-[10px]">
+                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-small">
                           <ImageIcon className="w-6 h-6 mb-1 opacity-40" />
                           <span>No Image Loaded</span>
                         </div>
@@ -1260,7 +1257,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
                   <div className="sm:col-span-9 space-y-3">
                     <div>
-                      <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                      <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                         Primary Image URL:
                       </label>
                       <input
@@ -1268,25 +1265,25 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         value={primaryUrl}
                         onChange={(e) => handleUpdateImageUrl(e.target.value)}
                         placeholder="https://..."
-                        className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                        className="w-full px-3 py-2 text-small bg-white"
                       />
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 pt-1">
-                      <span className="text-[10px] uppercase tracking-wider text-black/50 font-semibold">
+                      <span className="text-small uppercase tracking-wider text-black/50 font-semibold">
                         Current Frame:
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                      <span className="text-small px-2 py-0.5">
                         Anchor: {focalX}% / {focalY}%
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                      <span className="text-small px-2 py-0.5">
                         Scale: {Number(focalScale).toFixed(2)}x
                       </span>
-                      <span className="text-[10px] font-mono px-2 py-0.5 bg-black/5 border border-black/10">
+                      <span className="text-small px-2 py-0.5">
                         Angle: {focalRotation}°
                       </span>
                       {isFlipped && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 bg-black text-white">
+                        <span className="text-small px-2 py-0.5 text-white">
                           Flipped
                         </span>
                       )}
@@ -1296,11 +1293,11 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               </div>
 
               {/* 2. Secondary / Hover Image Card */}
-              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-4 shadow-2xs">
-                <div className="flex items-center justify-between border-b border-black/10 pb-2.5">
+              <div className="p-4 space-y-4">
+                <div className="flex items-center justify-between pb-2.5">
                   <div className="flex items-center gap-2">
                     <Eye className="w-4 h-4 text-black" />
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                    <h4 className="text-small font-semibold uppercase tracking-wider text-black">
                       Hover / Secondary Model Picture (Optional)
                     </h4>
                   </div>
@@ -1308,7 +1305,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     <button
                       type="button"
                       onClick={() => setPickerTarget({ kind: 'hover' })}
-                      className="px-2.5 py-1 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 text-small uppercase font-medium text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Upload className="w-3 h-3" />
                       <span>Upload / Choose</span>
@@ -1318,7 +1315,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         <button
                           type="button"
                           onClick={() => handleOpenAdjuster('hover')}
-                          className="px-2.5 py-1 text-[10.5px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+                          className="px-2.5 py-1 text-small uppercase hover:text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
                           <Compass className="w-3 h-3" />
                           <span>Adjust Frame</span>
@@ -1326,7 +1323,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         <button
                           type="button"
                           onClick={handleDeleteHoverImage}
-                          className="p-1 text-red-600 hover:bg-red-50 border border-red-200 transition-colors cursor-pointer"
+                          className="p-1 text-red-600 transition-colors cursor-pointer"
                           title="Delete hover picture"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -1338,7 +1335,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
 
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
                   <div className="sm:col-span-3">
-                    <div className="w-full aspect-[3/4] border border-black/20 overflow-hidden relative bg-black/5 shadow-2xs">
+                    <div className="w-full aspect-[3/4] overflow-hidden relative">
                       {hoverUrl ? (
                         <img
                           src={hoverUrl}
@@ -1346,7 +1343,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-[10px]">
+                        <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center text-black/40 text-small">
                           <span>No hover image (Primary used)</span>
                         </div>
                       )}
@@ -1354,7 +1351,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
 
                   <div className="sm:col-span-9">
-                    <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                       Hover Image URL:
                     </label>
                     <input
@@ -1362,27 +1359,27 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       value={hoverUrl}
                       onChange={(e) => handleUpdateHoverUrl(e.target.value)}
                       placeholder="https://..."
-                      className="w-full px-3 py-2 text-xs font-mono border border-black/[0.15] bg-white focus:border-black focus:outline-none"
+                      className="w-full px-3 py-2 text-small bg-white"
                     />
                   </div>
                 </div>
               </div>
 
               {/* 3. Additional Gallery Images Card */}
-              <div className="border border-black/[0.12] p-4 bg-neutral-50/70 space-y-3">
+              <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black">
+                    <h4 className="text-small font-semibold uppercase tracking-wider text-black">
                       Archival Garment Gallery ({(formData.images || []).length} pictures)
                     </h4>
-                    <p className="text-[11px] text-black/60 font-sans mt-0.5">
+                    <p className="text-small text-black/60 mt-0.5">
                       Upload detail shots, fabric macros, lookbook runway poses, or packshots.
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => setPickerTarget({ kind: 'gallery-add' })}
-                    className="px-3 py-1.5 text-[11px] uppercase tracking-wider font-mono bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                    className="px-3 py-1.5 text-small uppercase tracking-wider text-white transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     <span>Add Picture</span>
@@ -1390,7 +1387,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 </div>
 
                 {(formData.images || []).length === 0 ? (
-                  <p className="text-[11px] text-black/50 font-sans pt-2">
+                  <p className="text-small text-black/50 pt-2">
                     No pictures on this record yet. Use Add Picture to upload from a device, pick from the
                     media library or paste a URL.
                   </p>
@@ -1415,26 +1412,25 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                           setDragIndex(null);
                           setDragOverIndex(null);
                         }}
-                        className={`relative border bg-white p-1 group shadow-2xs transition-colors ${
-                          dragOverIndex === idx ? 'border-black' : 'border-black/15'
+                        className={`relative bg-white p-1 group transition-colors ${ dragOverIndex === idx ? 'opacity-50' : ''
                         } ${idx === 0 ? '' : 'cursor-grab active:cursor-grabbing'}`}
                       >
-                        <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-100 relative">
+                        <div className="w-full aspect-[3/4] overflow-hidden relative">
                           <img
                             src={img.url}
                             alt={img.alt?.en || `Gallery ${idx + 1}`}
                             className="w-full h-full object-cover"
                           />
-                          <span className="absolute top-1 left-1 bg-black text-white text-[8px] font-mono px-1 py-0.5">
+                          <span className="absolute top-1 left-1 text-white text-small px-1 py-0.5">
                             {idx === 0 ? 'PRIMARY' : `#${idx + 1}`}
                           </span>
                           {img.isHover && (
-                            <span className="absolute top-1 right-1 bg-white text-black text-[8px] font-mono px-1 py-0.5 border border-black">
+                            <span className="absolute top-1 right-1 bg-white text-black text-small px-1 py-0.5">
                               HOVER
                             </span>
                           )}
                           {/* Hover-only actions */}
-                          <div className="absolute inset-x-0 bottom-0 hidden group-hover:flex group-focus-within:flex flex-wrap items-center justify-center gap-1 bg-black/75 p-1">
+                          <div className="absolute inset-x-0 bottom-0 hidden group-hover:flex group-focus-within:flex flex-wrap items-center justify-center gap-1 p-1">
                             {idx !== 0 && (
                               <button
                                 type="button"
@@ -1471,8 +1467,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                             <button
                               type="button"
                               onClick={() => handleSetAsHover(idx)}
-                              className={`p-1 transition-colors cursor-pointer ${
-                                img.isHover ? 'bg-white text-black' : 'text-white hover:bg-white hover:text-black'
+                              className={`p-1 transition-colors cursor-pointer ${ img.isHover ?'bg-white text-black' : 'text-white hover:bg-white hover:text-black'
                               }`}
                               title={img.isHover ? 'Clear hover picture' : 'Use as hover picture'}
                               aria-label={
@@ -1521,15 +1516,15 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                             </button>
                           </div>
                         </div>
-                        <div className="flex items-center justify-between mt-1 pt-1 border-t border-black/10">
-                          <span className="flex items-center gap-1 text-[9px] uppercase tracking-wider font-mono text-black/60">
+                        <div className="flex items-center justify-between mt-1 pt-1">
+                          <span className="flex items-center gap-1 text-small uppercase tracking-wider text-black/60">
                             <GripVertical className="w-3 h-3" />
                             {idx === 0 ? 'Primary' : 'Drag'}
                           </span>
                           <button
                             type="button"
                             onClick={() => openAltEditor(idx)}
-                            className="text-[9px] uppercase tracking-wider font-mono text-black hover:underline cursor-pointer"
+                            className="text-small uppercase tracking-wider text-black hover:underline cursor-pointer"
                           >
                             {img.alt?.en ? 'Alt ✓' : 'Alt'}
                           </button>
@@ -1541,14 +1536,14 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               </div>
 
               {/* 4. Complete Inline Frame & Angle Adjuster Panel */}
-              <div className="p-4 border border-black/[0.12] bg-white space-y-5 shadow-sm">
-                <div className="flex items-center justify-between border-b border-black/10 pb-3">
+              <div className="p-4 bg-white space-y-5">
+                <div className="flex items-center justify-between pb-3">
                   <div>
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-black flex items-center gap-1.5">
+                    <h4 className="text-small font-semibold uppercase tracking-wider text-black flex items-center gap-1.5">
                       <Compass className="w-4 h-4 text-black" />
                       <span>Adjust Picture to Best Frame & Angle</span>
                     </h4>
-                    <p className="text-xs text-black/60 font-sans mt-0.5">
+                    <p className="text-small text-black/60 mt-0.5">
                       Click directly on the garment preview below to anchor focal center, or fine-tune angle/scale sliders.
                     </p>
                   </div>
@@ -1556,7 +1551,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     <button
                       type="button"
                       onClick={() => handleOpenAdjuster('primary')}
-                      className="px-3 py-1.5 text-[10.5px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                      className="px-3 py-1.5 text-small uppercase font-medium text-white flex items-center gap-1.5 cursor-pointer"
                     >
                       <Maximize2 className="w-3.5 h-3.5" />
                       <span>Open Fullscreen Adjuster</span>
@@ -1569,7 +1564,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         handleUpdateScale(1.05);
                         handleUpdateRotation(0);
                       }}
-                      className="px-2.5 py-1.5 text-[10px] uppercase font-mono border border-black/20 hover:border-black bg-white cursor-pointer"
+                      className="px-2.5 py-1.5 text-small uppercase bg-white cursor-pointer"
                     >
                       Reset 0° & Center
                     </button>
@@ -1579,8 +1574,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 {/* Precision Sliders: Angle, Scale, X, Y */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
                   {/* Angle / Rotation */}
-                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                  <div className="p-3 space-y-2">
+                    <div className="flex justify-between text-small uppercase tracking-wider text-black/80 font-semibold">
                       <span className="flex items-center gap-1">
                         <Compass className="w-3 h-3 text-black" />
                         <span>Angle / Tilt</span>
@@ -1600,29 +1595,28 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       <button
                         type="button"
                         onClick={() => handleUpdateRotation(Math.max(-180, focalRotation - 90))}
-                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black flex items-center gap-0.5 cursor-pointer"
+                        className="px-1.5 py-0.5 text-small bg-white flex items-center gap-0.5 cursor-pointer"
                       >
                         <RotateCcw className="w-2.5 h-2.5" /> -90°
                       </button>
                       <button
                         type="button"
                         onClick={() => handleUpdateRotation(0)}
-                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black cursor-pointer"
+                        className="px-1.5 py-0.5 text-small bg-white cursor-pointer"
                       >
                         0°
                       </button>
                       <button
                         type="button"
                         onClick={() => handleUpdateRotation(Math.min(180, focalRotation + 90))}
-                        className="px-1.5 py-0.5 text-[9px] border border-black/15 bg-white hover:border-black flex items-center gap-0.5 cursor-pointer"
+                        className="px-1.5 py-0.5 text-small bg-white flex items-center gap-0.5 cursor-pointer"
                       >
                         <RotateCw className="w-2.5 h-2.5" /> +90°
                       </button>
                       <button
                         type="button"
                         onClick={handleToggleFlip}
-                        className={`px-1.5 py-0.5 text-[9px] border cursor-pointer ${
-                          isFlipped ? 'border-black bg-black text-white' : 'border-black/15 bg-white hover:border-black'
+                        className={`px-1.5 py-0.5 text-small cursor-pointer ${ isFlipped ?'text-white' : 'bg-white'
                         }`}
                       >
                         Flip
@@ -1631,8 +1625,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
 
                   {/* Zoom / Scale */}
-                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                  <div className="p-3 space-y-2">
+                    <div className="flex justify-between text-small uppercase tracking-wider text-black/80 font-semibold">
                       <span className="flex items-center gap-1">
                         <ZoomIn className="w-3 h-3 text-black" />
                         <span>Zoom / Scale</span>
@@ -1654,10 +1648,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                           key={s}
                           type="button"
                           onClick={() => handleUpdateScale(s)}
-                          className={`px-1.5 py-0.5 text-[9px] border cursor-pointer ${
-                            Math.abs(focalScale - s) < 0.02
-                              ? 'border-black bg-black text-white font-bold'
-                              : 'border-black/15 bg-white hover:border-black'
+                          className={`px-1.5 py-0.5 text-small cursor-pointer ${ Math.abs(focalScale - s) < 0.02 ?'text-white font-bold'
+                              : 'bg-white'
                           }`}
                         >
                           {s}x
@@ -1667,8 +1659,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
 
                   {/* Horizontal X */}
-                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                  <div className="p-3 space-y-2">
+                    <div className="flex justify-between text-small uppercase tracking-wider text-black/80 font-semibold">
                       <span>Horizontal (X)</span>
                       <span className="font-bold">{focalX}%</span>
                     </div>
@@ -1680,7 +1672,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       onChange={(e) => handleUpdateFocalX(Number(e.target.value))}
                       className="w-full accent-black cursor-pointer"
                     />
-                    <div className="flex items-center justify-between text-[9px] text-black/50">
+                    <div className="flex items-center justify-between text-small text-black/50">
                       <span>Left (0%)</span>
                       <span>Center (50%)</span>
                       <span>Right (100%)</span>
@@ -1688,8 +1680,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
 
                   {/* Vertical Y */}
-                  <div className="p-3 border border-black/10 bg-neutral-50/70 space-y-2">
-                    <div className="flex justify-between text-[10.5px] uppercase tracking-wider text-black/80 font-semibold">
+                  <div className="p-3 space-y-2">
+                    <div className="flex justify-between text-small uppercase tracking-wider text-black/80 font-semibold">
                       <span>Vertical (Y)</span>
                       <span className="font-bold">{focalY}%</span>
                     </div>
@@ -1701,7 +1693,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       onChange={(e) => handleUpdateFocalY(Number(e.target.value))}
                       className="w-full accent-black cursor-pointer"
                     />
-                    <div className="flex items-center justify-between text-[9px] text-black/50">
+                    <div className="flex items-center justify-between text-small text-black/50">
                       <span>Top (0%)</span>
                       <span>Torso (35%)</span>
                       <span>Hem (100%)</span>
@@ -1713,16 +1705,16 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-2">
                   <div className="lg:col-span-7">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+                      <span className="text-small uppercase tracking-wider text-black/60 font-semibold">
                         Interactive Target Viewport (Click to anchor focal center):
                       </span>
-                      <span className="text-[10px] font-mono text-black/40">
+                      <span className="text-small text-black/40">
                         {currentAspectRatio} Aspect
                       </span>
                     </div>
                     <div
                       onClick={handleFocalPointClick}
-                      className="relative w-full aspect-[3/4] border-2 border-black/30 overflow-hidden bg-black/5 cursor-crosshair group select-none shadow-md"
+                      className="relative w-full aspect-[3/4] overflow-hidden cursor-crosshair group select-none"
                     >
                       <img
                         src={primaryUrl}
@@ -1735,15 +1727,15 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       />
 
                       {/* Rule of thirds lines */}
-                      <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-black/10 opacity-30 group-hover:opacity-60 transition-opacity">
-                        <div className="border-r border-b border-black/20" />
-                        <div className="border-r border-b border-black/20" />
-                        <div className="border-b border-black/20" />
-                        <div className="border-r border-b border-black/20" />
-                        <div className="border-r border-b border-black/20" />
-                        <div className="border-b border-black/20" />
-                        <div className="border-r border-b border-black/20" />
-                        <div className="border-r border-b border-black/20" />
+                      <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-30 group-hover:opacity-60 transition-opacity">
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
+                        <div className="" />
                         <div />
                       </div>
 
@@ -1752,10 +1744,10 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         style={{ left: `${focalX}%`, top: `${focalY}%` }}
                         className="absolute -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 transition-all duration-75"
                       >
-                        <div className="w-8 h-8 rounded-full border-2 border-white bg-black/50 flex items-center justify-center backdrop-blur-xs shadow-lg">
-                          <div className="w-2 h-2 bg-white rounded-full ring-2 ring-black" />
+                        <div className="w-8 h-8 flex items-center justify-center backdrop-blur-xs">
+                          <div className="w-2 h-2 bg-white" />
                         </div>
-                        <span className="absolute top-9 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] px-2 py-0.5 whitespace-nowrap shadow-md rounded-xs">
+                        <span className="absolute top-9 left-1/2 -translate-x-1/2 text-white text-small px-2 py-0.5 whitespace-nowrap">
                           X:{focalX}% Y:{focalY}%
                         </span>
                       </div>
@@ -1763,13 +1755,13 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </div>
 
                   <div className="lg:col-span-5 space-y-4">
-                    <div className="text-[10.5px] uppercase tracking-wider text-black font-semibold border-b border-black/10 pb-1.5">
+                    <div className="text-small uppercase tracking-wider text-black font-semibold pb-1.5">
                       Storefront Multi-Frame Previews:
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-black/60 block mb-1">3:4 Archive Dossier & Catalogue:</span>
-                      <div className="w-36 aspect-[3/4] border border-black/[0.15] overflow-hidden relative bg-black/5 shadow-xs">
+                      <span className="text-small text-black/60 block mb-1">3:4 Archive Dossier & Catalogue:</span>
+                      <div className="w-36 aspect-[3/4] overflow-hidden relative">
                         <img
                           src={primaryUrl}
                           style={{
@@ -1783,8 +1775,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     </div>
 
                     <div>
-                      <span className="text-[10px] text-black/60 block mb-1">1:1 Square (Cart & Checkout Bag):</span>
-                      <div className="w-28 aspect-square border border-black/[0.15] overflow-hidden relative bg-black/5 shadow-xs">
+                      <span className="text-small text-black/60 block mb-1">1:1 Square (Cart & Checkout Bag):</span>
+                      <div className="w-28 aspect-square overflow-hidden relative">
                         <img
                           src={primaryUrl}
                           style={{
@@ -1807,16 +1799,16 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-black">Sizes & Inventory Matrix</h4>
-                  <p className="text-xs text-black/60 font-sans mt-0.5">Manage individual sizes, stock counts, and SKUs.</p>
+                  <h4 className="text-small font-semibold uppercase tracking-wider text-black">Sizes & Inventory Matrix</h4>
+                  <p className="text-small text-black/60 mt-0.5">Manage individual sizes, stock counts, and SKUs.</p>
                 </div>
-                <div className="text-xs font-medium text-black">
+                <div className="text-small font-medium text-black">
                   Total Units: <span className="font-bold">{(formData.variants || []).reduce((a, v) => a + Number(v.stock || 0), 0)}</span>
                 </div>
               </div>
 
-              <div className="border border-black/[0.08] divide-y divide-black/[0.05]">
-                <div className="grid grid-cols-12 p-2.5 text-[10px] uppercase tracking-wider bg-black/[0.02] font-semibold text-black/70">
+              <div className="">
+                <div className="grid grid-cols-12 p-2.5 text-small uppercase tracking-wider font-semibold text-black/70">
                   <div className="col-span-3">Size</div>
                   <div className="col-span-4">SKU</div>
                   <div className="col-span-3">In Stock</div>
@@ -1826,7 +1818,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 {(formData.variants || []).map((v, idx) => {
                   const stockNum = Number(v.stock) || 0;
                   return (
-                    <div key={idx} className="grid grid-cols-12 p-3 items-center text-xs">
+                    <div key={idx} className="grid grid-cols-12 p-3 items-center text-small">
                       <div className="col-span-3 font-semibold">{v.size}</div>
                       <div className="col-span-4">
                         <input
@@ -1837,7 +1829,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                             newVariants[idx].sku = e.target.value;
                             setFormData({ ...formData, variants: newVariants });
                           }}
-                          className="w-full px-2 py-1 border border-black/[0.1] focus:border-black text-[11px]"
+                          className="w-full px-2 py-1 text-small"
                         />
                       </div>
                       <div className="col-span-3">
@@ -1850,20 +1842,20 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                             newVariants[idx].stock = parseInt(e.target.value) || 0;
                             setFormData({ ...formData, variants: newVariants });
                           }}
-                          className="w-20 px-2 py-1 border border-black/[0.1] focus:border-black font-semibold"
+                          className="w-20 px-2 py-1 font-semibold"
                         />
                       </div>
                       <div className="col-span-2 text-right">
                         {stockNum === 0 ? (
-                          <span className="text-[10px] text-rose-700 bg-rose-50 px-1.5 py-0.5">
+                          <span className="text-small text-rose-700 px-1.5 py-0.5">
                             Sold Out
                           </span>
                         ) : stockNum < 3 ? (
-                          <span className="text-[10px] text-amber-700 bg-amber-50 px-1.5 py-0.5">
+                          <span className="text-small text-amber-700 px-1.5 py-0.5">
                             Low ({stockNum})
                           </span>
                         ) : (
-                          <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5">
+                          <span className="text-small text-emerald-700 px-1.5 py-0.5">
                             In Stock ({stockNum})
                           </span>
                         )}
@@ -1880,18 +1872,18 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Retail Price (€ incl. VAT)
                   </label>
                   <input
                     type="number"
                     value={formData.price || 0}
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 text-sm font-semibold border border-black/[0.12] focus:border-black"
+                    className="w-full px-3 py-2 text-small font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Compare At Price (€)
                   </label>
                   <input
@@ -1899,23 +1891,23 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                     value={formData.compareAtPrice || ''}
                     placeholder="Regular price..."
                     onChange={(e) => setFormData({ ...formData, compareAtPrice: parseFloat(e.target.value) || undefined })}
-                    className="w-full px-3 py-2 text-sm border border-black/[0.12] focus:border-black"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     VAT Rate (%)
                   </label>
                   <input
                     type="number"
                     disabled
                     value={formData.vatRate || 24}
-                    className="w-full px-3 py-2 text-sm border border-black/[0.08] bg-black/[0.02]"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
               </div>
 
-              <div className="p-4 border border-black/[0.08] bg-neutral-50/50 text-xs space-y-1.5">
+              <div className="p-4 text-small space-y-1.5">
                 <div className="flex justify-between">
                   <span className="text-black/60">Net Price (VAT 0%):</span>
                   <span>{Math.round(((formData.price || 0) / 1.24) * 100) / 100} €</span>
@@ -1933,7 +1925,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Primary Category
                   </label>
                   <select
@@ -1946,7 +1938,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         categoryIds: [newCat],
                       });
                     }}
-                    className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
+                    className="w-full px-3 py-2 text-small cursor-pointer bg-white"
                   >
                     {categories.length > 0 ? (
                       categories
@@ -1967,7 +1959,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                     Subcategory
                   </label>
                   {(() => {
@@ -1983,7 +1975,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         <select
                           value={formData.subcategory || ''}
                           onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                          className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
+                          className="w-full px-3 py-2 text-small cursor-pointer bg-white"
                         >
                           <option value="">-- None / All --</option>
                           {subcats.map((sc) => (
@@ -2001,7 +1993,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                         value={formData.subcategory || ''}
                         placeholder="e.g. coats, knitwear..."
                         onChange={(e) => setFormData({ ...formData, subcategory: e.target.value })}
-                        className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black"
+                        className="w-full px-3 py-2 text-small"
                       />
                     );
                   })()}
@@ -2009,13 +2001,13 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               </div>
 
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   Collection Association
                 </label>
                 <select
                   value={formData.collectionSeason || 'perusvaatteet'}
                   onChange={(e) => setFormData({ ...formData, collectionSeason: e.target.value as any })}
-                  className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black cursor-pointer bg-white"
+                  className="w-full px-3 py-2 text-small cursor-pointer bg-white"
                 >
                   {collections.length > 0 ? (
                     collections.map((col) => (
@@ -2033,8 +2025,8 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 </select>
               </div>
 
-              <div className="pt-3 border-t border-black/[0.08]">
-                <label className="flex items-center gap-2 text-xs cursor-pointer">
+              <div className="pt-3">
+                <label className="flex items-center gap-2 text-small cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.isLimited || false}
@@ -2051,7 +2043,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
           {activeTab === 'seo' && (
             <div className="space-y-6">
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   Publishing Status
                 </label>
                 <select
@@ -2064,7 +2056,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                       setFormData({ ...formData, status: val as any, isComingSoon: false });
                     }
                   }}
-                  className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black font-semibold cursor-pointer bg-white"
+                  className="w-full px-3 py-2 text-small font-semibold cursor-pointer bg-white"
                 >
                   <option value="live">Live (Public in archive)</option>
                   <option value="coming_soon">Coming Soon (Priority Waitlist Mode)</option>
@@ -2076,24 +2068,24 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               </div>
 
               {formData.status === 'scheduled' && (
-                <div className="p-3 border border-black/[0.08] bg-neutral-50/50 space-y-2">
-                  <label className="block text-[10.5px] uppercase tracking-wider text-black/60">
+                <div className="p-3 space-y-2">
+                  <label className="block text-small uppercase tracking-wider text-black/60">
                     Scheduled Publish Timestamp
                   </label>
                   <input
                     type="datetime-local"
                     value={formData.publishAt ? new Date(formData.publishAt).toISOString().slice(0, 16) : ''}
                     onChange={(e) => setFormData({ ...formData, publishAt: new Date(e.target.value).toISOString() })}
-                    className="px-3 py-2 text-xs border border-black/[0.12] focus:border-black"
+                    className="px-3 py-2 text-small"
                   />
-                  <p className="text-[10px] text-black/60">
+                  <p className="text-small text-black/60">
                     Product publishes automatically to the live storefront when this time is reached.
                   </p>
                 </div>
               )}
 
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   SEO Page Title
                 </label>
                 <input
@@ -2101,12 +2093,12 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   value={formData.seo?.title || ''}
                   onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, title: e.target.value } })}
                   placeholder={`${formData.name?.en || 'Piece'} | Zejesh Studio Helsinki`}
-                  className="w-full px-3 py-2 text-xs border border-black/[0.12] focus:border-black"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
 
               <div>
-                <label className="block text-[10.5px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   SEO Meta Description
                 </label>
                 <textarea
@@ -2114,12 +2106,12 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   value={formData.seo?.description || ''}
                   onChange={(e) => setFormData({ ...formData, seo: { ...formData.seo, description: e.target.value } })}
                   placeholder="Nordic archival tailoring crafted in Finland."
-                  className="w-full px-3 py-2 text-xs font-sans border border-black/[0.12] focus:border-black"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
 
               {/* Audit trail */}
-              <div className="p-3 border border-black/[0.08] bg-neutral-50/50 text-[10px] text-black/50 space-y-1">
+              <div className="p-3 text-small text-black/50 space-y-1">
                 <div>Created: {formData.createdAt ? new Date(formData.createdAt).toLocaleString('en-US') : 'Original archive'}</div>
                 <div>Last updated: {formData.updatedAt ? new Date(formData.updatedAt).toLocaleString('en-US') : 'Unmodified'}</div>
                 <div>Operator: {adminProfile?.name || 'Studio Principal'}</div>
@@ -2152,7 +2144,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       {/* Alt text for one gallery picture */}
       {altEditIndex !== null && (
         <div
-          className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Edit alt text"
@@ -2160,20 +2152,20 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             if (e.target === e.currentTarget) setAltEditIndex(null);
           }}
         >
-          <div className="w-full max-w-md bg-white border border-black p-5 space-y-4 shadow-2xl">
-            <div className="border-b border-black/10 pb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+          <div className="w-full max-w-md bg-white p-5 space-y-4">
+            <div className="pb-3">
+              <h3 className="text-small font-semibold uppercase tracking-wider flex items-center gap-2">
                 <Type className="w-4 h-4" />
                 <span>Alt Text — Picture #{altEditIndex + 1}</span>
               </h3>
-              <p className="text-[11px] text-black/60 mt-1">
+              <p className="text-small text-black/60 mt-1">
                 Describes the picture for search engines and screen readers.
               </p>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   English (required)
                 </label>
                 <input
@@ -2181,11 +2173,11 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   value={altDraftEn}
                   onChange={(e) => setAltDraftEn(e.target.value)}
                   placeholder="e.g. Charcoal wool overcoat, front view"
-                  className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   Finnish
                 </label>
                 <input
@@ -2193,7 +2185,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                   value={altDraftFi}
                   onChange={(e) => setAltDraftFi(e.target.value)}
                   placeholder="e.g. Hiilenharmaa villapaita, etukuv"
-                  className="w-full px-3 py-2 text-xs border border-black/[0.15] focus:border-black focus:outline-none"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
             </div>
@@ -2202,7 +2194,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               <button
                 type="button"
                 onClick={() => setAltEditIndex(null)}
-                className="px-3 py-2 text-[11px] uppercase font-mono border border-black/20 hover:border-black cursor-pointer"
+                className="px-3 py-2 text-small uppercase cursor-pointer"
               >
                 Cancel
               </button>
@@ -2210,7 +2202,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 type="button"
                 onClick={handleSaveAlt}
                 disabled={isSavingAlt}
-                className="px-3 py-2 text-[11px] uppercase font-mono bg-black text-white hover:bg-neutral-800 disabled:opacity-50 cursor-pointer"
+                className="px-3 py-2 text-small uppercase text-white disabled:opacity-50 cursor-pointer"
               >
                 {isSavingAlt ? 'Saving…' : 'Save Alt Text'}
               </button>
@@ -2222,7 +2214,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
       {/* Usage-aware removal: never break another storefront image by accident */}
       {deleteTarget && (
         <div
-          className="fixed inset-0 z-[70] bg-black/60 flex items-center justify-center p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Remove picture"
@@ -2230,22 +2222,22 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
             if (e.target === e.currentTarget) setDeleteTarget(null);
           }}
         >
-          <div className="w-full max-w-lg bg-white border border-black p-5 space-y-4 shadow-2xl">
-            <div className="border-b border-black/10 pb-3">
-              <h3 className="text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+          <div className="w-full max-w-lg bg-white p-5 space-y-4">
+            <div className="pb-3">
+              <h3 className="text-small font-semibold uppercase tracking-wider flex items-center gap-2">
                 <Trash2 className="w-4 h-4" />
                 <span>Remove This Picture?</span>
               </h3>
             </div>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3 text-small">
               <p className="text-black/70">
                 Choose how far the removal should go. Removing a reference never deletes the file, so no
                 other storefront image can break.
               </p>
 
-              <div className="p-3 border border-black/10 bg-neutral-50/70">
-                <p className="text-[10px] uppercase tracking-wider text-black/60 mb-1">Where it is used</p>
+              <div className="p-3">
+                <p className="text-small uppercase tracking-wider text-black/60 mb-1">Where it is used</p>
                 {checkingUsage ? (
                   <p className="text-black/60">Checking usage…</p>
                 ) : deleteUsage ? (
@@ -2271,22 +2263,22 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
               </div>
 
               {deleteError && (
-                <p className="text-[11px] text-red-700 border border-red-200 bg-red-50 p-2">{deleteError}</p>
+                <p className="text-small text-red-700 p-2">{deleteError}</p>
               )}
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-2 pt-1 border-t border-black/10">
+            <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="px-3 py-2 text-[11px] uppercase font-mono border border-black/20 hover:border-black cursor-pointer"
+                className="px-3 py-2 text-small uppercase cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleRemoveReference}
-                className="px-3 py-2 text-[11px] uppercase font-mono border border-black hover:bg-black hover:text-white cursor-pointer"
+                className="px-3 py-2 text-small uppercase hover:text-white cursor-pointer"
               >
                 Remove From This Record
               </button>
@@ -2294,7 +2286,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 type="button"
                 onClick={handleRemoveEverywhere}
                 disabled={deleteAction === 'working' || checkingUsage}
-                className="px-3 py-2 text-[11px] uppercase font-mono border border-black bg-black text-white hover:bg-neutral-800 disabled:opacity-50 cursor-pointer"
+                className="px-3 py-2 text-small uppercase text-white disabled:opacity-50 cursor-pointer"
               >
                 {deleteAction === 'working' ? 'Working…' : 'Remove Everywhere'}
               </button>
@@ -2302,7 +2294,7 @@ export const AdminProductEditorDrawer: React.FC<AdminProductEditorDrawerProps> =
                 type="button"
                 onClick={handleDeletePermanently}
                 disabled={deleteAction === 'working' || checkingUsage}
-                className="px-3 py-2 text-[11px] uppercase font-mono border border-red-300 text-red-700 hover:bg-red-600 hover:text-white hover:border-red-600 disabled:opacity-50 cursor-pointer"
+                className="px-3 py-2 text-small uppercase text-red-700 hover:text-white disabled:opacity-50 cursor-pointer"
               >
                 Delete Permanently
               </button>

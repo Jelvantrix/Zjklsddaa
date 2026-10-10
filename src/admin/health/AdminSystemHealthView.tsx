@@ -271,273 +271,147 @@ export const AdminSystemHealthView: React.FC = () => {
   // Note: read/write counters are local to this device — no cost figure is invented from them.
 
   return (
-    <div className="space-y-8 max-w-6xl font-mono text-xs text-black">
+    <div className="space-y-12 max-w-5xl bg-white text-black">
       {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-black/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span
-              className={`w-2 h-2 rounded-full animate-pulse ${
-                dbStatus === 'connected'
-                  ? 'bg-emerald-500'
-                  : dbStatus === 'checking'
-                  ? 'bg-black/30'
-                  : 'bg-rose-500'
-              }`}
-            />
-            <span className="text-[10px] uppercase tracking-[0.25em] text-black/50">
-              {dbStatus === 'connected'
-                ? 'Production Infrastructure · Database reachable'
-                : dbStatus === 'checking'
-                ? 'Production Infrastructure · Checking database…'
-                : 'Production Infrastructure · Database unreachable'}
-            </span>
-          </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-normal tracking-tight">System Health & Live Ingestion</h1>
-          <p className="text-xs font-mono text-black/50 mt-1">
-            Measured database connectivity, recent event ingestion, the consent record held on this device,
-            and captured telemetry errors. Anything not measured is shown as "No data yet".
-          </p>
+          <span className="text-small text-black/40 block mb-1">
+            {dbStatus === 'connected'
+              ? 'Database connected'
+              : dbStatus === 'checking'
+              ? 'Checking database'
+              : 'Database unreachable'}
+          </span>
+          <h1 className="text-title">System Health</h1>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={handleSendTestEventAndVerify}
-            disabled={isSendingTest}
-            className="flex items-center gap-2 px-4 py-2.5 bg-black text-white hover:bg-neutral-800 transition-colors text-xs uppercase tracking-[0.16em] font-medium cursor-pointer shadow-sm disabled:opacity-50"
-          >
-            {isSendingTest ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
-            <span>{isSendingTest ? 'Verifying...' : 'Send Test Event & Verify'}</span>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleSendTestEventAndVerify}
+          disabled={isSendingTest}
+          className="text-small text-black hover:underline cursor-pointer disabled:opacity-40"
+        >
+          {isSendingTest ? 'Verifying...' : 'Send Test Event →'}
+        </button>
       </div>
 
       {/* TEST EVENT VERIFICATION BANNER */}
       {testResult.status !== 'idle' && (
-        <div
-          className={`p-4 border font-mono text-xs transition-all ${
-            testResult.status === 'success'
-              ? 'bg-black text-white border-black'
-              : 'bg-red-50 text-red-900 border-red-200'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-1">
-            <span className="font-semibold uppercase tracking-wider flex items-center gap-2">
-              {testResult.status === 'success' ? (
-                <>
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  <span>Database Round-Trip: Verified</span>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="w-4 h-4 text-red-600" />
-                  <span>Database Round-Trip Failed</span>
-                </>
-              )}
+        <div className="space-y-1">
+          <span className="text-small text-black/60 block">
+            {testResult.status === 'success' ? 'Verification Passed' : 'Verification Failed'}
+          </span>
+          <p className="text-body">
+            {testResult.message}
+          </p>
+          {testResult.latencyMs && (
+            <span className="text-small text-black/40 block">
+              Latency: {testResult.latencyMs}ms
             </span>
-            {testResult.latencyMs && (
-              <span className="text-[11px] opacity-80 font-mono">Round-trip latency: {testResult.latencyMs}ms</span>
-            )}
-          </div>
-          <p className="text-[11.5px] opacity-90">{testResult.message}</p>
-          {testResult.eventId && (
-            <div className="mt-2 text-[10px] opacity-60 font-mono">
-              Document ID: <code>/events/{testResult.eventId}</code> · Timestamp: {testResult.verifiedAt}
-            </div>
           )}
         </div>
       )}
 
-      {/* KPI METRIC CARDS (REAL DATA ONLY) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card 1: Event Ingestion */}
-        <div className="p-4 border border-black/[0.08] bg-white space-y-2">
-          <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
-            <span>Event Ingestion</span>
-            <Activity className="w-3.5 h-3.5" />
+      {/* KPI METRICS: Pure typography separated by whitespace */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="space-y-1">
+          <span className="text-small text-black/40 block">Ingestion</span>
+          <div className="text-title font-normal">
+            {dbStatus === 'checking' ? '...' : dbStatus === 'connected' ? totalEventsCount : 'N/A'}
           </div>
-          <div className="text-2xl font-editorial font-normal text-black">
-            {dbStatus === 'checking' ? 'Checking…' : dbStatus === 'connected' ? totalEventsCount : 'Could not load data'}
-          </div>
-          <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>Current Pace:</span>
-            <span className="font-semibold text-black">{eventsPerMinute} events/min</span>
-          </div>
+          <span className="text-small text-black/50 block">
+            {eventsPerMinute} / min
+          </span>
         </div>
 
-        {/* Card 2: Last Event Time */}
-        <div className="p-4 border border-black/[0.08] bg-white space-y-2">
-          <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
-            <span>Last Event Timestamp</span>
-            <Clock className="w-3.5 h-3.5" />
+        <div className="space-y-1">
+          <span className="text-small text-black/40 block">Last Event</span>
+          <div className="text-title font-normal truncate">
+            {timeAgo || 'None'}
           </div>
-          <div className="text-xl font-editorial font-normal text-black truncate">{timeAgo}</div>
-          <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>Recorded Time:</span>
-            <span className="font-mono text-black">{lastEventTime || 'Listening...'}</span>
-          </div>
+          <span className="text-small text-black/50 block">
+            {lastEventTime || 'Listening'}
+          </span>
         </div>
 
-        {/* Card 3: Operations recorded by this browser */}
-        <div className="p-4 border border-black/[0.08] bg-white space-y-2">
-          <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
-            <span>Ops Recorded (This Device)</span>
-            <DollarSign className="w-3.5 h-3.5" />
+        <div className="space-y-1">
+          <span className="text-small text-black/40 block">Operations</span>
+          <div className="text-title font-normal">
+            {readsToday + writesToday}
           </div>
-          <div className="text-2xl font-editorial font-normal text-black">
-            {readsToday + writesToday} <span className="text-xs font-mono text-black/50 font-normal">ops</span>
-          </div>
-          <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>Reads / Writes:</span>
-            <span className="font-semibold text-black">{readsToday} / {writesToday}</span>
-          </div>
+          <span className="text-small text-black/50 block">
+            {readsToday} r / {writesToday} w
+          </span>
         </div>
 
-        {/* Card 4: Consent Record */}
-        <div className="p-4 border border-black/[0.08] bg-white space-y-2">
-          <div className="flex items-center justify-between text-black/50 text-[10px] uppercase tracking-wider">
-            <span>Telemetry Consent</span>
-            <ShieldCheck className="w-3.5 h-3.5" />
+        <div className="space-y-1">
+          <span className="text-small text-black/40 block">Telemetry</span>
+          <div className="text-title font-normal">
+            {consentStats.total > 0 ? `${consentStats.rate}%` : 'No data'}
           </div>
-          <div className="text-2xl font-editorial font-normal text-black">
-            {consentStats.total > 0 ? `${consentStats.rate}%` : 'No data yet'}
-          </div>
-          <div className="text-[11px] text-black/60 flex items-center justify-between pt-1 border-t border-black/[0.06]">
-            <span>Stored on this device:</span>
-            <span className="font-semibold text-black">
-              {consentStats.total === 0
-                ? 'No record'
-                : consentStats.rate === 100
-                ? 'Accepted'
-                : 'Declined'}
-            </span>
-          </div>
+          <span className="text-small text-black/50 block">
+            {consentStats.total === 0 ? 'No record' : consentStats.rate === 100 ? 'Accepted' : 'Declined'}
+          </span>
         </div>
       </div>
 
       {/* CORE SUBSYSTEM DETAILS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Subsystem 1: Database reachability audit */}
-        <div className="border border-black/[0.08] bg-white p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-black/[0.08] pb-3">
-            <div className="flex items-center gap-2">
-              <Database className="w-4 h-4 text-black" />
-              <h3 className="font-semibold uppercase tracking-wider text-xs">Supabase Database Core</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div className="space-y-4">
+          <span className="text-small text-black/40 block">Database Core</span>
+          <div className="space-y-2 text-body">
+            <div className="flex justify-between">
+              <span className="text-black/50">Endpoint:</span>
+              <span className="text-black truncate pl-2">{databaseEndpoint}</span>
             </div>
-            <span
-              className={`px-2 py-0.5 border text-[10px] font-semibold ${
-                dbStatus === 'connected'
-                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
-                  : dbStatus === 'checking'
-                  ? 'border-black/30 text-black/50 bg-white'
-                  : 'border-rose-500 text-rose-700 bg-rose-50'
-              }`}
-            >
-              {dbStatus === 'connected' ? 'CONNECTED' : dbStatus === 'checking' ? 'CHECKING…' : 'UNREACHABLE'}
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-xs font-mono">
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Database Endpoint:</span>
-              <span className="font-mono text-black font-medium truncate pl-3">{databaseEndpoint}</span>
+            <div className="flex justify-between">
+              <span className="text-black/50">Status:</span>
+              <span className="text-black">{dbStatus}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Security Rules:</span>
-              <span className="font-mono text-black">Not verifiable from this client</span>
+            <div className="flex justify-between">
+              <span className="text-black/50">Reads:</span>
+              <span className="text-black">{readsToday}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Reads (This Device):</span>
-              <span className="font-mono text-black font-semibold">{readsToday} reads</span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Writes (This Device):</span>
-              <span className="font-mono text-black font-semibold">{writesToday} writes</span>
-            </div>
-            <div className="flex justify-between py-1">
-              <span className="text-black/50">Last Recorded Aggregation:</span>
-              <span className="font-mono text-black">
-                {lastAggregation?.status ||
-                  (dbStatus === 'connected' ? 'Checking…' : 'Could not load data')}
-              </span>
+            <div className="flex justify-between">
+              <span className="text-black/50">Writes:</span>
+              <span className="text-black">{writesToday}</span>
             </div>
           </div>
         </div>
 
-        {/* Subsystem 2: Auth & Role Governance */}
-        <div className="border border-black/[0.08] bg-white p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-black/[0.08] pb-3">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-black" />
-              <h3 className="font-semibold uppercase tracking-wider text-xs">Supabase Authentication & Identity</h3>
+        <div className="space-y-4">
+          <span className="text-small text-black/40 block">Authentication & Session</span>
+          <div className="space-y-2 text-body">
+            <div className="flex justify-between">
+              <span className="text-black/50">Operator:</span>
+              <span className="text-black truncate pl-2">{adminProfile?.email || user?.email || 'Not signed in'}</span>
             </div>
-            <span
-              className={`px-2 py-0.5 border text-[10px] font-semibold ${
-                user || adminProfile
-                  ? 'border-emerald-500 text-emerald-700 bg-emerald-50'
-                  : 'border-rose-500 text-rose-700 bg-rose-50'
-              }`}
-            >
-              {user || adminProfile ? 'SESSION ACTIVE' : 'NO SESSION'}
-            </span>
-          </div>
-
-          <div className="space-y-2.5 text-xs font-mono">
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Authenticated Operator:</span>
-              <span className="font-mono text-black font-semibold truncate pl-3">
-                {adminProfile?.email || user?.email || 'Not signed in'}
-              </span>
+            <div className="flex justify-between">
+              <span className="text-black/50">Role:</span>
+              <span className="text-black">{adminProfile?.role || role || 'None'}</span>
             </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Active Role:</span>
-              <span className="font-mono uppercase font-bold text-black">
-                {adminProfile?.role || role || 'No role assigned'}
-              </span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Page Connection:</span>
-              <span className="font-mono text-black">
-                {typeof window !== 'undefined' && window.location.protocol === 'https:'
-                  ? 'HTTPS (browser TLS)'
-                  : 'Not HTTPS'}
-              </span>
-            </div>
-            <div className="flex justify-between py-1 border-b border-black/[0.04]">
-              <span className="text-black/50">Privilege Level:</span>
-              <span className="font-mono text-black">{isOwner ? 'Owner (full access)' : 'Staff (limited access)'}</span>
-            </div>
-            <div className="flex justify-between py-1">
-              <span className="text-black/50">Server Functions:</span>
-              <span className="font-mono text-black">Unknown — not verified</span>
+            <div className="flex justify-between">
+              <span className="text-black/50">Privilege:</span>
+              <span className="text-black">{isOwner ? 'Owner' : 'Staff'}</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* TRACKER ERROR LOG */}
-      <div className="border border-black/[0.08] bg-white p-5 space-y-3">
-        <div className="flex items-center justify-between border-b border-black/[0.08] pb-2">
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-black/60" />
-            <h3 className="font-semibold uppercase tracking-wider text-xs">Tracker Error & Exception Audit Log</h3>
-          </div>
-          <span className="text-[10px] text-black/50 font-mono">
-            {trackerErrors.length} errors logged
-          </span>
+      <div className="space-y-4">
+        <div className="flex items-baseline justify-between">
+          <span className="text-small text-black/40">Error Log</span>
+          <span className="text-small text-black/40">{trackerErrors.length} logged</span>
         </div>
 
         {trackerErrors.length === 0 ? (
-          <div className="py-6 text-center text-black/40 text-xs">
-            <CheckCircle2 className="w-5 h-5 mx-auto mb-1 text-emerald-600" />
-            <span>No telemetry errors captured in this session.</span>
-          </div>
+          <p className="text-body text-black/40">No errors recorded</p>
         ) : (
-          <div className="divide-y divide-black/[0.06]">
+          <div className="space-y-2">
             {trackerErrors.map((err) => (
-              <div key={err.id} className="py-2 flex items-center justify-between text-[11px]">
-                <span className="text-red-700">{err.msg}</span>
+              <div key={err.id} className="flex items-baseline justify-between text-small">
+                <span className="text-black">{err.msg}</span>
                 <span className="text-black/40">{err.at}</span>
               </div>
             ))}

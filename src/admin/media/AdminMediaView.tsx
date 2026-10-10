@@ -144,12 +144,12 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
   });
 
   return (
-    <div className="space-y-6 select-none font-mono">
+    <div className="space-y-6 select-none">
       {/* Top Bar */}
-      <div className="pb-4 border-b border-black/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-editorial text-3xl font-normal text-black">Media Storage</h1>
-          <p className="text-xs text-black/50 mt-0.5">
+          <h1 className="font-serif text-display font-normal text-black">Media Storage</h1>
+          <p className="text-small text-black/50 mt-0.5">
             Direct Supabase Storage integration with client-side WebP compression and usage tracking.
           </p>
         </div>
@@ -159,7 +159,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
-            className="px-4 py-2 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 text-white text-small uppercase tracking-wider flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <UploadCloud className="w-3.5 h-3.5" />
             <span>{isUploading ? `Uploading (${uploadProgress || 0}%)...` : 'Upload From Device'}</span>
@@ -176,7 +176,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
       </div>
 
       {uploadError && (
-        <div className="p-3 border border-black/20 bg-neutral-100 text-xs text-black flex items-center gap-2">
+        <div className="p-3 text-small text-black flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>{uploadError}</span>
         </div>
@@ -184,34 +184,34 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
 
       {/* Dropzone & Filter */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-        <div className="flex-1 flex items-center gap-2 border border-black/15 px-3 py-2 bg-white">
+        <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-white">
           <Search className="w-3.5 h-3.5 text-black/40" />
           <input
             type="text"
             placeholder="Search media assets by filename or tag..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs font-mono focus:outline-none bg-transparent"
+            className="w-full text-small bg-transparent"
           />
         </div>
-        <div className="text-xs text-black/50 shrink-0 self-center">
+        <div className="text-small text-black/50 shrink-0 self-center">
           {mediaList.length} asset{mediaList.length === 1 ? '' : 's'} in storage
         </div>
       </div>
 
       {/* Storage Grid */}
       {loading ? (
-        <div className="py-20 text-center text-xs text-black/40 flex items-center justify-center gap-2">
+        <div className="py-20 text-center text-small text-black/40 flex items-center justify-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-black" />
           <span>Connecting to Supabase Storage bucket...</span>
         </div>
       ) : filteredMedia.length === 0 ? (
-        <div className="py-20 text-center border border-dashed border-black/20 bg-neutral-50 p-8 space-y-3">
+        <div className="py-20 text-center p-8 space-y-3">
           <UploadCloud className="w-8 h-8 text-black/30 mx-auto" />
-          <div className="text-xs uppercase tracking-wider text-black/60">
+          <div className="text-small uppercase tracking-wider text-black/60">
             Storage bucket is clean & empty
           </div>
-          <p className="text-[11px] text-black/40 max-w-sm mx-auto">
+          <p className="text-small text-black/40 max-w-sm mx-auto">
             Upload images or campaign videos from your device to populate the media library.
           </p>
         </div>
@@ -221,9 +221,9 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
             <div
               key={item.id}
               onClick={() => setSelectedAsset(item)}
-              className="border border-black/10 bg-white p-2.5 flex flex-col justify-between group hover:border-black transition-colors cursor-pointer"
+              className="bg-white p-2.5 flex flex-col justify-between group transition-colors cursor-pointer"
             >
-              <div className="aspect-[3/4] border border-black/5 bg-neutral-100 overflow-hidden relative mb-2">
+              <div className="aspect-[3/4] overflow-hidden relative mb-2">
                 {item.kind === 'video' ? (
                   <video
                     src={item.url}
@@ -239,18 +239,18 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
                     loading="lazy"
                   />
                 )}
-                <div className="absolute bottom-1 right-1 bg-black text-white text-[9px] px-1 py-0.5">
+                <div className="absolute bottom-1 right-1 text-white text-small px-1 py-0.5">
                   {item.width && item.height ? `${item.width}×${item.height}` : item.kind}
                 </div>
               </div>
 
               <div className="space-y-1">
-                <div className="text-[11px] font-semibold truncate text-black">
+                <div className="text-small font-semibold truncate text-black">
                   {item.alt || item.path.split('/').pop()}
                 </div>
-                <div className="flex items-center justify-between text-[10px] text-black/50">
+                <div className="flex items-center justify-between text-small text-black/50">
                   <span>{item.sizeBytes ? `${Math.round(item.sizeBytes / 1024)} KB` : ''}</span>
-                  <span className="uppercase text-[9px]">{item.kind}</span>
+                  <span className="uppercase text-small">{item.kind}</span>
                 </div>
               </div>
             </div>
@@ -260,10 +260,10 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
 
       {/* Asset Inspector Modal */}
       {selectedAsset && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-white border border-black/20 w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl p-6 overflow-y-auto space-y-5 font-mono">
-            <div className="flex items-center justify-between border-b border-black/10 pb-3">
-              <h2 className="text-xs uppercase tracking-wider font-semibold text-black">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-2xl max-h-[90vh] flex flex-col p-6 overflow-y-auto space-y-5">
+            <div className="flex items-center justify-between pb-3">
+              <h2 className="text-small uppercase tracking-wider font-semibold text-black">
                 Asset Metadata & Calibration
               </h2>
               <button
@@ -276,7 +276,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-start">
-              <div className="aspect-[3/4] bg-neutral-100 border border-black/10 overflow-hidden">
+              <div className="aspect-[3/4] overflow-hidden">
                 {selectedAsset.kind === 'video' ? (
                   <video
                     src={selectedAsset.url}
@@ -292,58 +292,58 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
                 )}
               </div>
 
-              <div className="space-y-4 text-xs">
+              <div className="space-y-4 text-small">
                 <div>
-                  <div className="text-[10px] text-black/40 uppercase">Storage Path</div>
-                  <div className="text-black break-all font-mono text-[11px] mt-0.5">
+                  <div className="text-small text-black/40 uppercase">Storage Path</div>
+                  <div className="text-black break-all text-small mt-0.5">
                     {selectedAsset.path}
                   </div>
                 </div>
 
                 <div>
-                  <div className="text-[10px] text-black/40 uppercase">Public URL</div>
+                  <div className="text-small text-black/40 uppercase">Public URL</div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <input
                       type="text"
                       readOnly
                       value={selectedAsset.url}
-                      className="w-full px-2 py-1 bg-neutral-50 border border-black/10 text-[10px] select-all truncate"
+                      className="w-full px-2 py-1 text-small select-all truncate"
                     />
                     <button
                       type="button"
                       onClick={() => handleCopyUrl(selectedAsset.url)}
-                      className="px-2 py-1 border border-black/20 hover:border-black text-[10px] uppercase cursor-pointer shrink-0"
+                      className="px-2 py-1 text-small uppercase cursor-pointer shrink-0"
                     >
                       {copySuccess ? 'Copied' : 'Copy'}
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 text-[11px]">
+                <div className="grid grid-cols-2 gap-3 text-small">
                   <div>
-                    <span className="text-black/40 block text-[10px] uppercase">Dimensions</span>
+                    <span className="text-black/40 block text-small uppercase">Dimensions</span>
                     <span>{selectedAsset.width && selectedAsset.height ? `${selectedAsset.width} × ${selectedAsset.height} px` : 'N/A'}</span>
                   </div>
                   <div>
-                    <span className="text-black/40 block text-[10px] uppercase">File Size</span>
+                    <span className="text-black/40 block text-small uppercase">File Size</span>
                     <span>{selectedAsset.sizeBytes ? `${Math.round(selectedAsset.sizeBytes / 1024)} KB` : 'N/A'}</span>
                   </div>
                 </div>
 
                 {/* Where is this used in the catalog? */}
-                <div className="border border-black/10 p-3 bg-neutral-50/60 space-y-2">
-                  <div className="text-[10px] text-black/50 uppercase font-semibold flex items-center justify-between">
+                <div className="p-3 space-y-2">
+                  <div className="text-small text-black/50 uppercase font-semibold flex items-center justify-between">
                     <span>Database References</span>
                     {checkingUsage && <Loader2 className="w-3 h-3 animate-spin text-black" />}
                   </div>
 
                   {assetUsage ? (
                     assetUsage.totalUses === 0 ? (
-                      <p className="text-[10.5px] text-black/60">
+                      <p className="text-small text-black/60">
                         This file is currently unreferenced in products or hero slides.
                       </p>
                     ) : (
-                      <div className="space-y-1 text-[10.5px] text-black">
+                      <div className="space-y-1 text-small text-black">
                         {assetUsage.productTitles.length > 0 && (
                           <div>
                             <span className="font-medium">Products ({assetUsage.productTitles.length}):</span>{' '}
@@ -372,7 +372,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
                     <button
                       type="button"
                       onClick={() => setEditorAsset(selectedAsset)}
-                      className="w-full py-2 border border-black text-black hover:bg-neutral-100 uppercase text-[10.5px] tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full py-2 text-black uppercase text-small tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                     >
                       <Sliders className="w-3.5 h-3.5" />
                       <span>Calibrate Frame & Placements</span>
@@ -384,7 +384,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
                     onClick={() => {
                       setAssetToDelete(selectedAsset);
                     }}
-                    className="w-full py-2 border border-red-300 text-red-700 hover:bg-red-50 uppercase text-[10.5px] tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full py-2 text-red-700 uppercase text-small tracking-wider flex items-center justify-center gap-1.5 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Delete From Storage</span>
@@ -398,8 +398,8 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
 
       {/* Deletion Warning Modal */}
       {assetToDelete && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs font-mono">
-          <div className="bg-white border border-black/20 w-full max-w-md p-6 shadow-2xl space-y-4 text-xs">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md p-6 space-y-4 text-small">
             <div className="flex items-center gap-2 text-black">
               <AlertTriangle className="w-4 h-4 text-black shrink-0" />
               <h3 className="uppercase tracking-wider font-semibold">
@@ -412,7 +412,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
             </p>
 
             {assetUsage && assetUsage.totalUses > 0 && (
-              <div className="p-3 bg-neutral-100 border border-black/15 text-[11px] text-black space-y-1">
+              <div className="p-3 text-small text-black space-y-1">
                 <div className="font-medium uppercase">Active Usage Notice:</div>
                 <p>
                   This asset is currently in use across {assetUsage.totalUses} place(s):{' '}
@@ -422,7 +422,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
             )}
 
             {deleteError && (
-              <div className="p-2 border border-red-300 text-red-700 bg-red-50 text-[11px]">
+              <div className="p-2 text-red-700 text-small">
                 {deleteError}
               </div>
             )}
@@ -431,7 +431,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
               <button
                 type="button"
                 onClick={() => setAssetToDelete(null)}
-                className="px-3 py-1.5 border border-black/20 hover:border-black text-[10.5px] uppercase cursor-pointer"
+                className="px-3 py-1.5 text-small uppercase cursor-pointer"
               >
                 Cancel
               </button>
@@ -439,7 +439,7 @@ export const AdminMediaView: React.FC<AdminMediaViewProps> = ({ products }) => {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={isDeleting}
-                className="px-4 py-1.5 bg-black text-white hover:bg-neutral-800 text-[10.5px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                className="px-4 py-1.5 text-white text-small uppercase tracking-wider cursor-pointer disabled:opacity-50"
               >
                 {isDeleting ? 'Deleting...' : 'Remove Everywhere'}
               </button>

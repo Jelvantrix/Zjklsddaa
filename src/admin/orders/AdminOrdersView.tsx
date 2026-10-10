@@ -135,27 +135,27 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
     switch (st) {
       case 'paid':
       case 'delivered':
-        return <span className="text-[10px] font-mono uppercase tracking-wider text-black font-semibold">● {st}</span>;
+        return <span className="text-small uppercase tracking-wider text-black font-semibold">● {st}</span>;
       case 'packed':
       case 'shipped':
-        return <span className="text-[10px] font-mono uppercase tracking-wider text-black">◐ {st}</span>;
+        return <span className="text-small uppercase tracking-wider text-black">◐ {st}</span>;
       case 'new':
-        return <span className="text-[10px] font-mono uppercase tracking-wider text-black/70">○ {st}</span>;
+        return <span className="text-small uppercase tracking-wider text-black/70">○ {st}</span>;
       case 'cancelled':
       case 'refunded':
-        return <span className="text-[10px] font-mono uppercase tracking-wider text-black/40 line-through">{st}</span>;
+        return <span className="text-small uppercase tracking-wider text-black/40 line-through">{st}</span>;
       default:
-        return <span className="text-[10px] font-mono uppercase tracking-wider">{st}</span>;
+        return <span className="text-small uppercase tracking-wider">{st}</span>;
     }
   };
 
   return (
     <div className="space-y-6">
       {/* Title Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
         <div>
-          <h1 className="font-editorial text-3xl font-normal text-black">Real Customer Orders</h1>
-          <p className="text-xs font-mono text-black/50 mt-0.5">
+          <h1 className="font-serif text-display font-normal text-black">Real Customer Orders</h1>
+          <p className="text-small text-black/50 mt-0.5">
             Verified checkout orders, fulfillment status, dispatch tracking, and audit trail.
           </p>
         </div>
@@ -165,7 +165,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
             <button
               type="button"
               onClick={printDocument}
-              className="px-3 py-1.5 border border-black text-xs font-mono flex items-center gap-1.5 cursor-pointer hover:bg-black hover:text-white transition-colors"
+              className="px-3 py-1.5 text-small flex items-center gap-1.5 cursor-pointer hover:text-white transition-colors"
             >
               <Printer className="w-3.5 h-3.5" />
               <span>Print Slip</span>
@@ -175,13 +175,13 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
       </div>
 
       {orders.length === 0 ? (
-        <div className="p-12 border border-black/[0.08] bg-white text-center space-y-4 font-mono">
-          <div className="w-12 h-12 border border-black/15 mx-auto flex items-center justify-center text-black/40">
+        <div className="p-12 bg-white text-center space-y-4">
+          <div className="w-12 h-12 mx-auto flex items-center justify-center text-black/40">
             <ShoppingBag className="w-6 h-6 stroke-[1.5]" />
           </div>
           <div>
-            <h3 className="font-editorial text-2xl font-normal text-black mb-1">No Customer Orders Yet</h3>
-            <p className="text-xs text-black/50 max-w-md mx-auto">
+            <h3 className="font-serif text-title font-normal text-black mb-1">No Customer Orders Yet</h3>
+            <p className="text-small text-black/50 max-w-md mx-auto">
               Real customer orders placed through the storefront checkout will immediately sync here in real-time.
             </p>
           </div>
@@ -189,7 +189,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
       ) : (
         <>
           {/* Filter and Search Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 border-b border-black/[0.08] text-xs font-mono bg-white">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 text-small bg-white">
             <div className="relative sm:col-span-2">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
               <input
@@ -197,7 +197,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search order number or customer name/email..."
-                className="w-full pl-8 pr-3 py-1.5 border-b border-black/20 focus:border-black bg-transparent focus:outline-none"
+                className="w-full pl-8 pr-3 py-1.5 bg-transparent"
               />
             </div>
 
@@ -205,7 +205,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as any)}
-                className="w-full px-2.5 py-1.5 border-b border-black/20 focus:border-black bg-transparent focus:outline-none cursor-pointer"
+                className="w-full px-2.5 py-1.5 bg-transparent cursor-pointer"
               >
                 <option value="all">All statuses ({orders.length})</option>
                 <option value="new">New</option>
@@ -221,9 +221,9 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-4">
             {/* Left Column: Order List */}
-            <div className="lg:col-span-5 divide-y divide-black/10 overflow-y-auto max-h-[700px]">
+            <div className="lg:col-span-5 overflow-y-auto max-h-[700px]">
               {filteredOrders.length === 0 ? (
-                <div className="p-8 text-center text-xs font-mono text-black/40">No orders match criteria.</div>
+                <div className="p-8 text-center text-small text-black/40">No orders match criteria.</div>
               ) : (
                 filteredOrders.map((ord) => {
                   const isSelected = selectedOrder?.id === ord.id;
@@ -231,8 +231,7 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                     <div
                       key={ord.id}
                       onClick={() => setSelectedOrder(ord)}
-                      className={`p-4 transition-colors cursor-pointer text-xs font-mono ${
-                        isSelected ? 'bg-black/[0.04]' : 'hover:bg-black/[0.015]'
+                      className={`p-4 transition-colors cursor-pointer text-small ${ isSelected ?'' : ''
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -240,11 +239,11 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                         {renderStatusBadge(ord.status)}
                       </div>
                       <div className="text-black/80 font-medium">{ord.customer.name}</div>
-                      <div className="text-[11px] text-black/50 mt-1 flex justify-between">
+                      <div className="text-small text-black/50 mt-1 flex justify-between">
                         <span>{ord.items.length} items</span>
                         <span className="font-semibold text-black">{ord.totals.total} €</span>
                       </div>
-                      <div className="text-[10px] text-black/40 mt-1">
+                      <div className="text-small text-black/40 mt-1">
                         {new Date(ord.createdAt).toLocaleDateString('en-US', {
                           month: 'short',
                           day: 'numeric',
@@ -260,26 +259,26 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
 
             {/* Right Column: Order Detail & Timeline */}
             {selectedOrder && (
-              <div className="lg:col-span-7 space-y-6 font-mono text-xs">
+              <div className="lg:col-span-7 space-y-6 text-small">
                 {/* Order Header */}
-                <div className="flex items-start justify-between border-b border-black/[0.08] pb-4">
+                <div className="flex items-start justify-between pb-4">
                   <div>
-                    <span className="text-[10px] uppercase text-black/50 tracking-wider">Order Details</span>
-                    <h2 className="font-editorial text-2xl font-normal text-black mt-0.5">{selectedOrder.number}</h2>
-                    <div className="text-black/50 text-[11px] mt-1">
+                    <span className="text-small uppercase text-black/50 tracking-wider">Order Details</span>
+                    <h2 className="font-serif text-title font-normal text-black mt-0.5">{selectedOrder.number}</h2>
+                    <div className="text-black/50 text-small mt-1">
                       Placed on {new Date(selectedOrder.createdAt).toLocaleString('en-US')}
                     </div>
                   </div>
 
                   <div className="text-right">
-                    <div className="text-sm font-semibold">{selectedOrder.totals.total} €</div>
+                    <div className="text-small font-semibold">{selectedOrder.totals.total} €</div>
                     <div className="mt-1">{renderStatusBadge(selectedOrder.status)}</div>
                   </div>
                 </div>
 
                 {/* Status Switcher */}
                 <div>
-                  <div className="text-[10px] uppercase text-black/50 tracking-wider mb-2">Update Fulfillment Status</div>
+                  <div className="text-small uppercase text-black/50 tracking-wider mb-2">Update Fulfillment Status</div>
                   <div className="flex flex-wrap gap-2">
                     {(['new', 'paid', 'packed', 'shipped', 'delivered', 'cancelled', 'refunded'] as OrderStatus[]).map(
                       (st) => (
@@ -288,10 +287,8 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                           type="button"
                           onClick={() => handleUpdateStatus(st)}
                           disabled={isUpdating || selectedOrder.status === st}
-                          className={`px-3 py-1 text-[11px] uppercase tracking-wider transition-colors border cursor-pointer ${
-                            selectedOrder.status === st
-                              ? 'bg-black text-white border-black font-semibold'
-                              : 'border-black/20 hover:border-black text-black/80'
+                          className={`px-3 py-1 text-small uppercase tracking-wider transition-colors cursor-pointer ${ selectedOrder.status === st ?'text-white font-semibold'
+                              : 'text-black/80'
                           }`}
                         >
                           {st}
@@ -302,14 +299,14 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 </div>
 
                 {/* Tracking Number */}
-                <div className="py-3 border-y border-black/10 space-y-2">
+                <div className="py-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase text-black/60 tracking-wider flex items-center gap-1.5">
+                    <span className="text-small uppercase text-black/60 tracking-wider flex items-center gap-1.5">
                       <Truck className="w-3.5 h-3.5" />
                       <span>Tracking & Dispatch</span>
                     </span>
                     {selectedOrder.tracking && (
-                      <span className="font-mono font-semibold text-black">{selectedOrder.tracking}</span>
+                      <span className="font-semibold text-black">{selectedOrder.tracking}</span>
                     )}
                   </div>
 
@@ -319,12 +316,12 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                       value={trackingNumber}
                       onChange={(e) => setTrackingNumber(e.target.value)}
                       placeholder={selectedOrder.tracking ? 'Update tracking code...' : 'Enter carrier tracking code...'}
-                      className="flex-1 py-1.5 bg-transparent border-0 border-b border-black/20 focus:border-black outline-none rounded-none text-xs"
+                      className="flex-1 py-1.5 bg-transparent text-small"
                     />
                     <button
                       type="button"
                       onClick={handleSaveTracking}
-                      className="py-1.5 px-4 bg-black text-white text-[11px] uppercase tracking-wider hover:bg-neutral-800 cursor-pointer"
+                      className="py-1.5 px-4 text-white text-small uppercase tracking-wider cursor-pointer"
                     >
                       Save
                     </button>
@@ -334,14 +331,14 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                 {/* Customer and Shipping Details */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-2">
                   <div>
-                    <span className="text-[10px] uppercase text-black/40 block mb-1">Customer Info</span>
+                    <span className="text-small uppercase text-black/40 block mb-1">Customer Info</span>
                     <div className="font-semibold text-black">{selectedOrder.customer.name}</div>
                     <div className="text-black/70">{selectedOrder.customer.email}</div>
                     {selectedOrder.customer.phone && <div className="text-black/60">{selectedOrder.customer.phone}</div>}
                   </div>
 
                   <div>
-                    <span className="text-[10px] uppercase text-black/40 block mb-1">Delivery Address</span>
+                    <span className="text-small uppercase text-black/40 block mb-1">Delivery Address</span>
                     {selectedOrder.customer.address ? (
                       <div className="text-black/80 space-y-0.5">
                         <div>{selectedOrder.customer.address.street}</div>
@@ -358,15 +355,15 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
 
                 {/* Items Table */}
                 <div className="space-y-2 pt-2">
-                  <div className="text-[10px] uppercase text-black/50 tracking-wider mb-2">Order Line Items</div>
-                  <div className="divide-y divide-black/10 border-y border-black/10">
+                  <div className="text-small uppercase text-black/50 tracking-wider mb-2">Order Line Items</div>
+                  <div className="">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="p-3 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <span className="text-black/40 font-mono text-[11px]">{item.productNr}</span>
+                          <span className="text-black/40 text-small">{item.productNr}</span>
                           <div>
                             <div className="font-medium text-black">{item.productName}</div>
-                            <div className="text-black/50 text-[10.5px]">Size: {item.size} · Qty: {item.quantity}</div>
+                            <div className="text-black/50 text-small">Size: {item.size} · Qty: {item.quantity}</div>
                           </div>
                         </div>
                         <span className="font-medium text-black">{item.price * item.quantity} €</span>
@@ -374,23 +371,23 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                     ))}
                   </div>
 
-                  <div className="pt-3 border-t border-black/10 mt-3 space-y-1 text-right text-[11px]">
+                  <div className="pt-3 mt-3 space-y-1 text-right text-small">
                     <div className="text-black/60">Subtotal: {selectedOrder.totals.subtotal} €</div>
                     <div className="text-black/60">Shipping: {selectedOrder.totals.shipping} €</div>
-                    <div className="text-sm font-semibold text-black">Total: {selectedOrder.totals.total} €</div>
+                    <div className="text-small font-semibold text-black">Total: {selectedOrder.totals.total} €</div>
                   </div>
                 </div>
 
                 {/* Order Timeline */}
                 <div>
-                  <div className="text-[10px] uppercase text-black/50 tracking-wider mb-2">Timeline Audit</div>
-                  <div className="space-y-2 border-l border-black/20 pl-4 ml-2">
+                  <div className="text-small uppercase text-black/50 tracking-wider mb-2">Timeline Audit</div>
+                  <div className="space-y-2 pl-4 ml-2">
                     {(selectedOrder.timeline || []).map((tl, i) => (
                       <div key={i} className="relative">
-                        <span className="w-2 h-2 rounded-full bg-black absolute -left-[21px] top-1.5" />
+                        <span className="w-2 h-2 absolute -left-[21px] top-1.5" />
                         <div className="flex items-center justify-between">
-                          <span className="font-medium uppercase text-[10px]">{tl.status}</span>
-                          <span className="text-[10px] text-black/40">
+                          <span className="font-medium uppercase text-small">{tl.status}</span>
+                          <span className="text-small text-black/40">
                             {new Date(tl.at).toLocaleString('en-US', {
                               month: 'short',
                               day: 'numeric',
@@ -399,8 +396,8 @@ export const AdminOrdersView: React.FC<AdminOrdersViewProps> = ({ orders, onRefr
                             })}
                           </span>
                         </div>
-                        {tl.note && <div className="text-[11px] text-black/70 mt-0.5">{tl.note}</div>}
-                        {tl.by && <div className="text-[9.5px] text-black/40">by {tl.by}</div>}
+                        {tl.note && <div className="text-small text-black/70 mt-0.5">{tl.note}</div>}
+                        {tl.by && <div className="text-small text-black/40">by {tl.by}</div>}
                       </div>
                     ))}
                   </div>

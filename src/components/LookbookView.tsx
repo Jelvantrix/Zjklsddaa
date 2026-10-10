@@ -33,9 +33,9 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
   }, [products]);
 
   return (
-    <div className="w-full bg-[#FFFFFF] text-[#000000] min-h-screen pt-24 sm:pt-32 lg:pt-40 select-none font-mono">
+    <div className="w-full text-[#000000] min-h-screen pt-24 sm:pt-32 lg:pt-40 select-none">
       {/* Top Bar with Navigation & Layout Switcher - Fully Responsive */}
-      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-xs">
+      <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-small">
         <button
           type="button"
           onClick={onBackToHome}
@@ -47,15 +47,14 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
 
         {/* Layout Switcher: Pure Unboxed Typography Tabs */}
         <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-8 w-full sm:w-auto">
-          <span className="text-[10px] text-black/40 uppercase tracking-widest hidden md:inline">
+          <span className="text-small text-black/40 uppercase tracking-widest hidden md:inline">
             Mode:
           </span>
           <div className="flex items-center gap-4 sm:gap-6">
             <button
               type="button"
               onClick={() => setLayoutMode('spread')}
-              className={`py-1 text-[11px] sm:text-xs uppercase tracking-[0.2em] cursor-pointer transition-colors ${
-                layoutMode === 'spread'
+              className={`py-1 text-small sm:text-small uppercase tracking-[0.2em] cursor-pointer transition-colors ${ layoutMode ==='spread'
                   ? 'text-black font-semibold underline underline-offset-8'
                   : 'text-black/50 hover:text-black'
               }`}
@@ -65,8 +64,7 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
             <button
               type="button"
               onClick={() => setLayoutMode('grid')}
-              className={`py-1 text-[11px] sm:text-xs uppercase tracking-[0.2em] cursor-pointer transition-colors ${
-                layoutMode === 'grid'
+              className={`py-1 text-small sm:text-small uppercase tracking-[0.2em] cursor-pointer transition-colors ${ layoutMode ==='grid'
                   ? 'text-black font-semibold underline underline-offset-8'
                   : 'text-black/50 hover:text-black'
               }`}
@@ -79,13 +77,13 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
 
       {/* Hero Header */}
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-10 sm:py-16 md:py-20 text-center">
-        <span className="font-mono text-[10px] sm:text-xs tracking-[0.3em] uppercase text-black/40 block mb-2 sm:mb-3">
+        <span className="text-small sm:text-small tracking-[0.3em] uppercase text-black/40 block mb-2 sm:mb-3">
           WINTER SOLSTICE 2026
         </span>
-        <h1 className="font-editorial text-3xl sm:text-5xl md:text-7xl font-normal text-black tracking-tight mb-3 sm:mb-4">
+        <h1 className="font-serif text-display sm:text-display md:text-display font-normal text-black tracking-tight mb-3 sm:mb-4">
           Winter Light and Silence
         </h1>
-        <p className="text-xs sm:text-sm font-sans text-black/60 max-w-xl mx-auto leading-relaxed font-light px-2">
+        <p className="text-small sm:text-small text-black/60 max-w-xl mx-auto leading-relaxed font-light px-2">
           Sculptural monolithic silhouettes photographed against a pure white studio horizon. Restraint, unblended wool, and permanence.
         </p>
       </div>
@@ -93,16 +91,16 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
       {/* EMPTY STATE IF NO PRODUCTS AVAILABLE */}
       {looks.length === 0 ? (
         <div className="max-w-md mx-auto text-center py-24 px-4">
-          <p className="text-xs uppercase tracking-widest text-black/50 mb-4">
+          <p className="text-small uppercase tracking-widest text-black/50 mb-4">
             Lookbook Issue in Curation
           </p>
-          <p className="text-sm font-sans text-black/70 mb-8">
+          <p className="text-small text-black/70 mb-8">
             The atelier is preparing the latest lookbook series. Explore our permanent catalogue in the meantime.
           </p>
           <button
             type="button"
             onClick={onBackToHome}
-            className="text-black text-xs uppercase tracking-[0.2em] font-mono cursor-pointer hover:opacity-60 underline underline-offset-8 transition-opacity"
+            className="text-black text-small uppercase tracking-[0.2em] cursor-pointer hover:opacity-60 underline underline-offset-8 transition-opacity"
           >
             Explore Storefront →
           </button>
@@ -121,13 +119,12 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
               >
                 {/* Image Column */}
                 <div
-                  className={`w-full ${
-                    isEven ? 'lg:col-span-7 lg:order-1' : 'lg:col-span-7 lg:order-2'
+                  className={`w-full ${ isEven ?'lg:col-span-7 lg:order-1' : 'lg:col-span-7 lg:order-2'
                   }`}
                 >
                   <div
                     onClick={() => onSelectProduct(product)}
-                    className="w-full aspect-[3/4] sm:aspect-[4/5] max-h-[80vh] overflow-hidden bg-neutral-50 relative group cursor-pointer"
+                    className="w-full aspect-[3/4] sm:aspect-[4/5] max-h-[80vh] overflow-hidden relative group cursor-pointer"
                   >
                     <FashionImage
                       product={product}
@@ -141,12 +138,12 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                     />
 
                     {/* Corner Tag */}
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 text-[10px] sm:text-[11px] font-mono">
+                    <div className="absolute top-4 left-4 backdrop-blur-sm px-3 py-1.5 text-small sm:text-small">
                       LOOK {lookNumber} · {product.plateNumber || product.nr || `№ ${lookNumber}`}
                     </div>
 
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
-                      <span className="text-black text-xs uppercase tracking-[0.2em] font-mono underline underline-offset-4">
+                    <div className="absolute inset-0 transition-colors flex items-center justify-center pointer-events-none opacity-0 group-hover:opacity-100">
+                      <span className="text-black text-small uppercase tracking-[0.2em] underline underline-offset-4">
                         Inspect Look →
                       </span>
                     </div>
@@ -155,29 +152,28 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
 
                 {/* Editorial Narrative Column */}
                 <div
-                  className={`w-full space-y-5 sm:space-y-7 ${
-                    isEven ? 'lg:col-span-5 lg:order-2' : 'lg:col-span-5 lg:order-1'
+                  className={`w-full space-y-5 sm:space-y-7 ${ isEven ?'lg:col-span-5 lg:order-2' : 'lg:col-span-5 lg:order-1'
                   }`}
                 >
                   <div className="space-y-2 sm:space-y-3">
-                    <div className="flex items-center gap-2 text-[10px] sm:text-[11px] uppercase tracking-wider text-black/40">
+                    <div className="flex items-center gap-2 text-small sm:text-small uppercase tracking-wider text-black/40">
                       <span>Look {lookNumber}</span>
                       <span>·</span>
                       <span>Accession {product.plateNumber || product.nr || `№ ${lookNumber}`}</span>
                     </div>
-                    <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-normal text-black leading-tight">
+                    <h2 className="font-serif text-title sm:text-display md:text-display lg:text-display font-normal text-black leading-tight">
                       {product.name?.en || product.name?.fi}
                     </h2>
-                    <div className="text-sm sm:text-base font-mono text-black font-semibold pt-2">
+                    <div className="text-small sm:text-body text-black font-semibold pt-2">
                       {formatPrice(product.price)}
                     </div>
                   </div>
 
-                  <p className="text-sm sm:text-base font-sans text-black/70 leading-relaxed font-light max-w-lg">
+                  <p className="text-small sm:text-body text-black/70 leading-relaxed font-light max-w-lg">
                     {product.description?.en || product.description?.fi}
                   </p>
 
-                  <div className="pt-3 space-y-2.5 text-sm text-black/60 font-mono">
+                  <div className="pt-3 space-y-2.5 text-small text-black/60">
                     <div className="flex justify-between py-1.5">
                       <span className="text-black/40 uppercase">Fabrication</span>
                       <span className="text-black font-medium text-right truncate max-w-[220px]">
@@ -200,7 +196,7 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                     <button
                       type="button"
                       onClick={() => onSelectProduct(product)}
-                      className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.22em] font-mono text-black hover:opacity-60 transition-opacity underline underline-offset-8 cursor-pointer"
+                      className="inline-flex items-center gap-2 text-small uppercase tracking-[0.22em] text-black hover:opacity-60 transition-opacity underline underline-offset-8 cursor-pointer"
                     >
                       <span>View Piece Dossier</span>
                       <span aria-hidden="true">→</span>
@@ -223,7 +219,7 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                   onClick={() => onSelectProduct(product)}
                   className="group cursor-pointer space-y-4"
                 >
-                  <div className="w-full aspect-[3/4] overflow-hidden bg-neutral-50 relative">
+                  <div className="w-full aspect-[3/4] overflow-hidden relative">
                     <FashionImage
                       product={product}
                       src={product.hoverImage || product.image}
@@ -234,12 +230,12 @@ export const LookbookView: React.FC<LookbookViewProps> = ({
                       className="w-full h-full"
                       imageClassName="group-hover:scale-105 transition-transform duration-700"
                     />
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 text-[10px] font-mono">
+                    <div className="absolute top-3 left-3 backdrop-blur-sm px-2.5 py-1 text-small">
                       LOOK {lookNumber}
                     </div>
                   </div>
 
-                  <div className="flex items-baseline justify-between text-sm gap-2">
+                  <div className="flex items-baseline justify-between text-small gap-2">
                     <div className="truncate">
                       <span className="text-black/40 mr-2">{product.plateNumber || product.nr || `№ ${lookNumber}`}</span>
                       <span className="font-medium text-black group-hover:underline">

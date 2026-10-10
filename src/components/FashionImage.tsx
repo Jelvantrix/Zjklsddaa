@@ -182,7 +182,7 @@ const aspectClasses: Record<string, string> = {
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden bg-[#f4f4f4] ${aspectClasses[resolvedAspect] || ''} ${className}`}
+      className={`relative overflow-hidden ${aspectClasses[resolvedAspect] ||''} ${className}`}
     >
       {isVideo ? (
         <video
@@ -213,8 +213,7 @@ const aspectClasses: Record<string, string> = {
             transform: transformStyle || undefined,
             transformOrigin: resolvedPosition,
           }}
-          className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
-            enableMultiply ? 'mix-blend-multiply' : ''
+          className={`w-full h-full object-cover transition-transform duration-500 ease-out ${ enableMultiply ?'mix-blend-multiply' : ''
           } ${onHoverZoom ? 'group-hover:scale-[1.03]' : ''} ${
             isLoaded ? 'opacity-100' : 'opacity-80'
           } ${imageClassName}`}

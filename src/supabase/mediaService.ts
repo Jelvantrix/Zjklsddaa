@@ -182,6 +182,19 @@ export async function uploadMediaAsset(
     });
 
   if (uploadError) {
+    const msg = (uploadError.message || '').toLowerCase();
+    if (
+      msg.includes('bucket') ||
+      msg.includes('not found') ||
+      msg.includes('policy') ||
+      msg.includes('row-level security') ||
+      msg.includes('unauthorized') ||
+      msg.includes('permission') ||
+      msg.includes('403') ||
+      msg.includes('404')
+    ) {
+      throw new Error('Storage is not set up. Run migration 0007.');
+    }
     throw new Error(`Storage upload failed: ${uploadError.message}`);
   }
 
@@ -542,5 +555,20 @@ export async function deleteMediaAssetPermanently(
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err?.message || 'Delete operation failed' };
+  }
+}
+
+/**
+ * Tests whether the media bucket exists and is accessible.
+ */
+export async function testStorageBucket(): Promise<boolean> {
+  try {
+    const { error } = await supabase.storage.from(MEDIA_BUCKET).list('', { limit: 1 });
+    if (error) {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
   }
 }

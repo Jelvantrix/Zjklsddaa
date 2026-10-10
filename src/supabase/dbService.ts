@@ -614,7 +614,7 @@ export async function joinWaitlist(
   source?: string
 ): Promise<boolean> {
   try {
-    const id = `wait-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 6) : Date.now().toString(36)}`;
+    const id = `wait-${Date.now()}-${typeof crypto !== 'undefined'&& crypto.randomUUID ? crypto.randomUUID().slice(0, 6) : Date.now().toString(36)}`;
     const { error } = await supabase.from('waitlist').insert({
       id,
       email,
@@ -770,7 +770,7 @@ export async function updateStoreContent(content: StoreContent): Promise<void> {
  * Create a new store order
  */
 export async function createStoreOrder(orderData: Partial<Order>): Promise<Order> {
-  const id = orderData.id || `ord-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
+  const id = orderData.id || `ord-${Date.now()}-${typeof crypto !== 'undefined'&& crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
   const orderNumber = orderData.number || `#ZE-${Date.now().toString().slice(-6)}`;
   const now = new Date().toISOString();
 
@@ -830,7 +830,7 @@ export async function submitCommunitySuggestion(
   data: Omit<CommunitySuggestion, 'id' | 'votes' | 'votedUserIds' | 'createdAt'>
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
-    const id = `sug-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
+    const id = `sug-${Date.now()}-${typeof crypto !== 'undefined'&& crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
     const now = new Date().toISOString();
     const newSug: CommunitySuggestion = {
       ...data,

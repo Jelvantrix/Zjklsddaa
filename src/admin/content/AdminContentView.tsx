@@ -136,17 +136,16 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
   return (
     <div
       onSubmit={(e) => e.stopPropagation()}
-      className="border border-black/10 bg-neutral-50/70 p-3 space-y-2.5"
+      className="p-3 space-y-2.5"
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold">
+        <span className="text-small uppercase tracking-wider text-black/60 font-semibold">
           {label}
         </span>
         <span
-          className={`text-[9px] uppercase px-1.5 py-0.5 font-mono font-semibold border ${
-            resolvedKind === 'video'
-              ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-              : 'bg-neutral-50 text-neutral-800 border-neutral-200'
+          className={`text-small uppercase px-1.5 py-0.5 font-semibold ${ resolvedKind ==='video'
+              ? 'text-indigo-900'
+              : 'text-neutral-800'
           }`}
         >
           {resolvedKind === 'video' ? 'VIDEO' : 'IMAGE'}
@@ -155,7 +154,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
 
       <div className="flex items-start gap-3">
         {/* Thumbnail */}
-        <div className="w-24 h-16 sm:w-28 sm:h-20 shrink-0 bg-white border border-black/10 overflow-hidden flex items-center justify-center">
+        <div className="w-24 h-16 sm:w-28 sm:h-20 shrink-0 bg-white overflow-hidden flex items-center justify-center">
           {value ? (
             resolvedKind === 'video' ? (
               <video
@@ -182,7 +181,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
               />
             )
           ) : (
-            <span className="text-[9px] uppercase font-mono text-black/40 px-2 text-center leading-tight">
+            <span className="text-small uppercase text-black/40 px-2 text-center leading-tight">
               No media selected
             </span>
           )}
@@ -190,11 +189,11 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
 
         {/* Value + actions */}
         <div className="min-w-0 flex-1 space-y-1.5">
-          <div className="text-[10px] text-black/50 font-mono break-all line-clamp-2">
+          <div className="text-small text-black/50 break-all line-clamp-2">
             {value || 'Empty slot — nothing renders on the storefront.'}
           </div>
           {framing && (
-            <div className="text-[9.5px] text-black/40 font-mono">
+            <div className="text-small text-black/40">
               Framing · {framingSummary(framing)}
             </div>
           )}
@@ -202,7 +201,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
             <button
               type="button"
               onClick={() => setPickerOpen(true)}
-              className="px-2.5 py-1 text-[10px] uppercase font-mono font-medium bg-black text-white hover:bg-neutral-800 transition-colors flex items-center gap-1 cursor-pointer"
+              className="px-2.5 py-1 text-small uppercase font-medium text-white transition-colors flex items-center gap-1 cursor-pointer"
             >
               <Upload className="w-3 h-3" />
               <span>Choose / Upload</span>
@@ -211,7 +210,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
               <button
                 type="button"
                 onClick={() => setEditorOpen(true)}
-                className="px-2.5 py-1 text-[10px] uppercase font-mono border border-black hover:bg-black hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+                className="px-2.5 py-1 text-small uppercase hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
               >
                 <Compass className="w-3 h-3" />
                 <span>Adjust Frame</span>
@@ -221,7 +220,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
               <button
                 type="button"
                 onClick={onClear}
-                className="px-2 py-1 text-[10px] uppercase font-mono text-red-600 border border-red-200 hover:bg-red-50 transition-colors cursor-pointer flex items-center gap-1"
+                className="px-2 py-1 text-small uppercase text-red-600 transition-colors cursor-pointer flex items-center gap-1"
               >
                 <Trash2 className="w-3 h-3" />
                 <span>Clear</span>
@@ -233,15 +232,15 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
 
       {/* Poster (video slots only) */}
       {allowPoster && resolvedKind === 'video' && (
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-black/10">
-          <span className="text-[10px] uppercase tracking-wider text-black/60">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2">
+          <span className="text-small uppercase tracking-wider text-black/60">
             Video poster image (optional)
           </span>
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => setPosterPickerOpen(true)}
-              className="px-2 py-1 text-[9.5px] uppercase font-mono border border-black/20 hover:border-black flex items-center gap-1 cursor-pointer"
+              className="px-2 py-1 text-small uppercase flex items-center gap-1 cursor-pointer"
             >
               <Upload className="w-2.5 h-2.5" />
               <span>{poster ? 'Replace Poster' : 'Choose Poster'}</span>
@@ -250,7 +249,7 @@ const ImageSlot: React.FC<ImageSlotProps> = ({
               <button
                 type="button"
                 onClick={onPosterClear}
-                className="p-1 text-red-600 border border-red-200 hover:bg-red-50 cursor-pointer"
+                className="p-1 text-red-600 cursor-pointer"
                 title="Clear poster"
                 aria-label={`Clear poster image for ${label}`}
               >
@@ -783,28 +782,28 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
   return (
     <div className="space-y-6">
       {/* Title & Save Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="font-editorial text-2xl sm:text-3xl font-normal">Storefront CMS & Hero Media</h1>
+            <h1 className="font-serif text-title sm:text-display font-normal">Storefront CMS & Hero Media</h1>
             {saveSuccess && (
-              <span className="flex items-center gap-1 text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+              <span className="flex items-center gap-1 text-small text-emerald-700 px-2 py-0.5">
                 <Check className="w-3 h-3" /> Live on Storefront
               </span>
             )}
             {discardSuccess && !saveSuccess && (
-              <span className="flex items-center gap-1 text-[11px] font-mono text-black/60 bg-black/[0.04] px-2 py-0.5 border border-black/20">
+              <span className="flex items-center gap-1 text-small text-black/60 px-2 py-0.5">
                 <RotateCcw className="w-3 h-3" /> Draft reverted
               </span>
             )}
             {isDirty && (
-              <span className="flex items-center gap-1.5 text-[11px] font-mono text-black bg-black/[0.04] px-2 py-0.5 border border-black/20">
-                <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+              <span className="flex items-center gap-1.5 text-small text-black px-2 py-0.5">
+                <span className="w-1.5 h-1.5 animate-pulse" />
                 Unsaved changes
               </span>
             )}
           </div>
-          <p className="text-xs font-mono text-black/50 mt-0.5">
+          <p className="text-small text-black/50 mt-0.5">
             Draft edits stay private until you publish. Centrally manage hero video/slides carousel, narrative pacing, and announcement ticker.
           </p>
         </div>
@@ -814,7 +813,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             type="button"
             onClick={handleDiscardChanges}
             disabled={!isDirty || isSaving}
-            className="text-xs font-mono uppercase tracking-wider text-black border border-black/25 hover:border-black px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="text-small uppercase tracking-wider text-black px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             <span>Discard changes</span>
@@ -824,7 +823,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             onClick={handleSaveAllContent}
             disabled={isSaving || !isDirty}
             title={!isEditor ? 'Editor role required to publish' : undefined}
-            className="text-xs font-mono uppercase tracking-wider text-white bg-black hover:bg-black/80 px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="text-small uppercase tracking-wider text-white px-4 py-2 cursor-pointer flex items-center gap-2 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? 'Publishing...' : 'Publish to Storefront'}</span>
@@ -833,13 +832,13 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       </div>
 
       {saveError && (
-        <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-[11px] font-mono" role="alert">
+        <div className="p-2.5 text-red-700 text-small" role="alert">
           {saveError}
         </div>
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-black/[0.08] text-xs font-mono uppercase tracking-wider overflow-x-auto">
+      <div className="flex text-small uppercase tracking-wider overflow-x-auto">
         {[
           { id: 'hero', label: `1. Hero Slides & Videos (${heroSlides.length})` },
           { id: 'sections', label: '2. Homepage Sections Order' },
@@ -850,9 +849,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
           <button
             key={tab.id}
             onClick={() => handleSelectTab(tab.id as TabId)}
-            className={`px-4 py-2.5 transition-colors cursor-pointer shrink-0 ${
-              activeTab === tab.id
-                ? 'font-bold text-black border-b-2 border-black'
+            className={`px-4 py-2.5 transition-colors cursor-pointer shrink-0 ${ activeTab === tab.id ?'font-bold text-black'
                 : 'text-black/50 hover:text-black'
             }`}
           >
@@ -865,21 +862,21 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* TAB 1: HERO SLIDES & VIDEO CAROUSEL MANAGEMENT (CORE FEATURE) */}
       {/* ============================================================== */}
       {activeTab === 'hero' && (
-        <div className="space-y-8 font-mono text-xs">
+        <div className="space-y-8 text-small">
           {/* Hero Management Notice */}
-          <div className="p-4 border border-black/10 bg-black/[0.02] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <p className="font-semibold text-black text-xs uppercase tracking-wider">
+              <p className="font-semibold text-black text-small uppercase tracking-wider">
                 Hero Video & Slide Management Studio
               </p>
-              <p className="text-[11px] text-black/60 mt-0.5">
+              <p className="text-small text-black/60 mt-0.5">
                 Drag the grip (or use the arrows) to reorder, toggle slides on or off, and give every slide its own desktop and mobile media. Nothing reaches the storefront until you press Publish to Storefront.
               </p>
             </div>
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="px-3.5 py-2 bg-black text-white hover:bg-black/80 transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 text-xs uppercase tracking-wider font-medium"
+              className="px-3.5 py-2 text-white transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 text-small uppercase tracking-wider font-medium"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Slide or Video</span>
@@ -887,14 +884,14 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
           </div>
 
           {/* Interactive Live Hero Preview Widget */}
-          <div className="border border-black/[0.1] bg-white p-4 sm:p-5 space-y-3">
+          <div className="bg-white p-4 sm:p-5 space-y-3">
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-black">
+                <span className="w-2 h-2 animate-pulse" />
+                <span className="text-small font-semibold uppercase tracking-wider text-black">
                   Interactive Live Carousel Preview
                 </span>
-                <span className="text-[10px] text-black/40">
+                <span className="text-small text-black/40">
                   {heroSlides.length > 0
                     ? `(Slide ${previewIndex + 1} of ${heroSlides.length})`
                     : '(No slides in draft)'}
@@ -905,7 +902,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   type="button"
                   disabled={heroSlides.length < 2}
                   onClick={() => setPreviewIndex((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                  className="p-1.5 text-black cursor-pointer transition-colors disabled:opacity-25"
                   title="Previous Slide"
                   aria-label="Previous Slide"
                 >
@@ -915,7 +912,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   type="button"
                   disabled={heroSlides.length < 2}
                   onClick={() => setPreviewIndex((prev) => (prev + 1) % heroSlides.length)}
-                  className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                  className="p-1.5 text-black cursor-pointer transition-colors disabled:opacity-25"
                   title="Next Slide"
                   aria-label="Next Slide"
                 >
@@ -927,7 +924,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             {/* Preview device toggle: 1920 / 834 / 390 px inline frames */}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-1.5" role="group" aria-label="Preview device width">
-                <span className="text-[10px] uppercase tracking-wider text-black/50 mr-1">
+                <span className="text-small uppercase tracking-wider text-black/50 mr-1">
                   Preview:
                 </span>
                 {PREVIEW_DEVICES.map((device) => (
@@ -936,10 +933,8 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     type="button"
                     onClick={() => setPreviewDevice(device.id)}
                     aria-pressed={previewDevice === device.id}
-                    className={`px-2.5 py-1 text-[10px] uppercase font-mono border flex items-center gap-1.5 cursor-pointer transition-colors ${
-                      previewDevice === device.id
-                        ? 'bg-black text-white border-black'
-                        : 'bg-white text-black/60 border-black/20 hover:border-black hover:text-black'
+                    className={`px-2.5 py-1 text-small uppercase flex items-center gap-1.5 cursor-pointer transition-colors ${ previewDevice === device.id ?'text-white'
+                        : 'bg-white text-black/60 hover:text-black'
                     }`}
                   >
                     <device.Icon className="w-3 h-3" />
@@ -949,13 +944,13 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   </button>
                 ))}
               </div>
-              <span className="text-[10px] text-black/40">
+              <span className="text-small text-black/40">
                 Scroll horizontally to inspect the full frame
               </span>
             </div>
 
             {/* Simulated Hero Viewport (fixed-width frame inside an overflow container) */}
-            <div className="w-full overflow-x-auto border border-black/[0.08]">
+            <div className="w-full overflow-x-auto">
               <div
                 style={{
                   width: PREVIEW_DEVICES.find((d) => d.id === previewDevice)?.width || 1920,
@@ -993,13 +988,13 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     />
                   )
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[11px] uppercase tracking-widest text-black/40">
+                  <div className="w-full h-full flex items-center justify-center text-small uppercase tracking-widest text-black/40">
                     No media configured for this slide
                   </div>
                 )}
 
                 {/* Overlay slide label */}
-                <div className="absolute top-3 left-3 bg-black/80 text-white px-2 py-0.5 text-[9.5px] uppercase tracking-widest font-mono flex items-center gap-1.5">
+                <div className="absolute top-3 left-3 text-white px-2 py-0.5 text-small uppercase tracking-widest flex items-center gap-1.5">
                   {previewKind === 'video' ? (
                     <>
                       <Video className="w-3 h-3 text-indigo-400" />
@@ -1015,7 +1010,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                 </div>
 
                 {/* Bottom counter overlay */}
-                <div className="absolute bottom-3 left-3 bg-white/90 backdrop-blur-xs px-2.5 py-1 text-[10px] font-mono border border-black/10">
+                <div className="absolute bottom-3 left-3 backdrop-blur-xs px-2.5 py-1 text-small">
                   <span className="font-bold text-black">
                     {String(Math.min(previewIndex + 1, Math.max(heroSlides.length, 1))).padStart(2, '0')}
                   </span>
@@ -1034,11 +1029,11 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
 
           {/* Active Hero Slides List */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between pb-2 border-b border-black/[0.08]">
-              <span className="text-xs uppercase font-semibold text-black tracking-wider">
+            <div className="flex items-center justify-between pb-2">
+              <span className="text-small uppercase font-semibold text-black tracking-wider">
                 Configured Hero Carousel Slides ({heroSlides.length})
               </span>
-              <span className="text-[11px] text-black/50">
+              <span className="text-small text-black/50">
                 Drag the grip or use Up / Down — order determines storefront sequence
               </span>
             </div>
@@ -1060,12 +1055,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     onDragOver={(e) => handleRowDragOver(e, slide.id)}
                     onDrop={(e) => handleRowDrop(e, slide.id)}
                     onDragEnd={handleRowDragEnd}
-                    className={`p-3.5 sm:p-4 border transition-colors bg-white flex flex-col md:flex-row md:items-start justify-between gap-4 cursor-grab active:cursor-grabbing ${
-                      dragOverId === slide.id
-                        ? 'border-black ring-2 ring-black/20'
+                    className={`p-3.5 sm:p-4 transition-colors bg-white flex flex-col md:flex-row md:items-start justify-between gap-4 cursor-grab active:cursor-grabbing ${ dragOverId === slide.id ? 'opacity-50'
                         : previewIndex === idx
-                          ? 'border-black ring-1 ring-black/10'
-                          : 'border-black/[0.1] hover:border-black/30'
+                          ? ''
+                          : ''
                     }${draggingId === slide.id ? ' opacity-60' : ''}`}
                   >
                     {/* Left: Grip, Thumbnail & Details */}
@@ -1082,7 +1075,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                       </button>
 
                       {/* Thumbnail preview */}
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 bg-neutral-100 border border-black/10 overflow-hidden relative flex items-center justify-center">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 overflow-hidden relative flex items-center justify-center">
                         {thumbUrl ? (
                           thumbKind === 'video' ? (
                             <>
@@ -1094,8 +1087,8 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                                 preload="metadata"
                                 className="w-full h-full object-cover"
                               />
-                              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                                <Video className="w-5 h-5 text-white drop-shadow" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <Video className="w-5 h-5 text-black" />
                               </div>
                             </>
                           ) : (
@@ -1113,11 +1106,11 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                             />
                           )
                         ) : (
-                          <span className="text-[9px] uppercase font-mono text-black/40 px-2 text-center">
+                          <span className="text-small uppercase text-black/40 px-2 text-center">
                             Empty slot
                           </span>
                         )}
-                        <span className="absolute bottom-1 right-1 bg-black text-white text-[8.5px] px-1 font-mono uppercase font-bold">
+                        <span className="absolute bottom-1 right-1 text-white text-[8.5px] px-1 uppercase font-bold">
                           {String(idx + 1).padStart(2, '0')}
                         </span>
                       </div>
@@ -1126,18 +1119,17 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                       <div className="space-y-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className={`text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border ${
-                              slide.type === 'video'
-                                ? 'bg-indigo-50 text-indigo-900 border-indigo-200'
-                                : 'bg-neutral-50 text-neutral-800 border-neutral-200'
+                            className={`text-small uppercase px-1.5 py-0.5 font-semibold ${ slide.type ==='video'
+                                ? 'text-indigo-900'
+                                : 'text-neutral-800'
                             }`}
                           >
                             {slide.type === 'video' ? 'VIDEO (.MP4)' : 'STUDIO PHOTO'}
                           </span>
-                          <span className="text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border border-black/20 bg-white text-black/70">
+                          <span className="text-small uppercase px-1.5 py-0.5 font-semibold bg-white text-black/70">
                             Desktop: {(slide.desktopMedia?.kind || 'empty').toUpperCase()}
                           </span>
-                          <span className="text-[9.5px] uppercase px-1.5 py-0.5 font-mono font-semibold border border-black/20 bg-white text-black/70">
+                          <span className="text-small uppercase px-1.5 py-0.5 font-semibold bg-white text-black/70">
                             Mobile: {(slide.mobileMedia?.kind || 'empty').toUpperCase()}
                           </span>
                           <button
@@ -1146,49 +1138,47 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                             aria-checked={isEnabled}
                             aria-label={`${isEnabled ? 'Disable' : 'Enable'} slide ${idx + 1}`}
                             onClick={() => toggleSlideEnabled(slide.id)}
-                            className={`px-2 py-0.5 text-[9.5px] uppercase font-mono font-semibold border flex items-center gap-1.5 cursor-pointer transition-colors ${
-                              isEnabled
-                                ? 'bg-black text-white border-black'
-                                : 'bg-white text-black/60 border-black/30 hover:border-black'
+                            className={`px-2 py-0.5 text-small uppercase font-semibold flex items-center gap-1.5 cursor-pointer transition-colors ${ isEnabled ?'text-white'
+                                : 'bg-white text-black/60'
                             }`}
                           >
                             <span
-                              className={`w-1.5 h-1.5 rounded-full ${isEnabled ? 'bg-white' : 'bg-black/40'}`}
+                              className={`w-1.5 h-1.5 ${isEnabled ?'bg-white' : ''}`}
                             />
                             <span>{isEnabled ? 'Enabled' : 'Disabled'}</span>
                           </button>
-                          <span className="text-[10px] text-black/40 font-mono">ID: {slide.id}</span>
+                          <span className="text-small text-black/40">ID: {slide.id}</span>
                         </div>
 
-                        <h4 className="font-semibold text-black text-xs">
+                        <h4 className="font-semibold text-black text-small">
                           {slide.caption?.en || 'Untitled Campaign Slide'}
                         </h4>
 
-                        <div className="text-[10.5px] text-black/50 font-mono break-all line-clamp-1 max-w-md">
+                        <div className="text-small text-black/50 break-all line-clamp-1 max-w-md">
                           Desktop: {slide.desktopMedia?.url || '—'}
                         </div>
-                        <div className="text-[10.5px] text-black/50 font-mono break-all line-clamp-1 max-w-md">
+                        <div className="text-small text-black/50 break-all line-clamp-1 max-w-md">
                           Mobile: {slide.mobileMedia?.url || '—'}
                         </div>
 
                         {slide.type === 'video' && (slide.desktopMedia?.poster || slide.mobileMedia?.poster || slide.poster) && (
-                          <div className="text-[10px] text-black/40 font-mono break-all line-clamp-1 max-w-md">
+                          <div className="text-small text-black/40 break-all line-clamp-1 max-w-md">
                             Poster: {slide.desktopMedia?.poster || slide.mobileMedia?.poster || slide.poster}
                           </div>
                         )}
 
-                        <div className="text-[9.5px] text-black/40 font-mono">
+                        <div className="text-small text-black/40">
                           Framing: Desktop ({framingSummary(slide.desktopMedia?.framing)}) · Mobile (
                           {framingSummary(slide.mobileMedia?.framing)})
                         </div>
 
-                        <div className="text-[9.5px] text-black/40 font-mono">
+                        <div className="text-small text-black/40">
                           Legacy positions: Desktop ({slide.positionDesktop || 'center 20%'}) · Mobile (
                           {slide.positionMobile || 'center 15%'})
                         </div>
 
                         {slide.linkUrl && (
-                          <div className="text-[10px] text-black/40 font-mono break-all line-clamp-1 max-w-md">
+                          <div className="text-small text-black/40 break-all line-clamp-1 max-w-md">
                             Link: {slide.linkUrl}
                           </div>
                         )}
@@ -1203,7 +1193,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                           setPreviewIndex(idx);
                           setPreviewDevice('desktop');
                         }}
-                        className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
+                        className="px-2.5 py-1.5 text-black text-small cursor-pointer transition-colors flex items-center gap-1"
                         title="Preview this slide"
                       >
                         <Eye className="w-3 h-3" />
@@ -1214,7 +1204,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                         type="button"
                         disabled={idx === 0}
                         onClick={() => handleMoveSlide(idx, 'up')}
-                        className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                        className="p-1.5 text-black cursor-pointer transition-colors disabled:opacity-25"
                         title="Move Up"
                         aria-label={`Move slide ${idx + 1} up`}
                       >
@@ -1225,7 +1215,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                         type="button"
                         disabled={idx === heroSlides.length - 1}
                         onClick={() => handleMoveSlide(idx, 'down')}
-                        className="p-1.5 border border-black/20 hover:border-black text-black cursor-pointer transition-colors disabled:opacity-25"
+                        className="p-1.5 text-black cursor-pointer transition-colors disabled:opacity-25"
                         title="Move Down"
                         aria-label={`Move slide ${idx + 1} down`}
                       >
@@ -1235,25 +1225,25 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                       <button
                         type="button"
                         onClick={() => handleOpenEditModal(slide)}
-                        className="px-2.5 py-1.5 border border-black/20 hover:border-black text-black text-[11px] cursor-pointer transition-colors flex items-center gap-1"
+                        className="px-2.5 py-1.5 text-black text-small cursor-pointer transition-colors flex items-center gap-1"
                       >
                         <Edit2 className="w-3 h-3" />
                         <span>Edit</span>
                       </button>
 
                       {deleteConfirmId === slide.id ? (
-                        <div className="flex items-center gap-1 bg-red-50 p-1 border border-red-200">
+                        <div className="flex items-center gap-1 p-1">
                           <button
                             type="button"
                             onClick={() => handleRemoveSlide(slide.id)}
-                            className="px-2 py-1 bg-red-600 text-white text-[10px] font-bold hover:bg-red-700 cursor-pointer"
+                            className="px-2 py-1 text-white text-small font-bold cursor-pointer"
                           >
                             Confirm
                           </button>
                           <button
                             type="button"
                             onClick={() => setDeleteConfirmId(null)}
-                            className="px-1.5 py-1 text-black/60 hover:text-black text-[10px] cursor-pointer"
+                            className="px-1.5 py-1 text-black/60 hover:text-black text-small cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -1262,7 +1252,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                         <button
                           type="button"
                           onClick={() => setDeleteConfirmId(slide.id)}
-                          className="p-1.5 border border-red-200 hover:border-red-600 text-red-600 hover:bg-red-50 cursor-pointer transition-colors"
+                          className="p-1.5 text-red-600 cursor-pointer transition-colors"
                           title="Remove Slide from Hero"
                           aria-label={`Remove slide ${idx + 1}`}
                         >
@@ -1277,8 +1267,8 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
           </div>
 
           {/* Actions for Hero Carousel */}
-          <div className="border border-black/[0.08] p-4 bg-neutral-50 flex items-center justify-between gap-3 flex-wrap">
-            <span className="text-xs uppercase font-medium text-black/70">
+          <div className="p-4 flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-small uppercase font-medium text-black/70">
               {heroSlides.length === 0
                 ? 'No slides in carousel'
                 : `${heroSlides.length} slide(s) in carousel · ${
@@ -1288,7 +1278,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             <button
               type="button"
               onClick={handleOpenAddModal}
-              className="px-4 py-2 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-wider font-semibold flex items-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 text-white text-small uppercase tracking-wider font-semibold flex items-center gap-1.5 cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Add Carousel Slide</span>
@@ -1301,18 +1291,18 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* TAB 2: SECTIONS REORDER */}
       {/* ============================================================== */}
       {activeTab === 'sections' && (
-        <div className="space-y-4 max-w-2xl font-mono text-xs">
-          <p className="text-black/60 text-[11px]">
+        <div className="space-y-4 max-w-2xl text-small">
+          <p className="text-black/60 text-small">
             Reorder homepage narrative sections. Changes reflect live on the storefront upon saving.
           </p>
 
-          <div className="border border-black/[0.08] divide-y divide-black/[0.06] bg-white">
+          <div className="bg-white">
             {(formData.sectionOrder || defaultSections.map((s) => s.id)).map((secId, idx, arr) => {
               const info = defaultSections.find((s) => s.id === secId) || { label: secId };
               return (
-                <div key={secId} className="p-3.5 flex items-center justify-between hover:bg-black/[0.015]">
+                <div key={secId} className="p-3.5 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] text-black/40 font-mono">0{idx + 1}</span>
+                    <span className="text-small text-black/40">0{idx + 1}</span>
                     <span className="font-medium text-black">{info.label}</span>
                   </div>
 
@@ -1320,7 +1310,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     <button
                       disabled={idx === 0}
                       onClick={() => handleMoveSection(idx, 'up')}
-                      className="text-xs font-mono uppercase text-black hover:opacity-60 underline cursor-pointer disabled:opacity-20"
+                      className="text-small uppercase text-black hover:opacity-60 underline cursor-pointer disabled:opacity-20"
                     >
                       Up
                     </button>
@@ -1328,7 +1318,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     <button
                       disabled={idx === arr.length - 1}
                       onClick={() => handleMoveSection(idx, 'down')}
-                      className="text-xs font-mono uppercase text-black hover:opacity-60 underline cursor-pointer disabled:opacity-20"
+                      className="text-small uppercase text-black hover:opacity-60 underline cursor-pointer disabled:opacity-20"
                     >
                       Down
                     </button>
@@ -1344,9 +1334,9 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* TAB 3: ANNOUNCEMENT TICKER (text only — no image slot exists)  */}
       {/* ============================================================== */}
       {activeTab === 'announcement' && (
-        <div className="space-y-6 max-w-2xl font-mono text-xs">
+        <div className="space-y-6 max-w-2xl text-small">
           <div>
-            <label className="block text-[10px] uppercase text-black/50 mb-1">Announcement Ticker Text (English)</label>
+            <label className="block text-small uppercase text-black/50 mb-1">Announcement Ticker Text (English)</label>
             <input
               type="text"
               value={formData.announcementBar?.en || ''}
@@ -1356,12 +1346,12 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   announcementBar: { ...formData.announcementBar, en: e.target.value },
                 })
               }
-              className="w-full px-3 py-2 border-b border-black/30 focus:border-black text-xs bg-transparent focus:outline-none"
+              className="w-full px-3 py-2 text-small bg-transparent"
             />
           </div>
 
           <div>
-            <label className="block text-[10px] uppercase text-black/50 mb-1">Announcement Ticker Text (Finnish - Optional)</label>
+            <label className="block text-small uppercase text-black/50 mb-1">Announcement Ticker Text (Finnish - Optional)</label>
             <input
               type="text"
               value={formData.announcementBar?.fi || ''}
@@ -1371,7 +1361,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   announcementBar: { ...formData.announcementBar, fi: e.target.value },
                 })
               }
-              className="w-full px-3 py-2 border-b border-black/30 focus:border-black text-xs bg-transparent focus:outline-none"
+              className="w-full px-3 py-2 text-small bg-transparent"
             />
           </div>
         </div>
@@ -1381,23 +1371,23 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* TAB 4: JOURNAL POSTS (editable cover image + framing)          */}
       {/* ============================================================== */}
       {activeTab === 'journal' && (
-        <div className="space-y-4 font-mono text-xs">
-          <p className="text-black/60 text-[11px]">
+        <div className="space-y-4 text-small">
+          <p className="text-black/60 text-small">
             Archival articles and editorial journals published to the community feed. Clearing a cover removes the image from the storefront article entirely.
           </p>
 
-          <div className="border border-black/[0.08] divide-y divide-black/[0.06] bg-white">
+          <div className="bg-white">
             {(formData.journalPosts || []).map((post) => {
               const record = post as JournalRecord;
               return (
-                <div key={post.id} className="p-4 flex flex-col lg:flex-row lg:items-start justify-between gap-4 hover:bg-black/[0.015]">
+                <div key={post.id} className="p-4 flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                   <div className="min-w-0">
                     <div className="font-semibold text-black">{post.title.en || post.title.fi}</div>
-                    <div className="text-[10px] text-black/40">
+                    <div className="text-small text-black/40">
                       {post.date} · {post.readTime} · Tag: {post.tag}
                     </div>
                     <div className="mt-2">
-                      <span className="text-[10px] uppercase text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                      <span className="text-small uppercase text-emerald-700 px-2 py-0.5">
                         Live
                       </span>
                     </div>
@@ -1427,8 +1417,8 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* TAB 5: STORY PAGE PLATES                                       */}
       {/* ============================================================== */}
       {activeTab === 'story' && (
-        <div className="space-y-6 max-w-3xl font-mono text-xs">
-          <p className="text-black/60 text-[11px]">
+        <div className="space-y-6 max-w-3xl text-small">
+          <p className="text-black/60 text-small">
             Image slots for the Story page. Every slot is optional — an empty slot renders nothing on the storefront.
           </p>
 
@@ -1488,14 +1478,14 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
       {/* MODAL: ADD / EDIT HERO SLIDE OR VIDEO                          */}
       {/* ============================================================== */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="w-full max-w-xl bg-white text-black p-5 sm:p-7 border border-black shadow-2xl space-y-5 animate-fadeIn max-h-[92vh] overflow-y-auto font-mono text-xs">
-            <div className="flex items-center justify-between pb-3 border-b border-black/10">
+        <div className="fixed inset-0 z-[120] backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="w-full max-w-xl bg-white text-black p-5 sm:p-7 space-y-5 animate-fadeIn max-h-[92vh] overflow-y-auto text-small">
+            <div className="flex items-center justify-between pb-3">
               <div>
-                <h3 className="font-editorial text-xl sm:text-2xl font-normal text-black">
+                <h3 className="font-serif text-title sm:text-title font-normal text-black">
                   {editingSlideId ? 'Edit Hero Slide / Video' : 'Add Hero Slide or Video'}
                 </h3>
-                <p className="text-[11px] text-black/50">
+                <p className="text-small text-black/50">
                   {editingSlideId
                     ? 'Update the desktop and mobile media slots, framing and link of this slide.'
                     : 'Attach desktop and mobile media to a new carousel slide. Publish when ready.'}
@@ -1512,19 +1502,19 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
             </div>
 
             {slideFormError && (
-              <div className="p-2.5 bg-red-50 border border-red-200 text-red-700 text-[11px]">
+              <div className="p-2.5 text-red-700 text-small">
                 {slideFormError}
               </div>
             )}
 
             <form onSubmit={handleSaveSlideModal} className="space-y-4">
               {/* Visibility */}
-              <div className="flex items-center justify-between gap-3 p-3 border border-black/10 bg-neutral-50/70">
+              <div className="flex items-center justify-between gap-3 p-3">
                 <div>
-                  <span className="text-[10px] uppercase tracking-wider text-black/60 font-semibold block">
+                  <span className="text-small uppercase tracking-wider text-black/60 font-semibold block">
                     Slide visibility
                   </span>
-                  <span className="text-[10px] text-black/40">
+                  <span className="text-small text-black/40">
                     Disabled slides stay in the draft but are hidden from the storefront.
                   </span>
                 </div>
@@ -1533,14 +1523,12 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   role="switch"
                   aria-checked={slideEnabled}
                   onClick={() => setSlideEnabled((v) => !v)}
-                  className={`px-2.5 py-1 text-[10px] uppercase font-mono font-semibold border flex items-center gap-1.5 cursor-pointer transition-colors shrink-0 ${
-                    slideEnabled
-                      ? 'bg-black text-white border-black'
-                      : 'bg-white text-black/60 border-black/30 hover:border-black'
+                  className={`px-2.5 py-1 text-small uppercase font-semibold flex items-center gap-1.5 cursor-pointer transition-colors shrink-0 ${ slideEnabled ?'text-white'
+                      : 'bg-white text-black/60'
                   }`}
                 >
                   <span
-                    className={`w-1.5 h-1.5 rounded-full ${slideEnabled ? 'bg-white' : 'bg-black/40'}`}
+                    className={`w-1.5 h-1.5 ${slideEnabled ?'bg-white' : ''}`}
                   />
                   <span>{slideEnabled ? 'Enabled' : 'Disabled'}</span>
                 </button>
@@ -1602,7 +1590,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
 
               {/* Optional link */}
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1 font-semibold">
                   Link (optional — https:// or /path):
                 </label>
                 <input
@@ -1610,14 +1598,14 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   value={slideLinkUrl}
                   onChange={(e) => setSlideLinkUrl(e.target.value)}
                   placeholder="https://... or /archive"
-                  className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
 
               {/* Caption / Title (metadata only — never rendered over the media) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1 font-semibold">
                     English Caption / Campaign Headline:
                   </label>
                   <input
@@ -1625,11 +1613,11 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     value={captionEn}
                     onChange={(e) => setCaptionEn(e.target.value)}
                     placeholder="e.g. Winter Campaign 2026 · Monolithic Wool"
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] uppercase tracking-wider text-black/60 mb-1 font-semibold">
+                  <label className="block text-small uppercase tracking-wider text-black/60 mb-1 font-semibold">
                     Finnish Caption (Optional):
                   </label>
                   <input
@@ -1637,26 +1625,26 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     value={captionFi}
                     onChange={(e) => setCaptionFi(e.target.value)}
                     placeholder="e.g. Talvikampanja 2026 · Monoliittinen villa"
-                    className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                    className="w-full px-3 py-2 text-small"
                   />
                 </div>
               </div>
-              <p className="text-[10px] text-black/40 -mt-2">
+              <p className="text-small text-black/40 -mt-2">
                 Captions are internal metadata only. The storefront hero never renders text over the media.
               </p>
 
               {/* Live per-device preview */}
               {(slideDesktop?.url || slideMobile?.url) && (
                 <div className="space-y-1.5">
-                  <span className="text-[10px] uppercase tracking-wider text-black/50">
+                  <span className="text-small uppercase tracking-wider text-black/50">
                     Live Slot Preview:
                   </span>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <span className="text-[9.5px] font-mono uppercase text-black/50">
+                      <span className="text-small uppercase text-black/50">
                         Desktop {slideDesktop?.url ? '' : '(empty)'}
                       </span>
-                      <div className="w-full h-36 bg-neutral-100 border border-black/20 overflow-hidden relative">
+                      <div className="w-full h-36 overflow-hidden relative">
                         {slideDesktop?.url ? (
                           slideDesktop.kind === 'video' ? (
                             <video
@@ -1692,7 +1680,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                             />
                           )
                         ) : (
-                          <span className="absolute inset-0 flex items-center justify-center text-[9.5px] uppercase text-black/40">
+                          <span className="absolute inset-0 flex items-center justify-center text-small uppercase text-black/40">
                             Nothing renders
                           </span>
                         )}
@@ -1700,10 +1688,10 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                     </div>
 
                     <div className="space-y-1">
-                      <span className="text-[9.5px] font-mono uppercase text-black/50">
+                      <span className="text-small uppercase text-black/50">
                         Mobile {slideMobile?.url ? '' : '(empty)'}
                       </span>
-                      <div className="w-full h-36 bg-neutral-100 border border-black/20 overflow-hidden relative">
+                      <div className="w-full h-36 overflow-hidden relative">
                         {slideMobile?.url ? (
                           slideMobile.kind === 'video' ? (
                             <video
@@ -1739,7 +1727,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                             />
                           )
                         ) : (
-                          <span className="absolute inset-0 flex items-center justify-center text-[9.5px] uppercase text-black/40">
+                          <span className="absolute inset-0 flex items-center justify-center text-small uppercase text-black/40">
                             Nothing renders
                           </span>
                         )}
@@ -1750,7 +1738,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
               )}
 
               {/* Buttons */}
-              <div className="pt-3 border-t border-black/10 flex items-center justify-between gap-3 flex-wrap">
+              <div className="pt-3 flex items-center justify-between gap-3 flex-wrap">
                 <div>
                   {editingSlideId && (
                     <button
@@ -1759,7 +1747,7 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                         handleRemoveSlide(editingSlideId);
                         setIsModalOpen(false);
                       }}
-                      className="px-3 py-2 text-red-600 hover:bg-red-50 border border-red-200 text-xs uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-2 text-red-600 text-small uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span>Delete Slide</span>
@@ -1771,13 +1759,13 @@ export const AdminContentView: React.FC<AdminContentViewProps> = ({ content, onR
                   <button
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 border border-black/20 hover:border-black text-black text-xs uppercase tracking-wider cursor-pointer"
+                    className="px-4 py-2 text-black text-small uppercase tracking-wider cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="px-5 py-2 bg-black text-white hover:bg-black/80 text-xs uppercase tracking-wider font-semibold cursor-pointer"
+                    className="px-5 py-2 text-white text-small uppercase tracking-wider font-semibold cursor-pointer"
                   >
                     {editingSlideId ? 'Save Slide Changes' : 'Add Slide to Carousel'}
                   </button>

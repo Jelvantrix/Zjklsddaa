@@ -28,12 +28,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
     <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/40 backdrop-blur-[2px]"
+        className="fixed inset-0 backdrop-blur-[2px]"
       />
 
-      <div className="relative w-full max-w-md bg-white border border-black/10 p-6 sm:p-8 shadow-2xl z-10 animate-fadeIn">
-        <div className="flex items-center justify-between pb-3 sm:pb-4 border-b border-black/10 mb-4 sm:mb-6">
-          <h3 className="font-editorial text-2xl sm:text-3xl font-normal">
+      <div className="relative w-full max-w-md bg-white p-6 sm:p-8 z-10 animate-fadeIn">
+        <div className="flex items-center justify-between pb-3 sm:pb-4 mb-4 sm:mb-6">
+          <h3 className="font-serif text-title sm:text-display font-normal">
             {t.nav.account}
           </h3>
           <button onClick={onClose} className="p-1.5 text-black/50 hover:text-black cursor-pointer">
@@ -43,12 +43,12 @@ export const AccountModal: React.FC<AccountModalProps> = ({
 
         {!isSubmitted ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            <p className="text-xs font-sans text-black/70 leading-relaxed">
+            <p className="text-small text-black/70 leading-relaxed">
               Sign in with your email to track active shipments or inspect your archival allocations.
             </p>
 
             <div>
-              <label className="block text-[10.5px] font-mono uppercase tracking-wider text-black/60 mb-1">
+              <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                 Email Address
               </label>
               <input
@@ -57,28 +57,28 @@ export const AccountModal: React.FC<AccountModalProps> = ({
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@example.com"
-                className="w-full py-2 px-1 text-xs font-mono border-b border-black/25 focus:border-black focus:outline-none bg-transparent"
+                className="w-full py-2 px-1 text-small bg-transparent"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
+              className="w-full py-3.5 btn-primary text-small uppercase tracking-[0.2em] font-medium cursor-pointer"
             >
               Send Access Key →
             </button>
           </form>
         ) : (
           <div className="text-center py-6 space-y-3">
-            <div className="w-10 h-10 border border-black/20 mx-auto flex items-center justify-center">
+            <div className="w-10 h-10 mx-auto flex items-center justify-center">
               <Check className="w-5 h-5" />
             </div>
-            <p className="text-xs font-sans text-black/80">
+            <p className="text-small text-black/80">
               A one-time access key has been dispatched to {email}.
             </p>
             <button
               onClick={onClose}
-              className="mt-4 text-xs font-mono uppercase tracking-[0.2em] text-black underline underline-offset-4 hover:opacity-60 transition-opacity cursor-pointer"
+              className="mt-4 text-small uppercase tracking-[0.2em] text-black underline underline-offset-4 hover:opacity-60 transition-opacity cursor-pointer"
             >
               Close
             </button>

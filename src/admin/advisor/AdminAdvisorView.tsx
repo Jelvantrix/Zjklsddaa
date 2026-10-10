@@ -183,12 +183,12 @@ Strictly valid JSON only.`,
   };
 
   return (
-    <div className="space-y-6 font-mono text-xs">
+    <div className="space-y-6 text-small">
       {/* Title & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/[0.08]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
         <div>
-          <h1 className="font-editorial text-3xl font-normal">AI Studio Advisor</h1>
-          <p className="text-xs font-mono text-black/50 mt-0.5">
+          <h1 className="font-serif text-display font-normal">AI Studio Advisor</h1>
+          <p className="text-small text-black/50 mt-0.5">
             Strategic analysis grounded in your recorded catalog, order and traffic data. When there is not
             enough data, the advisor says so instead of guessing.
           </p>
@@ -197,7 +197,7 @@ Strictly valid JSON only.`,
         <button
           onClick={handleAnalyzeNow}
           disabled={isAnalyzing}
-          className="text-xs font-mono uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-semibold disabled:opacity-50"
+          className="text-small uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-semibold disabled:opacity-50"
         >
           <Sparkles className="w-3.5 h-3.5" />
           <span>{isAnalyzing ? 'Analyzing Studio Data...' : 'Run Intelligence Sweep'}</span>
@@ -205,7 +205,7 @@ Strictly valid JSON only.`,
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-black/[0.08] text-xs font-mono uppercase tracking-wider">
+      <div className="flex text-small uppercase tracking-wider">
         {[
           { id: 'insights', label: `1. Actionable Insights (${activeInsightsList.filter((i) => i.status !== 'done').length})` },
           { id: 'chat', label: '2. Ask Your Data (Chat)' },
@@ -214,8 +214,7 @@ Strictly valid JSON only.`,
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2.5 transition-colors cursor-pointer ${
-              activeTab === tab.id ? 'font-bold text-black border-b-2 border-black' : 'text-black/50 hover:text-black'
+            className={`px-4 py-2.5 transition-colors cursor-pointer ${ activeTab === tab.id ?'font-bold text-black' : 'text-black/50 hover:text-black'
             }`}
           >
             {tab.label}
@@ -228,11 +227,11 @@ Strictly valid JSON only.`,
         <div className="space-y-4">
           <div className="grid grid-cols-1 gap-4">
             {activeInsightsList.length === 0 ? (
-              <div className="p-8 border border-black/10 bg-neutral-50/50 text-center space-y-2">
-                <span className="text-xs uppercase font-semibold text-black tracking-wider block">
+              <div className="p-8 text-center space-y-2">
+                <span className="text-small uppercase font-semibold text-black tracking-wider block">
                   No Strategic Insights Yet
                 </span>
-                <p className="text-xs text-black/60 max-w-md mx-auto font-sans">
+                <p className="text-small text-black/60 max-w-md mx-auto">
                   {products.length === 0
                     ? 'No products found in the catalog. Add products and record store traffic to enable strategic intelligence analysis.'
                     : 'Click "Analyze Catalog & Traffic" above to generate strategic recommendations from live store telemetry.'}
@@ -242,42 +241,40 @@ Strictly valid JSON only.`,
               activeInsightsList.map((ins) => (
                 <div
                   key={ins.id}
-                  className={`p-5 border border-black/[0.08] bg-white space-y-3 transition-colors ${
-                    ins.status === 'done' ? 'opacity-50' : ''
+                  className={`p-5 bg-white space-y-3 transition-colors ${ ins.status ==='done' ? 'opacity-50' : ''
                   }`}
                 >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-black/[0.06] pb-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5">
                   <div className="flex items-center gap-2.5">
                     <span
-                      className={`text-[9.5px] uppercase font-bold tracking-wider ${
-                        ins.priority === 'high' ? 'underline' : 'text-black/60'
+                      className={`text-small uppercase font-bold tracking-wider ${ ins.priority ==='high' ? 'underline' : 'text-black/60'
                       }`}
                     >
                       [{ins.priority} priority]
                     </span>
-                    <span className="text-[10px] uppercase text-black/50 tracking-wider">
+                    <span className="text-small uppercase text-black/50 tracking-wider">
                       · {ins.category}
                     </span>
                   </div>
 
-                  <span className="text-[10px] text-black/40">
+                  <span className="text-small text-black/40">
                     Status: <span className="font-semibold uppercase">{ins.status}</span>
                   </span>
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-black">{ins.title}</h3>
-                  <div className="text-[11px] text-black/70 mt-1 leading-relaxed">
+                  <h3 className="text-small font-semibold text-black">{ins.title}</h3>
+                  <div className="text-small text-black/70 mt-1 leading-relaxed">
                     <span className="font-semibold text-black">Evidence: </span>
                     {ins.evidence}
                   </div>
-                  <div className="text-[11px] text-black/90 mt-1 leading-relaxed">
+                  <div className="text-small text-black/90 mt-1 leading-relaxed">
                     <span className="font-semibold text-black">Recommendation: </span>
                     {ins.recommendation}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-black/[0.06] text-[11px]">
+                <div className="flex flex-wrap items-center justify-between gap-4 pt-2 text-small">
                   <div className="space-x-4 text-black/60">
                     <span>
                       Expected Impact: <span className="font-semibold text-black">{ins.expectedImpact}</span>
@@ -292,7 +289,7 @@ Strictly valid JSON only.`,
                     {ins.suggestedAction?.deepLink && (
                       <button
                         onClick={() => onNavigateView(ins.suggestedAction.deepLink!)}
-                        className="text-xs uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1 font-semibold"
+                        className="text-small uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1 font-semibold"
                       >
                         <span>Open in Admin</span>
                         <ArrowRight className="w-3 h-3" />
@@ -302,7 +299,7 @@ Strictly valid JSON only.`,
                     {ins.status !== 'done' && (
                       <button
                         onClick={() => handleMarkInsightDone(ins.id)}
-                        className="text-xs uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+                        className="text-small uppercase text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
                       >
                         Mark Done
                       </button>
@@ -317,36 +314,35 @@ Strictly valid JSON only.`,
 
       {/* TAB 2: ASK YOUR DATA (Interactive Natural Language Querying) */}
       {activeTab === 'chat' && (
-        <div className="border border-black/[0.08] bg-white p-6 space-y-4 max-w-3xl">
+        <div className="bg-white p-6 space-y-4 max-w-3xl">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-black">
+            <h2 className="text-small font-semibold uppercase tracking-wider text-black">
               Ask Your Data (Studio Intelligence)
             </h2>
-            <p className="text-[11px] text-black/50 mt-0.5">
+            <p className="text-small text-black/50 mt-0.5">
               Ask strategic questions in English or Finnish. The model answers from your recorded store totals;
               when the data is missing it states that there is not enough data.
             </p>
           </div>
 
           {/* Chat Transcript */}
-          <div className="h-80 overflow-y-auto border border-black/[0.08] p-4 space-y-4 bg-black/[0.01]">
+          <div className="h-80 overflow-y-auto p-4 space-y-4">
             {chatMessages.map((msg, idx) => (
               <div
                 key={idx}
-                className={`p-3 max-w-[85%] text-xs leading-relaxed ${
-                  msg.sender === 'user'
-                    ? 'ml-auto bg-black text-white'
-                    : 'mr-auto bg-white border border-black/[0.08] text-black'
+                className={`p-3 max-w-[85%] text-small leading-relaxed ${ msg.sender ==='user'
+                    ? 'ml-auto text-white'
+                    : 'mr-auto bg-white text-black'
                 }`}
               >
-                <div className="text-[9.5px] uppercase text-black/40 mb-1 font-bold">
+                <div className="text-small uppercase text-black/40 mb-1 font-bold">
                   {msg.sender === 'user' ? 'Store Strategist' : 'Zejesh AI Engine'}
                 </div>
                 <div>{msg.text}</div>
               </div>
             ))}
             {isAsking && (
-              <div className="p-3 bg-white border border-black/[0.08] mr-auto text-xs text-black/50">
+              <div className="p-3 bg-white mr-auto text-small text-black/50">
                 Calculating studio telemetry...
               </div>
             )}
@@ -359,12 +355,12 @@ Strictly valid JSON only.`,
               value={chatQuery}
               onChange={(e) => setChatQuery(e.target.value)}
               placeholder="e.g. Which category converts best on mobile? Or what pieces should I launch next?"
-              className="flex-1 px-3 py-2 border-b border-black/30 focus:border-black text-xs bg-transparent"
+              className="flex-1 px-3 py-2 text-small bg-transparent"
             />
             <button
               type="submit"
               disabled={isAsking || !chatQuery.trim()}
-              className="text-xs uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer font-semibold disabled:opacity-30"
+              className="text-small uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer font-semibold disabled:opacity-30"
             >
               Ask Advisor
             </button>
@@ -374,19 +370,19 @@ Strictly valid JSON only.`,
 
       {/* TAB 3: WEEKLY EXECUTIVE DIGEST (no fabricated report is generated) */}
       {activeTab === 'digest' && (
-        <div className="border border-black/[0.08] bg-white p-6 space-y-4 max-w-2xl">
+        <div className="bg-white p-6 space-y-4 max-w-2xl">
           <div>
-            <div className="text-[10px] uppercase text-black/50 tracking-wider">Executive Briefing</div>
-            <h2 className="font-editorial text-2xl font-normal text-black mt-1">Weekly Executive Digest</h2>
+            <div className="text-small uppercase text-black/50 tracking-wider">Executive Briefing</div>
+            <h2 className="font-serif text-title font-normal text-black mt-1">Weekly Executive Digest</h2>
           </div>
 
-          <div className="p-8 border border-black/10 bg-neutral-50/50 text-center space-y-2">
-            <span className="text-xs uppercase font-semibold text-black tracking-wider block">No data yet</span>
-            <p className="text-xs text-black/60 max-w-md mx-auto font-sans leading-relaxed">
+          <div className="p-8 text-center space-y-2">
+            <span className="text-small uppercase font-semibold text-black tracking-wider block">No data yet</span>
+            <p className="text-small text-black/60 max-w-md mx-auto leading-relaxed">
               Not enough data yet — the advisor needs live store activity before it can write a digest.
               Revenue, order and traffic figures will appear here once they are recorded in the database.
             </p>
-            <p className="text-[11px] text-black/40 font-mono">
+            <p className="text-small text-black/40">
               Recorded so far: {products.length} catalog items · {totalOrd} orders · {totalRev.toLocaleString()} €
             </p>
           </div>

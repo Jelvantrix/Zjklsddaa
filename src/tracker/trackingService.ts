@@ -109,7 +109,7 @@ class TrackingEngine {
     let sid = sessionStorage.getItem(SESSION_ID_KEY);
     if (!sid) {
       const u = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
-      sid = 's_' + Date.now().toString(36) + '_' + u;
+      sid = 's_'+ Date.now().toString(36) +'_' + u;
       try {
         sessionStorage.setItem(SESSION_ID_KEY, sid);
       } catch {}

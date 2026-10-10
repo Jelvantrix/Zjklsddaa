@@ -37,19 +37,19 @@ interface NoDataTrajectoryProps {
 }
 
 const NoDataTrajectory: React.FC<NoDataTrajectoryProps> = ({ n, title, reason, wide = false }) => (
-  <div className={`space-y-3 pb-6 border-b border-black/10 ${wide ? 'col-span-1 lg:col-span-2' : ''}`}>
+  <div className={`space-y-3 pb-6 ${wide ?'col-span-1 lg:col-span-2' : ''}`}>
     <div className="flex justify-between items-baseline">
       <div>
-        <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">
+        <span className="text-small uppercase tracking-[0.25em] text-black/40 block">
           Trajectory {String(n).padStart(2, '0')}
         </span>
-        <h3 className="font-editorial text-2xl font-normal text-black">{title}</h3>
+        <h3 className="font-serif text-title font-normal text-black">{title}</h3>
       </div>
-      <span className="text-[11px] font-mono text-black/60">No data yet</span>
+      <span className="text-small text-black/60">No data yet</span>
     </div>
-    <div className="h-64 w-full pt-2 flex flex-col items-center justify-center gap-2 border border-black/10">
-      <span className="text-[11px] uppercase tracking-[0.2em] text-black/40">No data yet</span>
-      <span className="text-[10px] font-mono text-black/40 text-center max-w-sm">{reason}</span>
+    <div className="h-64 w-full pt-2 flex flex-col items-center justify-center gap-2">
+      <span className="text-small uppercase tracking-[0.2em] text-black/40">No data yet</span>
+      <span className="text-small text-black/40 text-center max-w-sm">{reason}</span>
     </div>
   </div>
 );
@@ -308,10 +308,10 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   // Tooltip custom style
   const tooltipStyle = {
     backgroundColor: '#FFFFFF',
-    borderColor: '#000000',
+    border: 'none',
     borderRadius: 0,
-    fontSize: 11,
-    fontFamily: 'monospace',
+    fontSize: 13,
+    fontFamily: 'var(--font-grotesk)',
     color: '#000000',
     boxShadow: 'none',
   };
@@ -360,22 +360,22 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   const noSeries = displayPoints.length === 0;
 
   return (
-    <div className="space-y-12 font-mono text-xs text-black bg-white select-text">
+    <div className="space-y-12 text-small text-black bg-white select-text">
       {/* HEADER SECTION: Pure Institutional & Editorial Typography */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6 border-b border-black/10">
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 pb-6">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-black/50 block">
+            <span className="text-small uppercase tracking-[0.3em] text-black/50 block">
               Atelier Intelligence // Matrix 40.0
             </span>
-            <span className="text-[9px] uppercase tracking-wider px-2 py-0.5 bg-black text-white font-mono">
+            <span className="text-small uppercase tracking-wider px-2 py-0.5 text-white">
               Computed From Live Store Data
             </span>
           </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl lg:text-5xl font-normal text-black tracking-tight">
+          <h1 className="font-serif text-display sm:text-display lg:text-display font-normal text-black tracking-tight">
             Atelier Analytics: 40 Trajectories
           </h1>
-          <p className="text-xs text-black/60 font-sans font-light max-w-2xl">
+          <p className="text-small text-black/60 font-light max-w-2xl">
             Every figure below is computed from live store records: {effectiveProducts.length} styles holding{' '}
             {totalCatalogStock} units ({totalCatalogValue.toLocaleString()} € at list price),{' '}
             {totalRevenue.toLocaleString()} € across {totalOrders} recorded orders, and {fortyPoints.length} recorded
@@ -391,9 +391,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                 key={r}
                 type="button"
                 onClick={() => setDateRange(r)}
-                className={`text-xs uppercase tracking-wider cursor-pointer transition-colors ${
-                  dateRange === r
-                    ? 'font-bold text-black underline underline-offset-8'
+                className={`text-small uppercase tracking-wider cursor-pointer transition-colors ${ dateRange === r ?'font-bold text-black underline underline-offset-8'
                     : 'text-black/40 hover:text-black'
                 }`}
               >
@@ -406,7 +404,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
           <button
             type="button"
             onClick={handleExportFullCSV}
-            className="text-xs uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-medium ml-2"
+            className="text-small uppercase text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-medium ml-2"
           >
             <Download className="w-3.5 h-3.5" />
             <span>Export Recorded Data (CSV)</span>
@@ -415,60 +413,60 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
       </div>
 
       {/* EXECUTIVE KPI MATRIX (REAL DB-DERIVED METRICS ONLY) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pb-8 border-b border-black/10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pb-8">
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Gross Revenue (Range)</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Gross Revenue (Range)</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {rangeRevenue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">{rangeOrders} orders recorded</span>
+          <span className="text-small text-black/60">{rangeOrders} orders recorded</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Ticket Size AOV</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Ticket Size AOV</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {rangeAov} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Average of recorded orders</span>
+          <span className="text-small text-black/60">Average of recorded orders</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Catalog Stock Depth</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Catalog Stock Depth</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {totalCatalogStock} pcs
           </div>
-          <span className="text-[10px] text-black/60 font-mono">{effectiveProducts.length} registered styles</span>
+          <span className="text-small text-black/60">{effectiveProducts.length} registered styles</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Units Sold</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Units Sold</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {totalAddToBags} units
           </div>
-          <span className="text-[10px] text-black/60 font-mono">From recorded order line items</span>
+          <span className="text-small text-black/60">From recorded order line items</span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Average Daily Revenue</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Average Daily Revenue</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {avgDailyRevenue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">
+          <span className="text-small text-black/60">
             Across {displayPoints.length} recorded days
           </span>
         </div>
 
         <div className="space-y-1">
-          <span className="text-[9px] uppercase tracking-[0.2em] text-black/40 block">Inventory Value at Retail</span>
-          <div className="font-editorial text-2xl sm:text-3xl font-normal text-black">
+          <span className="text-small uppercase tracking-[0.2em] text-black/40 block">Inventory Value at Retail</span>
+          <div className="font-serif text-title sm:text-display font-normal text-black">
             {totalCatalogValue.toLocaleString()} €
           </div>
-          <span className="text-[10px] text-black/60 font-mono">Stock × list price</span>
+          <span className="text-small text-black/60">Stock × list price</span>
         </div>
       </div>
 
       {/* SUITE NAVIGATION TABS & SEARCH BAR */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4 border-b border-black/10">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pb-4">
         <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
           {suites.map((s) => (
             <button
@@ -478,10 +476,8 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                 setActiveSuite(s.id);
                 setSearchQuery('');
               }}
-              className={`text-[11px] uppercase tracking-wider px-3 py-1 cursor-pointer transition-colors whitespace-nowrap ${
-                activeSuite === s.id && !searchQuery
-                  ? 'bg-black text-white font-medium'
-                  : 'text-black/50 hover:text-black hover:bg-black/5'
+              className={`text-small uppercase tracking-wider px-3 py-1 cursor-pointer transition-colors whitespace-nowrap ${ activeSuite === s.id && !searchQuery ?'text-white font-medium'
+                  : 'text-black/50 hover:text-black'
               }`}
             >
               {s.label}
@@ -497,7 +493,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search trajectory (1-40, revenue, stock)..."
-            className="w-full pl-8 pr-3 py-1 text-xs font-mono bg-white border-b border-black/20 focus:border-black outline-none placeholder:text-black/30"
+            className="w-full pl-8 pr-3 py-1 text-small bg-white placeholder:text-black/30"
           />
         </div>
       </div>
@@ -511,11 +507,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE I: FINANCIAL & CAPITAL LIQUIDITY (GRAPHS 1–5) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite I: Financial & Capital Liquidity (Trajectories 01–05)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Source: orders & daily stats</span>
+            <span className="text-small text-black/50">Source: orders & daily stats</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -528,13 +524,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No revenue has been recorded for this store yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 01</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Daily Gross Revenue & Order Count</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 01</span>
+                      <h3 className="font-serif text-title font-normal text-black">Daily Gross Revenue & Order Count</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Recorded € vs Orders</span>
+                    <span className="text-small text-black/60">Recorded € vs Orders</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -565,13 +561,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No revenue has been recorded for this store yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 02</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Cumulative Gross Revenue Run-Rate</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 02</span>
+                      <h3 className="font-serif text-title font-normal text-black">Cumulative Gross Revenue Run-Rate</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Running total of recorded revenue (€)</span>
+                    <span className="text-small text-black/60">Running total of recorded revenue (€)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -604,13 +600,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No products in the catalog yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 04</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Category Capital Allocation vs Units Sold</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 04</span>
+                      <h3 className="font-serif text-title font-normal text-black">Category Capital Allocation vs Units Sold</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Capital (€) & Stock Turnover</span>
+                    <span className="text-small text-black/60">Capital (€) & Stock Turnover</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -636,13 +632,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   wide
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                <div className="space-y-3 pb-6 col-span-1 lg:col-span-2">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 05</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Ticket Size & Average Order Value (AOV)</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 05</span>
+                      <h3 className="font-serif text-title font-normal text-black">Ticket Size & Average Order Value (AOV)</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Recorded AOV (€) per reporting day</span>
+                    <span className="text-small text-black/60">Recorded AOV (€) per reporting day</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -663,11 +659,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE II: INVENTORY & STOCK VELOCITY (GRAPHS 6–10) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite II: Inventory Health & Stock Velocity (Trajectories 06–10)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Variant SKU Resolution</span>
+            <span className="text-small text-black/50">Variant SKU Resolution</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -680,13 +676,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No products in the catalog yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 06</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Garment Size Stock Depth vs Units Sold</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 06</span>
+                      <h3 className="font-serif text-title font-normal text-black">Garment Size Stock Depth vs Units Sold</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">XS through XL in stock vs sold</span>
+                    <span className="text-small text-black/60">XS through XL in stock vs sold</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -711,13 +707,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No products in the catalog yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 07</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Units Sold vs Stock on Hand (Quadrant)</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 07</span>
+                      <h3 className="font-serif text-title font-normal text-black">Units Sold vs Stock on Hand (Quadrant)</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Sold units vs remaining stock (bubble = price)</span>
+                    <span className="text-small text-black/60">Sold units vs remaining stock (bubble = price)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -742,13 +738,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   reason="No products in the catalog yet."
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 08</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">SKU Turnover Ratio</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 08</span>
+                      <h3 className="font-serif text-title font-normal text-black">SKU Turnover Ratio</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Units sold ÷ units in stock</span>
+                    <span className="text-small text-black/60">Units sold ÷ units in stock</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -782,13 +778,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
                   wide
                 />
               ) : (
-                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                <div className="space-y-3 pb-6 col-span-1 lg:col-span-2">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 10</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Inventory Capital Concentration Spread</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 10</span>
+                      <h3 className="font-serif text-title font-normal text-black">Inventory Capital Concentration Spread</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Stock × list price by category (€)</span>
+                    <span className="text-small text-black/60">Stock × list price by category (€)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -809,24 +805,24 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE III: PATRONS & CONVERSION (GRAPHS 11–15) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite III: Patron Acquisition & Conversion Flow (Trajectories 11–15)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Recorded sessions & orders</span>
+            <span className="text-small text-black/50">Recorded sessions & orders</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
             {/* TRAJECTORY 11 */}
             {isVisible(11) &&
               (hasSessionData && !noSeries ? (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 11</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Recorded Sessions vs Orders Settled</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 11</span>
+                      <h3 className="font-serif text-title font-normal text-black">Recorded Sessions vs Orders Settled</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Sessions & orders per reporting day</span>
+                    <span className="text-small text-black/60">Sessions & orders per reporting day</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -851,13 +847,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             {/* TRAJECTORY 12 */}
             {isVisible(12) &&
               (hasSessionData && !noSeries ? (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 12</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Revenue Per Visitor (RPV)</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 12</span>
+                      <h3 className="font-serif text-title font-normal text-black">Revenue Per Visitor (RPV)</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Recorded revenue ÷ recorded visitors (€)</span>
+                    <span className="text-small text-black/60">Recorded revenue ÷ recorded visitors (€)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -899,13 +895,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             {/* TRAJECTORY 15 */}
             {isVisible(15) &&
               (orders.length > 0 ? (
-                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                <div className="space-y-3 pb-6 col-span-1 lg:col-span-2">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 15</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Customer Lifetime Value (LTV) Cohorts</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 15</span>
+                      <h3 className="font-serif text-title font-normal text-black">Customer Lifetime Value (LTV) Cohorts</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Customers grouped by total recorded spend</span>
+                    <span className="text-small text-black/60">Customers grouped by total recorded spend</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -933,11 +929,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE IV: TELEMETRY & ATTENTION DWELL (GRAPHS 16–20) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite IV: Behavioral Telemetry & Attention Dwell (Trajectories 16–20)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">No telemetry source recorded</span>
+            <span className="text-small text-black/50">No telemetry source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -980,13 +976,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             {/* TRAJECTORY 20 */}
             {isVisible(20) &&
               (hasSessionData && !noSeries ? (
-                <div className="space-y-3 pb-6 border-b border-black/10 col-span-1 lg:col-span-2">
+                <div className="space-y-3 pb-6 col-span-1 lg:col-span-2">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 20</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Recorded Sessions per Day</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 20</span>
+                      <h3 className="font-serif text-title font-normal text-black">Recorded Sessions per Day</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Sessions recorded in daily stats</span>
+                    <span className="text-small text-black/60">Sessions recorded in daily stats</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -1014,11 +1010,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE V: PRICING ELASTICITY & MARGINS (GRAPHS 21–25) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite V: Pricing Elasticity & Margin Ratios (Trajectories 21–25)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Order totals only</span>
+            <span className="text-small text-black/50">Order totals only</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1043,13 +1039,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             {/* TRAJECTORY 23 */}
             {isVisible(23) &&
               (discountSplit ? (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 23</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Full-Price vs Discounted Gross Volume</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 23</span>
+                      <h3 className="font-serif text-title font-normal text-black">Full-Price vs Discounted Gross Volume</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Share of recorded gross volume (%)</span>
+                    <span className="text-small text-black/60">Share of recorded gross volume (%)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -1095,11 +1091,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE VI: LOGISTICS & FULFILLMENT (GRAPHS 26–30) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite VI: Logistics & Atelier Fulfillment (Trajectories 26–30)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">Order records only</span>
+            <span className="text-small text-black/50">Order records only</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1133,13 +1129,13 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
             {/* TRAJECTORY 29 */}
             {isVisible(29) &&
               (weekdayOrders ? (
-                <div className="space-y-3 pb-6 border-b border-black/10">
+                <div className="space-y-3 pb-6">
                   <div className="flex justify-between items-baseline">
                     <div>
-                      <span className="text-[10px] uppercase tracking-[0.25em] text-black/40 block">Trajectory 29</span>
-                      <h3 className="font-editorial text-2xl font-normal text-black">Orders Placed by Weekday</h3>
+                      <span className="text-small uppercase tracking-[0.25em] text-black/40 block">Trajectory 29</span>
+                      <h3 className="font-serif text-title font-normal text-black">Orders Placed by Weekday</h3>
                     </div>
-                    <span className="text-[11px] font-mono text-black/60">Count of recorded orders (Mon–Sun)</span>
+                    <span className="text-small text-black/60">Count of recorded orders (Mon–Sun)</span>
                   </div>
                   <div className="h-64 w-full pt-2">
                     <ResponsiveContainer width="100%" height="100%">
@@ -1176,11 +1172,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE VII: PREDICTIVE ATELIER FORECAST (GRAPHS 31–35) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite VII: Predictive Atelier Forecasting (Trajectories 31–35)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">No forecast source recorded</span>
+            <span className="text-small text-black/50">No forecast source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -1236,11 +1232,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
         {/* SUITE VIII: RISK, RETURNS & VOLATILITY (GRAPHS 36–40) */}
         {/* ---------------------------------------------------- */}
         <div className="space-y-8">
-          <div className="flex items-baseline justify-between border-b border-black/20 pb-2">
-            <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-black">
+          <div className="flex items-baseline justify-between pb-2">
+            <h2 className="text-small uppercase tracking-[0.25em] font-bold text-black">
               Suite VIII: Archival Risk, Returns & Volatility (Trajectories 36–40)
             </h2>
-            <span className="text-[10px] font-mono text-black/50">No risk source recorded</span>
+            <span className="text-small text-black/50">No risk source recorded</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">

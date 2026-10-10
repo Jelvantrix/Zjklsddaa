@@ -41,13 +41,13 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
   return (
     <div className="fixed inset-0 z-[85] bg-white flex flex-col justify-between overflow-y-auto animate-fadeIn select-none">
       {/* Top Header */}
-      <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 border-b border-black/10 flex items-center justify-between">
+      <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="font-mono text-xs tracking-[0.2em] uppercase text-black/50">
+          <span className="text-small tracking-[0.2em] uppercase text-black/50">
             {product.plateNumber || product.nr}
           </span>
-          <span className="text-black/20 font-mono">/</span>
-          <span className="font-mono text-xs text-black/50">
+          <span className="text-black/20">/</span>
+          <span className="text-small text-black/50">
             {currentIndex >= 0 ? currentIndex + 1 : 1} OF {Math.max(1, products.length)}
           </span>
         </div>
@@ -78,7 +78,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
 
         {/* Center: Large High-Fashion Image Viewport */}
         <div className="lg:col-span-6 flex justify-center">
-          <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg aspect-[3/4] border border-black/10 overflow-hidden relative bg-white">
+          <div className="w-full max-w-sm sm:max-w-md lg:max-w-lg aspect-[3/4] overflow-hidden relative bg-white">
             <FashionImage
               product={product}
               src={product.hoverImage || product.image}
@@ -90,7 +90,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
               className="w-full h-full"
             />
             {product.isLimited && (
-              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 font-mono text-[9.5px] sm:text-[10px] tracking-wider uppercase text-black/70">
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 text-small sm:text-small tracking-wider uppercase text-black/70">
                 {t.archive.limited}
               </div>
             )}
@@ -100,26 +100,26 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
         {/* Right: Plate Dossier */}
         <div className="lg:col-span-4 flex flex-col justify-between space-y-6 sm:space-y-8">
           <div className="space-y-3 sm:space-y-4">
-            <span className="font-mono text-[10.5px] sm:text-[11px] tracking-[0.24em] uppercase text-black/40 block">
+            <span className="text-small sm:text-small tracking-[0.24em] uppercase text-black/40 block">
               {product.category.toUpperCase()} · {product.subcategory}
             </span>
-            <h2 className="font-editorial text-2xl sm:text-3xl md:text-4xl font-normal leading-tight">
+            <h2 className="font-serif text-title sm:text-display md:text-display font-normal leading-tight">
               {product.name.en || product.name.fi}
             </h2>
-            <p className="font-mono text-lg sm:text-xl text-black">
+            <p className="text-title sm:text-title text-black">
               {formatPrice(product.price)}
             </p>
-            <p className="font-mono text-xs text-black/50">
+            <p className="text-small text-black/50">
               {product.material.en || product.material.fi} · {product.origin.en || product.origin.fi}
             </p>
-            <p className="text-xs sm:text-sm font-sans text-black/70 leading-relaxed pt-1 sm:pt-2">
+            <p className="text-small sm:text-small text-black/70 leading-relaxed pt-1 sm:pt-2">
               {product.description.en || product.description.fi}
             </p>
           </div>
 
           {/* Quick size selection and actions */}
           <div>
-            <span className="text-[9.5px] sm:text-[10px] font-mono tracking-wider uppercase text-black/50 block mb-2">
+            <span className="text-small sm:text-small tracking-wider uppercase text-black/50 block mb-2">
               SELECT SIZE FOR DIRECT ACQUISITION:
             </span>
             <div className="flex flex-wrap gap-2.5 sm:gap-3 mb-4 sm:mb-6">
@@ -128,7 +128,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
                   type="button"
                   key={sz}
                   onClick={() => onQuickAdd(product, sz)}
-                  className="py-1 px-2 text-xs font-mono text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer"
+                  className="py-1 px-2 text-small text-black/60 hover:text-black hover:underline underline-offset-4 transition-colors cursor-pointer"
                 >
                   +{sz}
                 </button>
@@ -141,7 +141,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
                 onClose();
                 onSelectProduct(product);
               }}
-              className="w-full py-3.5 sm:py-4 text-xs font-mono uppercase tracking-[0.2em] btn-primary flex items-center justify-between cursor-pointer font-medium"
+              className="w-full py-3.5 sm:py-4 text-small uppercase tracking-[0.2em] btn-primary flex items-center justify-between cursor-pointer font-medium"
             >
               <span>Open Product Page</span>
               <ArrowRight className="w-4 h-4 stroke-[1.5]" />
@@ -163,7 +163,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
       </div>
 
       {/* Bottom Footer bar with Next / Prev Plate affordances (Mobile & Desktop) */}
-      <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 md:px-10 py-3.5 sm:py-4 border-t border-black/10 flex items-center justify-between text-xs font-mono text-black/60">
+      <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 md:px-10 py-3.5 sm:py-4 flex items-center justify-between text-small text-black/60">
         <button
           type="button"
           onClick={goToPrevPlate}
@@ -173,7 +173,7 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
           <span>Prev</span>
         </button>
 
-        <span className="hidden sm:inline text-black/40 font-mono text-[10px] tracking-wider uppercase">
+        <span className="hidden sm:inline text-black/40 text-small tracking-wider uppercase">
           Archival Plate Dossier · Est. 2026
         </span>
 

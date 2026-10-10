@@ -22,13 +22,13 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className="fixed inset-0 bg-black/40 backdrop-blur-[2px]"
+        className="fixed inset-0 backdrop-blur-[2px]"
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl bg-white border border-black p-6 sm:p-10 shadow-2xl z-10 max-h-[90vh] overflow-y-auto animate-fadeIn">
-        <div className="flex items-center justify-between pb-4 border-b border-black/10 mb-6">
-          <h3 className="font-editorial text-2xl sm:text-3xl font-normal">
+      <div className="relative w-full max-w-2xl bg-white p-6 sm:p-10 z-10 max-h-[90vh] overflow-y-auto animate-fadeIn">
+        <div className="flex items-center justify-between pb-4 mb-6">
+          <h3 className="font-serif text-title sm:text-display font-normal">
             {t.pdp.sizeGuide}
           </h3>
           <button
@@ -39,26 +39,26 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
           </button>
         </div>
 
-        <p className="text-xs font-sans text-black/70 mb-6 leading-relaxed">
+        <p className="text-small text-black/70 mb-6 leading-relaxed">
           All dimensions are body measurements in centimetres (cm). If your measurements fall between two sizes, we recommend opting for the larger size for a relaxed Nordic silhouette.
         </p>
 
         {/* Women's Table */}
         <div className="mb-8">
-          <h4 className="font-mono text-xs uppercase tracking-wider text-black/50 mb-3">
+          <h4 className="text-small uppercase tracking-wider text-black/50 mb-3">
             WOMEN (XS – XL)
           </h4>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono border-collapse">
+            <table className="w-full text-left text-small">
               <thead>
-                <tr className="border-b border-black/20 text-black/50">
+                <tr className="text-black/50">
                   <th className="py-2 pr-4 font-normal">Size / EU</th>
                   <th className="py-2 pr-4 font-normal">Bust (cm)</th>
                   <th className="py-2 pr-4 font-normal">Waist (cm)</th>
                   <th className="py-2 font-normal">Hips (cm)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/10">
+              <tbody className="">
                 <tr>
                   <td className="py-2.5 font-medium">XS / 34</td>
                   <td className="py-2.5">80–84</td>
@@ -96,20 +96,20 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
 
         {/* Men's Table */}
         <div>
-          <h4 className="font-mono text-xs uppercase tracking-wider text-black/50 mb-3">
+          <h4 className="text-small uppercase tracking-wider text-black/50 mb-3">
             MEN (S – XL / 46 – 54)
           </h4>
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono border-collapse">
+            <table className="w-full text-left text-small">
               <thead>
-                <tr className="border-b border-black/20 text-black/50">
+                <tr className="text-black/50">
                   <th className="py-2 pr-4 font-normal">Size / EU</th>
                   <th className="py-2 pr-4 font-normal">Chest (cm)</th>
                   <th className="py-2 pr-4 font-normal">Waist (cm)</th>
                   <th className="py-2 font-normal">Inseam (cm)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-black/10">
+              <tbody className="">
                 <tr>
                   <td className="py-2.5 font-medium">S / 46</td>
                   <td className="py-2.5">90–94</td>
@@ -139,10 +139,10 @@ export const SizeGuideModal: React.FC<SizeGuideModalProps> = ({
           </div>
         </div>
 
-        <div className="mt-8 pt-4 border-t border-black/10 text-center">
+        <div className="mt-8 pt-4 text-center">
           <button
             onClick={onClose}
-            className="w-full py-3 btn-secondary text-xs uppercase tracking-[0.18em]"
+            className="w-full py-3 btn-secondary text-small uppercase tracking-[0.18em]"
           >
             Close Size Guide
           </button>

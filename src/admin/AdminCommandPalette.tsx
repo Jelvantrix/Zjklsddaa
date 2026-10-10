@@ -52,11 +52,11 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4">
-      <div onClick={onClose} className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
+      <div onClick={onClose} className="fixed inset-0 backdrop-blur-sm" />
 
-      <div className="relative w-full max-w-2xl bg-white border border-black/10 shadow-2xl z-10 overflow-hidden animate-fadeIn">
+      <div className="relative w-full max-w-2xl bg-white z-10 overflow-hidden animate-fadeIn">
         {/* Search Input */}
-        <div className="flex items-center px-4 py-3.5 border-b border-black/[0.08] bg-white">
+        <div className="flex items-center px-4 py-3.5 bg-white">
           <Search className="w-4 h-4 text-black/40 mr-3" />
           <input
             autoFocus
@@ -64,18 +64,18 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search products, drops or actions..."
-            className="w-full text-xs font-mono bg-transparent focus:outline-none placeholder:text-black/30"
+            className="w-full text-small bg-transparent placeholder:text-black/30"
           />
           <button onClick={onClose} className="p-1 text-black/40 hover:text-black cursor-pointer">
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="max-h-[60vh] overflow-y-auto p-2 divide-y divide-black/5">
+        <div className="max-h-[60vh] overflow-y-auto p-2">
           {/* Matched Products */}
           {filteredProducts.length > 0 && (
             <div className="py-2">
-              <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-black/40">
+              <div className="px-3 py-1 text-small uppercase tracking-wider text-black/40">
                 Products ({filteredProducts.length})
               </div>
               {filteredProducts.map((p) => (
@@ -85,15 +85,15 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
                     onSelectProduct(p);
                     onClose();
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-black/5 flex items-center justify-between group transition-colors cursor-pointer"
+                  className="w-full px-3 py-2 text-left flex items-center justify-between group transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className="font-mono text-[11px] font-semibold">{p.nr || p.plateNumber}</span>
-                    <span className="text-xs">{p.name.en || p.name.fi}</span>
-                    <span className="text-[10px] text-black/40">({p.name.fi})</span>
+                    <span className="text-small font-semibold">{p.nr || p.plateNumber}</span>
+                    <span className="text-small">{p.name.en || p.name.fi}</span>
+                    <span className="text-small text-black/40">({p.name.fi})</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-medium">{p.price} €</span>
+                    <span className="text-small font-medium">{p.price} €</span>
                     <ArrowRight className="w-3.5 h-3.5 text-black/20 group-hover:text-black" />
                   </div>
                 </button>
@@ -103,7 +103,7 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
 
           {/* Navigation Shortcuts */}
           <div className="py-2">
-            <div className="px-3 py-1 text-[10px] font-mono uppercase tracking-wider text-black/40">
+            <div className="px-3 py-1 text-small uppercase tracking-wider text-black/40">
               Quick Navigation
             </div>
             {filteredNav.map((n) => {
@@ -115,11 +115,11 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
                     onNavigateView(n.id);
                     onClose();
                   }}
-                  className="w-full px-3 py-2 text-left hover:bg-black/5 flex items-center justify-between group transition-colors cursor-pointer"
+                  className="w-full px-3 py-2 text-left flex items-center justify-between group transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-2.5">
                     <Icon className="w-4 h-4 text-black/50" />
-                    <span className="text-xs font-mono">{n.label}</span>
+                    <span className="text-small">{n.label}</span>
                   </div>
                   <ArrowRight className="w-3.5 h-3.5 text-black/20 group-hover:text-black" />
                 </button>
@@ -128,7 +128,7 @@ export const AdminCommandPalette: React.FC<AdminCommandPaletteProps> = ({
           </div>
         </div>
 
-        <div className="px-4 py-2 border-t border-black/10 bg-white flex items-center justify-between text-[10px] font-mono text-black/40">
+        <div className="px-4 py-2 bg-white flex items-center justify-between text-small text-black/40">
           <span>Click to select action or navigate</span>
           <button onClick={onClose} className="hover:text-black cursor-pointer">
             Close

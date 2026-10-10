@@ -301,7 +301,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   ];
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] text-[#000000] flex flex-col font-sans selection:bg-black selection:text-white">
+    <div className="min-h-screen text-[#000000] flex flex-col selection:text-white">
       {/* High-Grade Security Gate Lock Screen */}
       <AdminSecurityGate
         isLocked={isTerminalLocked}
@@ -309,14 +309,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         onExitToStore={onBackToStorefront}
       />
 
-      {/* TOP BAR: Clean Minimalist Storefront Style (No Boxes/Borders) */}
-      <header className="h-16 border-b border-black/10 bg-white px-4 sm:px-8 flex items-center justify-between z-20 shrink-0 sticky top-0 font-mono">
-        <div className="flex items-center gap-4">
+      {/* TOP BAR: Clean Minimalist Style (No Boxes/Borders) */}
+      <header className="h-16 bg-white px-6 flex items-center justify-between z-20 shrink-0 sticky top-0">
+        <div className="flex items-center gap-6">
           {/* Mobile navigation trigger */}
           <button
             type="button"
             onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-            className="p-1 text-black hover:opacity-60 md:hidden cursor-pointer"
+            className="text-black hover:opacity-60 md:hidden cursor-pointer"
             aria-label="Toggle admin navigation"
           >
             {isMobileNavOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -324,35 +324,32 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
           <button
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="p-1 text-black/40 hover:text-black cursor-pointer hidden md:block transition-colors"
+            className="text-black/40 hover:text-black cursor-pointer hidden md:block transition-colors"
             title={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           >
             {isSidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
 
           <div className="flex items-center gap-3">
-            <span className="font-editorial text-lg tracking-wider font-semibold">ZEJESH</span>
-            <span className="text-[10px] tracking-[0.25em] uppercase text-black/40 pl-3 border-l border-black/15 hidden xs:inline">
-              ATELIER TERMINAL
+            <span className="text-title font-normal">ZEJESH</span>
+            <span className="text-small text-black/40 hidden xs:inline">
+              Admin
             </span>
           </div>
 
-          {/* Visitors Counter — only shown when real events were recorded in the last 5 minutes */}
           {liveVisitors > 0 && (
-            <div className="hidden lg:flex items-center gap-2 pl-4 border-l border-black/15 text-xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
-              <span className="text-black/40 uppercase tracking-wider text-[10px]">Live Session:</span>
-              <span className="font-medium text-black">{liveVisitors} Active</span>
+            <div className="hidden lg:flex items-center gap-2 text-small text-black/50">
+              <span>{liveVisitors} Active</span>
             </div>
           )}
         </div>
 
         {/* Global Search & Actions: Pure Typography, No Box Containers */}
-        <div className="flex items-center gap-5 sm:gap-6">
+        <div className="flex items-center gap-6">
           <button
             type="button"
             onClick={() => setIsCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 text-xs text-black/60 hover:text-black cursor-pointer transition-colors underline underline-offset-4"
+            className="hidden sm:flex items-center gap-1.5 text-small text-black/60 hover:text-black cursor-pointer hover:underline"
           >
             <Search className="w-3.5 h-3.5 text-black/50" />
             <span>Search</span>
@@ -362,19 +359,18 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <button
             type="button"
             onClick={() => setIsNotificationsOpen(true)}
-            className="p-1 text-black hover:opacity-60 relative cursor-pointer"
+            className="text-black hover:opacity-60 relative cursor-pointer"
             title="Notifications"
           >
             <Bell className="w-4 h-4 stroke-[1.5]" />
-            <span className="absolute top-0.5 right-0.5 w-1.5 h-1.5 bg-black rounded-full" />
           </button>
 
           {/* Lock Terminal Now Button */}
           <button
             type="button"
             onClick={handleLockTerminalNow}
-            className="text-xs text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-4 flex items-center gap-1"
-            title="Lock Studio Terminal"
+            className="text-small text-black/60 hover:text-black cursor-pointer hover:underline flex items-center gap-1"
+            title="Lock Terminal"
           >
             <Lock className="w-3 h-3" />
             <span className="hidden sm:inline">Lock</span>
@@ -386,8 +382,8 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             onClick={() => {
               void signOut();
             }}
-            className="text-xs text-black/60 hover:text-black transition-colors cursor-pointer underline underline-offset-4"
-            title="Sign Out of Studio Console"
+            className="text-small text-black/60 hover:text-black cursor-pointer hover:underline"
+            title="Sign Out"
           >
             <span>Sign Out</span>
           </button>
@@ -396,7 +392,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <button
             type="button"
             onClick={onBackToStorefront}
-            className="text-xs uppercase tracking-wider text-black hover:opacity-60 transition-opacity flex items-center gap-1.5 cursor-pointer underline underline-offset-4 font-semibold"
+            className="text-small text-black hover:underline cursor-pointer flex items-center gap-1.5"
           >
             <span>Storefront</span>
             <ExternalLink className="w-3 h-3" />
@@ -411,25 +407,25 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
           <div className="fixed inset-0 z-50 md:hidden flex">
             {/* Backdrop */}
             <div
-              className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+              className="fixed inset-0"
               onClick={() => setIsMobileNavOpen(false)}
             />
 
             {/* Slide-out Menu */}
-            <div className="relative w-72 max-w-[80vw] bg-white border-r border-black/[0.1] h-full flex flex-col justify-between p-4 z-10 font-mono shadow-2xl overflow-y-auto">
+            <div className="relative w-72 max-w-[80vw] bg-white h-full flex flex-col justify-between p-6 z-10 overflow-y-auto">
               <div>
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-black/[0.08]">
-                  <span className="font-editorial text-lg tracking-wider font-semibold">NAVIGATION</span>
+                <div className="flex items-center justify-between pb-4 mb-4">
+                  <span className="text-title">Menu</span>
                   <button
                     type="button"
                     onClick={() => setIsMobileNavOpen(false)}
-                    className="p-1 text-black/60 hover:text-black cursor-pointer"
+                    className="text-black/60 hover:text-black cursor-pointer"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-3">
                   {navItems.map((item) => {
                     const Icon = item.icon;
                     const isActive = currentView === item.id;
@@ -441,16 +437,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                           setCurrentView(item.id);
                           setIsMobileNavOpen(false);
                         }}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-xs transition-colors cursor-pointer text-left ${
-                          isActive
-                            ? 'text-black font-semibold bg-neutral-100'
-                            : 'text-black/70 hover:text-black hover:bg-neutral-50'
+                        className={`w-full flex items-center gap-3 py-1.5 text-small cursor-pointer text-left ${ isActive ?'text-black underline font-bold'
+                            : 'text-black/70 hover:text-black'
                         }`}
                       >
                         <Icon className="w-4 h-4 shrink-0" />
                         <span className="flex-1 truncate">{item.label}</span>
                         {item.badge !== undefined && (
-                          <span className="text-[10px] text-black/50">({item.badge})</span>
+                          <span className="text-small text-black/40">({item.badge})</span>
                         )}
                       </button>
                     );
@@ -458,31 +452,27 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-black/[0.08] text-xs space-y-2">
-                <div className="flex items-center gap-2">
-                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="font-semibold text-black uppercase tracking-wider">{adminProfile?.role || role}</span>
-                </div>
-                <div className="text-[11px] text-black/50 truncate">{adminProfile?.email || 'Not signed in'}</div>
+              <div className="pt-6 text-small space-y-2">
+                <div className="text-black font-medium">{adminProfile?.role || role}</div>
+                <div className="text-black/50 truncate">{adminProfile?.email || 'Not signed in'}</div>
                 <button
                   type="button"
                   onClick={onBackToStorefront}
-                  className="w-full mt-2 py-2 border border-black/20 text-center text-xs uppercase tracking-wider text-black font-medium"
+                  className="w-full text-left pt-2 text-small text-black hover:underline cursor-pointer"
                 >
-                  Exit to Storefront
+                  Exit to Storefront →
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Desktop Left Sidebar: Pure Typography (No Box Borders/Backgrounds) */}
+        {/* Desktop Left Sidebar: Pure Typography */}
         <aside
-          className={`${
-            isSidebarCollapsed ? 'w-16' : 'w-64'
-          } border-r border-black/10 bg-white transition-all duration-300 hidden md:flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar font-mono`}
+          className={`${ isSidebarCollapsed ?'w-16' : 'w-56'
+          } bg-white transition-all hidden md:flex flex-col justify-between shrink-0 select-none overflow-y-auto no-scrollbar py-6 px-4`}
         >
-          <div className="p-4 space-y-1">
+          <div className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.id;
@@ -492,18 +482,16 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
                   key={item.id}
                   onClick={() => setCurrentView(item.id)}
                   title={item.label}
-                  className={`w-full flex items-center gap-3 px-2 py-2 text-xs transition-colors cursor-pointer text-left ${
-                    isActive
-                      ? 'text-black font-semibold underline underline-offset-8'
-                      : 'text-black/40 hover:text-black'
+                  className={`w-full flex items-center gap-3 px-2 py-1.5 text-small transition-colors cursor-pointer text-left ${ isActive ?'text-black font-bold underline'
+                      : 'text-black/50 hover:text-black'
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5 shrink-0" />
                   {!isSidebarCollapsed && (
-                    <span className="flex-1 truncate uppercase tracking-wider text-[11px]">{item.label}</span>
+                    <span className="flex-1 truncate">{item.label}</span>
                   )}
                   {!isSidebarCollapsed && item.badge !== undefined && (
-                    <span className="text-[10px] text-black/35 font-normal">
+                    <span className="text-small text-black/30">
                       ({item.badge})
                     </span>
                   )}
@@ -512,14 +500,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             })}
           </div>
 
-          {/* Bottom user badge & Level 4 Clearance */}
+          {/* Bottom user badge */}
           {!isSidebarCollapsed && (
-            <div className="p-4 border-t border-black/10 text-xs space-y-1">
-              <div className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-black" />
-                <span className="font-semibold text-black uppercase tracking-wider text-[11px]">{adminProfile?.role || role || 'No role assigned'}</span>
-              </div>
-              <div className="text-[10.5px] text-black/50 truncate font-mono">{adminProfile?.email || 'Not signed in'}</div>
+            <div className="px-2 pt-6 text-small space-y-1">
+              <div className="text-black/70 font-medium">{adminProfile?.role || role}</div>
+              <div className="text-black/40 truncate">{adminProfile?.email || ''}</div>
             </div>
           )}
         </aside>

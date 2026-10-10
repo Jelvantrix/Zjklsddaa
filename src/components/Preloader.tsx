@@ -38,8 +38,7 @@ export const Preloader: React.FC<PreloaderProps> = ({ onComplete }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-[#FFFFFF] flex items-center justify-center pointer-events-none transition-transform duration-800 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-        isWipingUp ? '-translate-y-full' : 'translate-y-0'
+      className={`fixed inset-0 z-[100] flex items-center justify-center pointer-events-none transition-transform duration-800 ease-[cubic-bezier(0.22,1,0.36,1)] ${ isWipingUp ?'-translate-y-full' : 'translate-y-0'
       }`}
     >
       <div

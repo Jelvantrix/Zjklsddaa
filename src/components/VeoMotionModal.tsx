@@ -133,14 +133,14 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn select-none font-mono">
-      <div className="bg-white text-black max-w-4xl w-full border border-black/[0.1] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[100] backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-fadeIn select-none">
+      <div className="bg-white text-black max-w-4xl w-full overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="h-14 border-b border-black/[0.08] px-4 sm:px-6 flex items-center justify-between shrink-0">
+        <div className="h-14 px-4 sm:px-6 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
             <Film className="w-4 h-4 stroke-[1.5]" />
-            <span className="font-editorial text-lg tracking-wider font-semibold">MOTION ATELIER</span>
-            <span className="text-[10px] uppercase tracking-[0.2em] text-black/50 pl-2 border-l border-black/[0.1] hidden sm:inline">
+            <span className="font-serif text-title tracking-wider font-semibold">MOTION ATELIER</span>
+            <span className="text-small uppercase tracking-[0.2em] text-black/50 pl-2 hidden sm:inline">
               Veo Video Generations · veo-3.1-fast-generate-preview
             </span>
           </div>
@@ -158,16 +158,16 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
         {/* Content Body */}
         <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1">
           {/* Instructions banner */}
-          <div className="border border-black/[0.08] p-3.5 sm:p-4 bg-neutral-50/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-small">
             <div>
-              <span className="text-[10px] uppercase tracking-widest text-black/40 block mb-0.5 font-medium">
+              <span className="text-small uppercase tracking-widest text-black/40 block mb-0.5 font-medium">
                 AI COUTURE IN MOTION
               </span>
-              <p className="text-black/80 font-sans text-xs">
+              <p className="text-black/80 text-small">
                 Upload a garment photograph or choose an archival plate. Veo animates the static weave into fluid 24fps high-fashion video.
               </p>
             </div>
-            <div className="text-[10px] px-2.5 py-1 border border-black/20 uppercase tracking-widest shrink-0 font-medium">
+            <div className="text-small px-2.5 py-1 uppercase tracking-widest shrink-0 font-medium">
               Model: veo-3.1-fast
             </div>
           </div>
@@ -178,13 +178,13 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
               {/* 1. Photo Selection */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10.5px] uppercase tracking-[0.2em] text-black/60 font-medium">
+                  <span className="text-small uppercase tracking-[0.2em] text-black/60 font-medium">
                     1. Select or Upload Still Photo
                   </span>
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="text-[11px] uppercase tracking-wider text-black underline underline-offset-4 hover:opacity-60 cursor-pointer flex items-center gap-1.5"
+                    className="text-small uppercase tracking-wider text-black underline underline-offset-4 hover:opacity-60 cursor-pointer flex items-center gap-1.5"
                   >
                     <Upload className="w-3 h-3" />
                     <span>Upload Custom Photo</span>
@@ -210,10 +210,8 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                           setSelectedImage(prod.image || NEUTRAL_PLACEHOLDER_IMG);
                           setGeneratedVideoUrl(null);
                         }}
-                        className={`w-14 aspect-[3/4] border shrink-0 overflow-hidden relative transition-all cursor-pointer ${
-                          isSelected
-                            ? 'border-black ring-1 ring-black'
-                            : 'border-black/10 opacity-70 hover:opacity-100'
+                        className={`w-14 aspect-[3/4] shrink-0 overflow-hidden relative transition-all cursor-pointer ${ isSelected ?''
+                            : 'opacity-70 hover:opacity-100'
                         }`}
                         title={prod.name?.en || prod.plateNumber}
                       >
@@ -222,7 +220,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                           alt={prod.name?.en || 'Plate'}
                           className="w-full h-full object-cover"
                         />
-                        <span className="absolute bottom-0 inset-x-0 bg-white/90 text-[8px] py-0.5 text-center truncate">
+                        <span className="absolute bottom-0 inset-x-0 text-small py-0.5 text-center truncate">
                           {prod.plateNumber}
                         </span>
                       </button>
@@ -233,44 +231,42 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
 
               {/* 2. Aspect Ratio Selector (Mandatory 16:9 or 9:16) */}
               <div>
-                <span className="text-[10.5px] uppercase tracking-[0.2em] text-black/60 block mb-2 font-medium">
+                <span className="text-small uppercase tracking-[0.2em] text-black/60 block mb-2 font-medium">
                   2. Video Aspect Ratio
                 </span>
-                <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="grid grid-cols-2 gap-3 text-small">
                   <button
                     type="button"
                     onClick={() => setSelectedAspect('16:9')}
-                    className={`py-3 px-4 border text-left cursor-pointer transition-all flex items-center justify-between ${
-                      selectedAspect === '16:9'
-                        ? 'border-black bg-black text-white font-medium'
-                        : 'border-black/20 hover:border-black text-black'
+                    className={`py-3 px-4 text-left cursor-pointer transition-all flex items-center justify-between ${ selectedAspect ==='16:9'
+                        ? 'text-white font-medium'
+                        : 'text-black'
                     }`}
                   >
                     <div>
                       <div className="font-semibold tracking-wider">16:9 Landscape</div>
-                      <div className={`text-[10px] ${selectedAspect === '16:9' ? 'text-white/70' : 'text-black/50'}`}>
+                      <div className={`text-small ${selectedAspect ==='16:9' ? 'text-white/70' : 'text-black/50'}`}>
                         Cinematic Runway & Desktop Hero
                       </div>
                     </div>
-                    <div className="w-6 h-3.5 border border-current" />
+                    <div className="w-6 h-3.5" />
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setSelectedAspect('9:16')}
-                    className={`py-3 px-4 border text-left cursor-pointer transition-all flex items-center justify-between ${
-                      selectedAspect === '9:16'
-                        ? 'border-black bg-black text-white font-medium'
-                        : 'border-black/20 hover:border-black text-black'
+                    className={`py-3 px-4 text-left cursor-pointer transition-all flex items-center justify-between ${ selectedAspect ==='9:16'
+                        ? 'text-white font-medium'
+                        : 'text-black'
                     }`}
                   >
                     <div>
                       <div className="font-semibold tracking-wider">9:16 Portrait</div>
-                      <div className={`text-[10px] ${selectedAspect === '9:16' ? 'text-white/70' : 'text-black/50'}`}>
+                      <div className={`text-small ${selectedAspect ==='9:16' ? 'text-white/70' : 'text-black/50'}`}>
                         Editorial Mobile & Vertical Reel
                       </div>
                     </div>
-                    <div className="w-3.5 h-6 border border-current" />
+                    <div className="w-3.5 h-6" />
                   </button>
                 </div>
               </div>
@@ -278,7 +274,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
               {/* 3. Motion Direction & Presets */}
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10.5px] uppercase tracking-[0.2em] text-black/60 font-medium">
+                  <span className="text-small uppercase tracking-[0.2em] text-black/60 font-medium">
                     3. Motion Presets & Direction
                   </span>
                 </div>
@@ -289,10 +285,8 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                       key={pst.id}
                       type="button"
                       onClick={() => handleSelectPreset(pst)}
-                      className={`p-2 text-left text-xs border cursor-pointer transition-colors truncate ${
-                        activePresetId === pst.id
-                          ? 'border-black bg-black/5 font-semibold text-black'
-                          : 'border-black/15 text-black/60 hover:text-black'
+                      className={`p-2 text-left text-small cursor-pointer transition-colors truncate ${ activePresetId === pst.id ?'font-semibold text-black'
+                          : 'text-black/60 hover:text-black'
                       }`}
                     >
                       <div className="truncate">{pst.label}</div>
@@ -304,7 +298,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
                   rows={2}
-                  className="w-full p-2.5 text-xs font-mono border border-black/20 focus:border-black focus:outline-none resize-none leading-relaxed placeholder-black/30"
+                  className="w-full p-2.5 text-small resize-none leading-relaxed placeholder-black/30"
                   placeholder="Describe desired movement, camera pan, and garment flow..."
                 />
               </div>
@@ -314,7 +308,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                 type="button"
                 onClick={handleStartGeneration}
                 disabled={isGenerating || !selectedImage}
-                className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.24em] font-medium flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
+                className="w-full py-3.5 btn-primary text-small uppercase tracking-[0.24em] font-medium flex items-center justify-center gap-2 disabled:opacity-40 cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>
@@ -327,13 +321,13 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
               {/* Progress status */}
               {isGenerating && (
                 <div className="space-y-2 pt-1 animate-fadeIn">
-                  <div className="flex justify-between text-[11px] text-black/60">
+                  <div className="flex justify-between text-small text-black/60">
                     <span className="truncate pr-2">{progressStatus}</span>
                     <span className="shrink-0">{progressValue}%</span>
                   </div>
-                  <div className="w-full h-1 bg-black/10 overflow-hidden">
+                  <div className="w-full h-1 overflow-hidden">
                     <div
-                      className="h-full bg-black transition-all duration-300"
+                      className="h-full transition-all duration-300"
                       style={{ width: `${progressValue}%` }}
                     />
                   </div>
@@ -343,13 +337,12 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
 
             {/* Right: Real-Time Preview & Video Output (5 cols) */}
             <div className="lg:col-span-5 flex flex-col">
-              <span className="text-[10.5px] uppercase tracking-[0.2em] text-black/60 block mb-2 font-medium">
+              <span className="text-small uppercase tracking-[0.2em] text-black/60 block mb-2 font-medium">
                 {generatedVideoUrl ? 'Generated Veo Video Stream' : 'Source Still Preview'}
               </span>
 
               <div
-                className={`relative border border-black/15 bg-black flex items-center justify-center overflow-hidden transition-all ${
-                  selectedAspect === '16:9' ? 'aspect-video' : 'aspect-[9/16] max-h-[380px]'
+                className={`relative flex items-center justify-center overflow-hidden transition-all ${ selectedAspect ==='16:9' ? 'aspect-video' : 'aspect-[9/16] max-h-[380px]'
                 }`}
               >
                 {generatedVideoUrl ? (
@@ -365,13 +358,13 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                     />
 
                     {/* Minimal Video Overlays */}
-                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/75 text-white text-[9px] font-mono uppercase tracking-wider flex items-center gap-1.5">
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 text-white text-small uppercase tracking-wider flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 animate-pulse" />
                       <span>VEO 24FPS · {selectedAspect}</span>
                     </div>
 
                     {/* Bottom controls strip */}
-                    <div className="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-black/80 to-transparent flex items-center justify-between text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-0 inset-x-0 p-2.5 from-black/80 to-transparent flex items-center justify-between text-white opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
                         onClick={toggleVideoPlayback}
@@ -386,7 +379,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                           download={`zejesh-veo-${selectedAspect}.mp4`}
                           target="_blank"
                           rel="noreferrer"
-                          className="p-1 hover:opacity-75 cursor-pointer text-xs"
+                          className="p-1 hover:opacity-75 cursor-pointer text-small"
                           title="Download MP4 Video"
                         >
                           <Download className="w-3.5 h-3.5" />
@@ -395,7 +388,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="relative w-full h-full bg-neutral-100 flex items-center justify-center">
+                  <div className="relative w-full h-full flex items-center justify-center">
                     {selectedImage ? (
                       <img
                         src={selectedImage}
@@ -403,11 +396,11 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <span className="text-xs text-black/40">No photo selected</span>
+                      <span className="text-small text-black/40">No photo selected</span>
                     )}
 
-                    <div className="absolute inset-0 bg-black/20 flex items-center justify-center pointer-events-none">
-                      <div className="w-10 h-10 border border-white/60 rounded-full flex items-center justify-center text-white/80 backdrop-blur-xs">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="w-10 h-10 flex items-center justify-center text-white/80 backdrop-blur-xs">
                         <Play className="w-4 h-4 ml-0.5" />
                       </div>
                     </div>
@@ -421,7 +414,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                   <button
                     type="button"
                     onClick={handleApplyToHero}
-                    className="w-full py-2 text-xs uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 transition-opacity cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full py-2 text-small uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 transition-opacity cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     {isHeroApplied ? <Check className="w-3.5 h-3.5" /> : <Layers className="w-3.5 h-3.5" />}
                     <span>{isHeroApplied ? 'Applied to Storefront Hero!' : 'Set as Hero Video'}</span>
@@ -432,7 +425,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
                     download={`zejesh-veo-${selectedAspect}.mp4`}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-1 text-black/60 hover:text-black text-[11px] uppercase tracking-wider transition-colors text-center block underline underline-offset-2"
+                    className="w-full py-1 text-black/60 hover:text-black text-small uppercase tracking-wider transition-colors text-center block underline underline-offset-2"
                   >
                     Download High-Res MP4
                   </a>
@@ -443,7 +436,7 @@ export const VeoMotionModal: React.FC<VeoMotionModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="h-12 border-t border-black/[0.08] px-6 bg-neutral-50/50 flex items-center justify-between text-[11px] text-black/50 shrink-0">
+        <div className="h-12 px-6 flex items-center justify-between text-small text-black/50 shrink-0">
           <span>Veo 3.1 Fast AI Generation Service</span>
           <span>16:9 & 9:16 HD Native Aspect</span>
         </div>

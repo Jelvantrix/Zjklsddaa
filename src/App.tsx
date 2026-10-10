@@ -393,7 +393,7 @@ function StorefrontApp() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#FFFFFF] text-[#000000] selection:bg-[#000000] selection:text-[#FFFFFF]">
+    <div className="relative min-h-screen text-[#000000] selection:text-[#FFFFFF]">
       {/* 1. PRELOADER */}
       <Preloader onComplete={() => setPreloaderDone(true)} />
 
@@ -499,22 +499,16 @@ function StorefrontApp() {
                 isWishlisted={wishlistIds.includes(activeProduct.id)}
               />
             ) : (
-              <div className="max-w-[1720px] mx-auto px-6 py-32 text-center min-h-[60vh] flex flex-col items-center justify-center">
-                <span className="font-mono text-xs uppercase tracking-widest text-black/50 mb-2">
-                  PLATE NOT LOCATED
-                </span>
-                <h1 className="font-editorial text-3xl sm:text-4xl mb-4">
-                  Archival Piece Not Found
+              <div className="max-w-[1720px] mx-auto px-6 py-32 text-center min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+                <h1 className="text-title">
+                  Product Not Found
                 </h1>
-                <p className="text-xs font-sans text-black/60 max-w-sm mb-6">
-                  The requested plate is either undergoing accession revision or has been retired from active rotation.
-                </p>
                 <button
                   type="button"
                   onClick={() => navigateTo({ type: 'archive' })}
-                  className="btn-primary text-xs uppercase tracking-[0.2em]"
+                  className="text-small text-black hover:underline cursor-pointer"
                 >
-                  Return to Archive Catalogue →
+                  Return to Catalogue →
                 </button>
               </div>
             )}
@@ -578,27 +572,21 @@ function StorefrontApp() {
           </ErrorBoundary>
         )}
 
-        {/* PAGE: JOURNAL & ESSAYS */}
+        {/* PAGE: JOURNAL */}
         {route.type === 'journal' && (
           <ErrorBoundary componentName="JournalView">
-            <div className="max-w-[1720px] mx-auto px-6 md:px-10 py-24 min-h-screen">
-              <div className="max-w-4xl mx-auto text-center mb-16">
-                <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 block mb-2">
-                  ATELIER MONOGRAPHS
-                </span>
-                <h1 className="font-editorial text-4xl sm:text-6xl font-normal mb-3 text-black">
-                  Textile Studies & Archival Notes
+            <div className="max-w-[1720px] mx-auto px-6 py-24 min-h-screen">
+              <div className="max-w-4xl mx-auto text-center mb-16 space-y-2">
+                <h1 className="text-display">
+                  Journal
                 </h1>
-                <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto font-light leading-relaxed">
-                  Documenting raw northern materials, heritage shuttle weaving, and permanent garment architecture.
-                </p>
               </div>
 
-              <div className="max-w-4xl mx-auto space-y-8">
+              <div className="max-w-4xl mx-auto space-y-12">
                 {(content.journalPosts || []).length === 0 ? (
-                  <div className="p-12 text-center border border-dashed border-black/15 bg-neutral-50/50">
-                    <p className="text-xs uppercase font-mono tracking-wider text-black/50">
-                      No journal monographs published yet
+                  <div className="py-24 text-center">
+                    <p className="text-body text-black/50">
+                      No articles yet
                     </p>
                   </div>
                 ) : (
@@ -606,22 +594,17 @@ function StorefrontApp() {
                     <article
                       key={article.id}
                       onClick={() => setJournalArticleId(article.id)}
-                      className="p-8 sm:p-10 border border-black/[0.08] hover:border-black transition-colors cursor-pointer group bg-white"
+                      className="cursor-pointer space-y-3"
                     >
-                      <div className="flex items-center gap-3 text-[10.5px] font-mono text-black/40 mb-3 uppercase tracking-wider">
-                        <span>{article.date}</span>
-                        <span>·</span>
-                        <span>ARCHIVE DOSSIER</span>
-                      </div>
-                      <h2 className="font-editorial text-2xl sm:text-4xl font-normal mb-3 text-black group-hover:underline underline-offset-4">
+                      <span className="text-small text-black/40 block">
+                        {article.date}
+                      </span>
+                      <h2 className="text-title hover:underline">
                         {article.title.en || article.title.fi}
                       </h2>
-                      <p className="text-xs sm:text-sm font-sans text-black/60 mb-6 leading-relaxed font-light max-w-2xl">
+                      <p className="text-body text-black/60 max-w-2xl">
                         {article.subtitle.en || article.subtitle.fi}
                       </p>
-                      <span className="text-xs font-mono tracking-[0.2em] uppercase text-black underline underline-offset-4">
-                        Inspect Dossier →
-                      </span>
                     </article>
                   ))
                 )}

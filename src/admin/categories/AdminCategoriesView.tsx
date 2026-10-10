@@ -357,18 +357,18 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
   return (
     <div className="space-y-6">
       {/* HEADER SECTION */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-black/10">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-mono uppercase tracking-[0.2em] text-black/50">Taxonomy & Navigation</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 border border-black/15 bg-black/[0.02]">
+            <span className="text-small uppercase tracking-[0.2em] text-black/50">Taxonomy & Navigation</span>
+            <span className="text-small px-2 py-0.5">
               {categories.length} total nodes
             </span>
           </div>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-normal text-black tracking-tight">
+          <h1 className="font-serif text-display sm:text-display font-normal text-black tracking-tight">
             Categories & Department Architecture
           </h1>
-          <p className="text-xs font-mono text-black/60 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-small text-black/60 mt-1 max-w-2xl leading-relaxed">
             Manage storefront departments, hierarchical subcategories, URL slugs, and visibility on the live header & menus.
           </p>
         </div>
@@ -377,7 +377,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
           <button
             type="button"
             onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-black text-white hover:bg-neutral-800 transition-colors text-xs font-mono uppercase tracking-[0.16em] cursor-pointer shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 text-white transition-colors text-small uppercase tracking-[0.16em] cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Create New Category</span>
@@ -388,10 +388,9 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
       {/* STATUS BANNER */}
       {statusMsg && (
         <div
-          className={`p-3 text-xs font-mono flex items-center justify-between border ${
-            statusMsg.type === 'success'
-              ? 'bg-black text-white border-black'
-              : 'bg-red-50 text-red-900 border-red-200'
+          className={`p-3 text-small flex items-center justify-between ${ statusMsg.type ==='success'
+              ? 'text-white'
+              : 'text-red-900'
           }`}
         >
           <span>{statusMsg.text}</span>
@@ -406,7 +405,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
       )}
 
       {/* FILTER & SEARCH STRIP */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-black/[0.02] border border-black/10 font-mono text-xs">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 text-small">
         <div className="relative flex-1 max-w-md">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
           <input
@@ -414,7 +413,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search categories by name, slug or code..."
-            className="w-full pl-9 pr-3 py-1.5 border border-black/15 bg-white text-xs text-black placeholder:text-black/40 focus:outline-none focus:border-black"
+            className="w-full pl-9 pr-3 py-1.5 bg-white text-small text-black placeholder:text-black/40"
           />
           {searchQuery && (
             <button
@@ -426,11 +425,11 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
           )}
         </div>
 
-        <div className="flex items-center gap-4 text-black/60 text-[11px]">
+        <div className="flex items-center gap-4 text-black/60 text-small">
           <span>
             Showing <strong className="text-black">{filteredParents.length}</strong> root departments
           </span>
-          <span className="w-px h-3 bg-black/15" />
+          <span className="w-px h-3" />
           <span>
             <strong className="text-black">
               {categories.filter((c) => c.visible).length}
@@ -441,15 +440,15 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
       </div>
 
       {/* CATEGORIES HIERARCHY TREE */}
-      <div className="border border-black/[0.12] bg-white divide-y divide-black/[0.08]">
+      <div className="bg-white">
         {filteredParents.length === 0 ? (
-          <div className="p-12 text-center font-mono text-xs text-black/50 space-y-3">
+          <div className="p-12 text-center text-small text-black/50 space-y-3">
             <FolderTree className="w-8 h-8 mx-auto text-black/30 stroke-[1]" />
-            <p className="text-sm font-editorial text-black/80">No categories found matching your query.</p>
+            <p className="text-small font-serif text-black/80">No categories found matching your query.</p>
             <button
               type="button"
               onClick={() => setIsCreateModalOpen(true)}
-              className="px-4 py-2 border border-black text-black hover:bg-black hover:text-white transition-colors cursor-pointer text-xs uppercase tracking-wider"
+              className="px-4 py-2 text-black hover:text-white transition-colors cursor-pointer text-small uppercase tracking-wider"
             >
               + Create First Category
             </button>
@@ -463,14 +462,14 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
             const isEditing = editingId === parent.id;
 
             return (
-              <div key={parent.id} className="p-4 sm:p-5 space-y-4 hover:bg-neutral-50/40 transition-colors">
+              <div key={parent.id} className="p-4 sm:p-5 space-y-4 transition-colors">
                 {/* PARENT ROW */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={() => toggleParentCollapse(parent.id)}
-                      className="p-1 hover:bg-black/5 transition-colors cursor-pointer text-black/60 hover:text-black"
+                      className="p-1 transition-colors cursor-pointer text-black/60 hover:text-black"
                       title={isCollapsed ? 'Expand subcategories' : 'Collapse subcategories'}
                     >
                       {children.length > 0 ? (
@@ -485,47 +484,47 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     </button>
 
                     {isEditing ? (
-                      <div className="flex flex-wrap items-center gap-2 font-mono text-xs">
-                        <div className="flex items-center gap-1 border-b border-black">
-                          <span className="text-[10px] text-black/40">EN:</span>
+                      <div className="flex flex-wrap items-center gap-2 text-small">
+                        <div className="flex items-center gap-1">
+                          <span className="text-small text-black/40">EN:</span>
                           <input
                             type="text"
                             value={editNameEn}
                             onChange={(e) => setEditNameEn(e.target.value)}
                             placeholder="Name (EN)"
-                            className="px-1 py-1 text-xs bg-transparent focus:outline-none min-w-[130px]"
+                            className="px-1 py-1 text-small bg-transparent min-w-[130px]"
                           />
                         </div>
 
-                        <div className="flex items-center gap-1 border-b border-black">
-                          <span className="text-[10px] text-black/40">FI:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-small text-black/40">FI:</span>
                           <input
                             type="text"
                             value={editNameFi}
                             onChange={(e) => setEditNameFi(e.target.value)}
                             placeholder="Name (FI)"
-                            className="px-1 py-1 text-xs bg-transparent focus:outline-none min-w-[130px]"
+                            className="px-1 py-1 text-small bg-transparent min-w-[130px]"
                           />
                         </div>
 
-                        <div className="flex items-center gap-1 border-b border-black">
-                          <span className="text-[10px] text-black/40">Slug:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-small text-black/40">Slug:</span>
                           <input
                             type="text"
                             value={editSlug}
                             onChange={(e) => setEditSlug(e.target.value)}
                             placeholder="slug"
-                            className="px-1 py-1 text-xs bg-transparent focus:outline-none w-24"
+                            className="px-1 py-1 text-small bg-transparent w-24"
                           />
                         </div>
 
-                        <div className="flex items-center gap-1 border-b border-black">
-                          <span className="text-[10px] text-black/40">Order:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="text-small text-black/40">Order:</span>
                           <input
                             type="number"
                             value={editOrder}
                             onChange={(e) => setEditOrder(parseInt(e.target.value, 10) || 1)}
-                            className="px-1 py-1 text-xs bg-transparent focus:outline-none w-12"
+                            className="px-1 py-1 text-small bg-transparent w-12"
                           />
                         </div>
 
@@ -533,53 +532,51 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                           type="button"
                           onClick={() => saveEdit(parent.id)}
                           disabled={isProcessing}
-                          className="px-2 py-1 bg-black text-white hover:bg-neutral-800 text-[10px] uppercase tracking-wider cursor-pointer"
+                          className="px-2 py-1 text-white text-small uppercase tracking-wider cursor-pointer"
                         >
                           Save
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingId(null)}
-                          className="px-2 py-1 border border-black/20 text-black hover:bg-black/5 text-[10px] uppercase tracking-wider cursor-pointer"
+                          className="px-2 py-1 text-black text-small uppercase tracking-wider cursor-pointer"
                         >
                           Cancel
                         </button>
                       </div>
                     ) : (
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="font-editorial text-2xl font-normal text-black">
+                        <span className="font-serif text-title font-normal text-black">
                           {parent.name.en || parent.name.fi}
                         </span>
 
                         {parent.name.fi && parent.name.fi !== parent.name.en && (
-                          <span className="text-xs font-mono text-black/50">
+                          <span className="text-small text-black/50">
                             ({parent.name.fi})
                           </span>
                         )}
 
-                        <span className="px-1.5 py-0.5 text-[10px] font-mono border border-black/15 text-black/60 bg-black/[0.02]">
+                        <span className="px-1.5 py-0.5 text-small text-black/60">
                           /{parent.slug}
                         </span>
 
-                        <span className="text-[10px] font-mono text-black/40">
+                        <span className="text-small text-black/40">
                           (order: {parent.order || 0})
                         </span>
 
                         <span
-                          className={`text-[10px] font-mono uppercase px-2 py-0.5 border ${
-                            parent.visible
-                              ? 'border-black text-black bg-black/[0.04]'
-                              : 'border-dashed border-black/30 text-black/40'
+                          className={`text-small uppercase px-2 py-0.5 ${ parent.visible ?'text-black'
+                              : 'text-black/40'
                           }`}
                         >
                           {parent.visible ? 'Live in Nav' : 'Hidden'}
                         </span>
 
                         {parent.isComingSoon && (
-                          <span className="text-[10px] font-mono uppercase px-2 py-0.5 bg-black text-white font-semibold flex items-center gap-1">
+                          <span className="text-small uppercase px-2 py-0.5 text-white font-semibold flex items-center gap-1">
                             <span>⏳ Coming Soon</span>
                             {parent.comingSoonNotice && (
-                              <span className="text-[9px] text-white/70 hidden lg:inline">
+                              <span className="text-small text-white/70 hidden lg:inline">
                                 · {parent.comingSoonNotice}
                               </span>
                             )}
@@ -590,14 +587,12 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                   </div>
 
                   {/* ACTION CONTROLS */}
-                  <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 font-mono text-xs pt-1 sm:pt-0">
+                  <div className="flex items-center gap-2.5 sm:gap-3 shrink-0 text-small pt-1 sm:pt-0">
                     <button
                       type="button"
                       onClick={() => toggleComingSoon(parent)}
-                      className={`px-2 py-1 text-[10.5px] uppercase font-mono border transition-colors cursor-pointer ${
-                        parent.isComingSoon
-                          ? 'bg-black text-white border-black font-semibold'
-                          : 'border-dashed border-black/30 text-black/60 hover:border-black hover:text-black bg-white'
+                      className={`px-2 py-1 text-small uppercase transition-colors cursor-pointer ${ parent.isComingSoon ?'text-white font-semibold'
+                          : 'text-black/60 hover:text-black bg-white'
                       }`}
                       title={parent.comingSoonNotice || 'Toggle Coming Soon status on storefront'}
                     >
@@ -607,18 +602,18 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     <button
                       type="button"
                       onClick={() => toggleVisibility(parent)}
-                      className="flex items-center gap-1.5 text-black/70 hover:text-black cursor-pointer text-xs"
+                      className="flex items-center gap-1.5 text-black/70 hover:text-black cursor-pointer text-small"
                       title={parent.visible ? 'Hide from storefront' : 'Show on storefront'}
                     >
                       {parent.visible ? (
                         <>
                           <Eye className="w-3.5 h-3.5 text-black" />
-                          <span className="hidden md:inline text-[11px]">Visible</span>
+                          <span className="hidden md:inline text-small">Visible</span>
                         </>
                       ) : (
                         <>
                           <EyeOff className="w-3.5 h-3.5 text-black/40" />
-                          <span className="hidden md:inline text-[11px] text-black/50">Hidden</span>
+                          <span className="hidden md:inline text-small text-black/50">Hidden</span>
                         </>
                       )}
                     </button>
@@ -626,7 +621,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     <button
                       type="button"
                       onClick={() => startEdit(parent)}
-                      className="text-black/80 hover:text-black underline underline-offset-4 cursor-pointer text-xs uppercase tracking-wider"
+                      className="text-black/80 hover:text-black underline underline-offset-4 cursor-pointer text-small uppercase tracking-wider"
                     >
                       Edit
                     </button>
@@ -638,26 +633,26 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                         setQuickSubcatNameEn('');
                         setQuickSubcatNameFi('');
                       }}
-                      className="px-2.5 py-1 bg-black/[0.04] hover:bg-black hover:text-white transition-colors border border-black/20 text-xs uppercase tracking-wider cursor-pointer font-medium"
+                      className="px-2.5 py-1 hover:text-white transition-colors text-small uppercase tracking-wider cursor-pointer font-medium"
                     >
                       + Subcategory
                     </button>
 
                     {/* DELETE BUTTON */}
                     {confirmDeleteId === parent.id ? (
-                      <div className="flex items-center gap-1.5 bg-red-50 p-1 border border-red-200">
-                        <span className="text-[10px] text-red-800">Delete all {children.length} items?</span>
+                      <div className="flex items-center gap-1.5 p-1">
+                        <span className="text-small text-red-800">Delete all {children.length} items?</span>
                         <button
                           type="button"
                           onClick={() => handleDeleteCategory(parent.id)}
-                          className="px-1.5 py-0.5 bg-red-600 text-white text-[10px] uppercase font-bold cursor-pointer"
+                          className="px-1.5 py-0.5 text-white text-small uppercase font-bold cursor-pointer"
                         >
                           Confirm
                         </button>
                         <button
                           type="button"
                           onClick={() => setConfirmDeleteId(null)}
-                          className="px-1.5 py-0.5 text-[10px] text-black/60 hover:text-black cursor-pointer"
+                          className="px-1.5 py-0.5 text-small text-black/60 hover:text-black cursor-pointer"
                         >
                           X
                         </button>
@@ -677,9 +672,9 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
 
                 {/* SUBCATEGORIES TREE (INDENTED) */}
                 {!isCollapsed && (
-                  <div className="pl-6 sm:pl-8 border-l border-black/15 ml-3 sm:ml-4 space-y-2 pt-1">
+                  <div className="pl-6 sm:pl-8 ml-3 sm:ml-4 space-y-2 pt-1">
                     {children.length === 0 && newSubcatParent !== parent.id && (
-                      <p className="text-[11px] font-mono text-black/40 italic py-1">
+                      <p className="text-small text-black/40 italic py-1">
                         No subcategories attached. Click &quot;+ Subcategory&quot; to branch this department.
                       </p>
                     )}
@@ -690,7 +685,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                       return (
                         <div
                           key={sub.id}
-                          className="p-2.5 bg-black/[0.015] border border-black/[0.06] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono"
+                          className="p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-small"
                         >
                           <div className="flex items-center gap-2">
                             <CornerDownRight className="w-3.5 h-3.5 text-black/40 shrink-0" />
@@ -702,33 +697,33 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                                   value={editNameEn}
                                   onChange={(e) => setEditNameEn(e.target.value)}
                                   placeholder="EN name"
-                                  className="px-1.5 py-0.5 border-b border-black text-xs bg-white min-w-[120px]"
+                                  className="px-1.5 py-0.5 text-small bg-white min-w-[120px]"
                                 />
                                 <input
                                   type="text"
                                   value={editNameFi}
                                   onChange={(e) => setEditNameFi(e.target.value)}
                                   placeholder="FI name"
-                                  className="px-1.5 py-0.5 border-b border-black text-xs bg-white min-w-[120px]"
+                                  className="px-1.5 py-0.5 text-small bg-white min-w-[120px]"
                                 />
                                 <input
                                   type="text"
                                   value={editSlug}
                                   onChange={(e) => setEditSlug(e.target.value)}
                                   placeholder="slug"
-                                  className="px-1.5 py-0.5 border-b border-black text-xs bg-white w-20"
+                                  className="px-1.5 py-0.5 text-small bg-white w-20"
                                 />
                                 <button
                                   type="button"
                                   onClick={() => saveEdit(sub.id)}
-                                  className="px-2 py-0.5 bg-black text-white text-[10px] uppercase cursor-pointer"
+                                  className="px-2 py-0.5 text-white text-small uppercase cursor-pointer"
                                 >
                                   Save
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setEditingId(null)}
-                                  className="text-[10px] text-black/50 underline cursor-pointer ml-1"
+                                  className="text-small text-black/50 underline cursor-pointer ml-1"
                                 >
                                   Cancel
                                 </button>
@@ -739,18 +734,18 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                                   {sub.name.en || sub.name.fi}
                                 </span>
                                 {sub.name.fi && sub.name.fi !== sub.name.en && (
-                                  <span className="text-[11px] text-black/50">({sub.name.fi})</span>
+                                  <span className="text-small text-black/50">({sub.name.fi})</span>
                                 )}
-                                <span className="text-[10px] text-black/40 font-mono">
+                                <span className="text-small text-black/40">
                                   /{sub.slug}
                                 </span>
                                 {!sub.visible && (
-                                  <span className="text-[9px] uppercase px-1.5 py-0.5 border border-dashed border-black/30 text-black/40">
+                                  <span className="text-small uppercase px-1.5 py-0.5 text-black/40">
                                     Hidden
                                   </span>
                                 )}
                                 {sub.isComingSoon && (
-                                  <span className="text-[9px] uppercase font-mono px-1.5 py-0.5 bg-black text-white font-semibold">
+                                  <span className="text-small uppercase px-1.5 py-0.5 text-white font-semibold">
                                     Coming Soon
                                   </span>
                                 )}
@@ -758,14 +753,12 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                             )}
                           </div>
 
-                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto font-mono">
+                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 self-end sm:self-auto">
                             <button
                               type="button"
                               onClick={() => toggleComingSoon(sub)}
-                              className={`px-1.5 py-0.5 text-[9.5px] uppercase font-mono border transition-colors cursor-pointer ${
-                                sub.isComingSoon
-                                  ? 'bg-black text-white border-black font-semibold'
-                                  : 'border-dashed border-black/30 text-black/50 hover:border-black hover:text-black bg-white'
+                              className={`px-1.5 py-0.5 text-small uppercase transition-colors cursor-pointer ${ sub.isComingSoon ?'text-white font-semibold'
+                                  : 'text-black/50 hover:text-black bg-white'
                               }`}
                               title={sub.comingSoonNotice || 'Toggle Coming Soon on subcategory'}
                             >
@@ -788,24 +781,24 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                             <button
                               type="button"
                               onClick={() => startEdit(sub)}
-                              className="text-black/70 hover:text-black underline text-xs cursor-pointer"
+                              className="text-black/70 hover:text-black underline text-small cursor-pointer"
                             >
                               Edit
                             </button>
 
                             {confirmDeleteId === sub.id ? (
-                              <div className="flex items-center gap-1 bg-red-50 px-1 border border-red-200">
+                              <div className="flex items-center gap-1 px-1">
                                 <button
                                   type="button"
                                   onClick={() => handleDeleteCategory(sub.id)}
-                                  className="text-[10px] text-red-600 font-bold uppercase cursor-pointer"
+                                  className="text-small text-red-600 font-bold uppercase cursor-pointer"
                                 >
                                   Delete
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setConfirmDeleteId(null)}
-                                  className="text-[10px] text-black/40 cursor-pointer ml-1"
+                                  className="text-small text-black/40 cursor-pointer ml-1"
                                 >
                                   Cancel
                                 </button>
@@ -827,47 +820,47 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
 
                     {/* FAST INLINE SUBCATEGORY FORM */}
                     {newSubcatParent === parent.id && (
-                      <div className="p-3 bg-black/[0.03] border border-black/30 space-y-2 mt-2">
+                      <div className="p-3 space-y-2 mt-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-mono uppercase tracking-wider text-black font-semibold">
+                          <span className="text-small uppercase tracking-wider text-black font-semibold">
                             Add Subcategory under {parent.name.en || parent.name.fi}
                           </span>
                           <button
                             type="button"
                             onClick={() => setNewSubcatParent(null)}
-                            className="text-black/40 hover:text-black cursor-pointer text-xs"
+                            className="text-black/40 hover:text-black cursor-pointer text-small"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 text-xs font-mono">
+                        <div className="flex flex-wrap gap-2 text-small">
                           <input
                             type="text"
                             value={quickSubcatNameEn}
                             onChange={(e) => setQuickSubcatNameEn(e.target.value)}
                             placeholder="Subcategory Name (e.g. Wool Coats)"
-                            className="px-2.5 py-1.5 border border-black/20 bg-white text-xs flex-1 min-w-[160px] focus:outline-none focus:border-black"
+                            className="px-2.5 py-1.5 bg-white text-small flex-1 min-w-[160px]"
                           />
                           <input
                             type="text"
                             value={quickSubcatNameFi}
                             onChange={(e) => setQuickSubcatNameFi(e.target.value)}
                             placeholder="Finnish Name (optional)"
-                            className="px-2.5 py-1.5 border border-black/20 bg-white text-xs flex-1 min-w-[160px] focus:outline-none focus:border-black"
+                            className="px-2.5 py-1.5 bg-white text-small flex-1 min-w-[160px]"
                           />
                           <button
                             type="button"
                             onClick={() => handleQuickCreateSubcategory(parent.id)}
                             disabled={isProcessing}
-                            className="px-4 py-1.5 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-wider cursor-pointer font-medium"
+                            className="px-4 py-1.5 text-white text-small uppercase tracking-wider cursor-pointer font-medium"
                           >
                             Save
                           </button>
                           <button
                             type="button"
                             onClick={() => setNewSubcatParent(null)}
-                            className="px-3 py-1.5 border border-black/20 text-black hover:bg-black/5 text-xs uppercase cursor-pointer"
+                            className="px-3 py-1.5 text-black text-small uppercase cursor-pointer"
                           >
                             Cancel
                           </button>
@@ -884,12 +877,12 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
 
       {/* MODAL / DRAWER FOR CREATING A NEW TOP-LEVEL OR NESTED CATEGORY */}
       {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white border border-black max-w-lg w-full p-6 sm:p-8 space-y-6 shadow-2xl relative max-h-[90vh] overflow-y-auto font-mono">
-            <div className="flex items-start justify-between border-b border-black/10 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white max-w-lg w-full p-6 sm:p-8 space-y-6 relative max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between pb-4">
               <div>
-                <span className="text-[10px] uppercase tracking-[0.2em] text-black/50 block">Architecture</span>
-                <h2 className="font-editorial text-2xl font-normal text-black mt-0.5">
+                <span className="text-small uppercase tracking-[0.2em] text-black/50 block">Architecture</span>
+                <h2 className="font-serif text-title font-normal text-black mt-0.5">
                   Create New Category
                 </h2>
               </div>
@@ -902,9 +895,9 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleCreateCategory} className="space-y-4 text-xs">
+            <form onSubmit={handleCreateCategory} className="space-y-4 text-small">
               <div>
-                <label className="block text-[11px] uppercase tracking-wider text-black font-semibold mb-1">
+                <label className="block text-small uppercase tracking-wider text-black font-semibold mb-1">
                   Category Name (English) *
                 </label>
                 <input
@@ -923,12 +916,12 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     }
                   }}
                   placeholder="e.g. Footwear, Outerwear, Tailoring"
-                  className="w-full px-3 py-2 border border-black/30 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-sm text-black"
+                  className="w-full px-3 py-2 focus:bg-white text-small text-black"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                   Category Name (Finnish / Localized)
                 </label>
                 <input
@@ -936,13 +929,13 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                   value={newCatNameFi}
                   onChange={(e) => setNewCatNameFi(e.target.value)}
                   placeholder="e.g. Jalkineet, Ulkovaatteet"
-                  className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-sm text-black"
+                  className="w-full px-3 py-2 focus:bg-white text-small text-black"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                     URL Slug
                   </label>
                   <input
@@ -950,18 +943,18 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                     value={newCatSlug}
                     onChange={(e) => setNewCatSlug(e.target.value)}
                     placeholder="e.g. footwear"
-                    className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                    className="w-full px-3 py-2 focus:bg-white text-small text-black"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                     Hierarchy Placement
                   </label>
                   <select
                     value={newCatParentId}
                     onChange={(e) => setNewCatParentId(e.target.value)}
-                    className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                    className="w-full px-3 py-2 focus:bg-white text-small text-black"
                   >
                     <option value="root">Top-Level Department (Root)</option>
                     {parentCategories.map((p) => (
@@ -975,19 +968,19 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                     Display Order
                   </label>
                   <input
                     type="number"
                     value={newCatOrder}
                     onChange={(e) => setNewCatOrder(parseInt(e.target.value, 10) || 1)}
-                    className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                    className="w-full px-3 py-2 focus:bg-white text-small text-black"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                  <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                     Visibility
                   </label>
                   <div className="flex items-center gap-2 pt-2">
@@ -998,7 +991,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                       onChange={(e) => setNewCatVisible(e.target.checked)}
                       className="accent-black w-4 h-4 cursor-pointer"
                     />
-                    <label htmlFor="catVisCheck" className="text-xs text-black cursor-pointer">
+                    <label htmlFor="catVisCheck" className="text-small text-black cursor-pointer">
                       Visible in Storefront Navigation
                     </label>
                   </div>
@@ -1006,7 +999,7 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-[11px] uppercase tracking-wider text-black/70 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/70 mb-1">
                   Cover Image URL (Optional)
                 </label>
                 <input
@@ -1014,22 +1007,22 @@ export const AdminCategoriesView: React.FC<AdminCategoriesViewProps> = ({
                   value={newCatImage}
                   onChange={(e) => setNewCatImage(e.target.value)}
                   placeholder="https://... or leave empty for default archive cover"
-                  className="w-full px-3 py-2 border border-black/20 bg-neutral-50/50 focus:bg-white focus:outline-none focus:border-black text-xs text-black"
+                  className="w-full px-3 py-2 focus:bg-white text-small text-black"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-black/10">
+              <div className="flex items-center justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2.5 border border-black/20 text-black hover:bg-black/5 text-xs uppercase tracking-wider cursor-pointer"
+                  className="px-4 py-2.5 text-black text-small uppercase tracking-wider cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-6 py-2.5 bg-black text-white hover:bg-neutral-800 text-xs uppercase tracking-widest font-semibold cursor-pointer shadow-sm disabled:opacity-50"
+                  className="px-6 py-2.5 text-white text-small uppercase tracking-widest font-semibold cursor-pointer disabled:opacity-50"
                 >
                   {isProcessing ? 'Writing to Firestore...' : 'Create Category'}
                 </button>

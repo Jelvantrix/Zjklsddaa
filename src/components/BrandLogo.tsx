@@ -35,8 +35,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   return (
     <div
-      className={`inline-flex items-center justify-center select-none text-center transition-colors duration-300 ${
-        invert ? 'text-white' : 'text-black'
+      className={`inline-flex items-center justify-center select-none text-center transition-colors duration-300 ${ invert ?'text-white' : 'text-black'
       } ${className}`}
       aria-label="ZEJESH"
     >

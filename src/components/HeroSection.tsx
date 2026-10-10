@@ -79,28 +79,22 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         aria-label="Atelier Hero"
       >
         <div className="max-w-xl space-y-4">
-          <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40 block">
-            ZEJESH ARCHIVE · HELSINKI
+          <span className="text-small text-black/40 block">
+            ZEJESH
           </span>
-          <h1 className="font-editorial text-4xl sm:text-6xl md:text-7xl font-normal tracking-tight text-black leading-none">
-            The Quiet Architecture
+          <h1 className="text-display text-black">
+            The Collection
           </h1>
-          <p className="text-xs sm:text-sm font-sans text-black/60 max-w-md mx-auto font-light leading-relaxed">
-            Northern monolithic silhouettes carved with restraint and unblended virgin fibers.
-          </p>
         </div>
 
-        {/* 1px animated vertical scroll cue at bottom centre */}
         <div
           onClick={onScrollCueClick}
           role="button"
           tabIndex={0}
           aria-label="Scroll to explore"
-          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20"
+          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 cursor-pointer z-20 text-small text-black/60 hover:text-black"
         >
-          <div className="w-[1px] h-9 sm:h-12 bg-black/25 overflow-hidden relative">
-            <div className="w-full h-1/2 bg-black absolute top-0 left-0 animate-scrollCue" />
-          </div>
+          Scroll ↓
         </div>
       </section>
     );
@@ -109,7 +103,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   return (
     <section
       ref={containerRef}
-      className="relative w-full h-[100svh] overflow-hidden bg-[#FFFFFF] select-none touch-pan-y"
+      className="relative w-full h-[100svh] overflow-hidden select-none touch-pan-y"
       style={{ touchAction: 'pan-y' }}
       aria-label="Hero Carousel"
     >
@@ -227,9 +221,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
         })}
       </div>
 
-      {/* Slide Navigation Dots (Only if multiple slides) */}
+      {/* Slide Navigation Numbers (Only if multiple slides) */}
       {slides.length > 1 && (
-        <div className="absolute bottom-6 sm:bottom-8 right-4 sm:right-8 md:right-10 z-20 flex items-center gap-2 pointer-events-auto">
+        <div className="absolute bottom-6 sm:bottom-8 right-6 md:right-10 z-20 flex items-center gap-3 pointer-events-auto">
           {slides.map((slide, i) => {
             const isActive = i === currentIndex;
             return (
@@ -240,16 +234,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                   e.stopPropagation();
                   goToSlide(i);
                 }}
-                className="group p-1.5 cursor-pointer flex items-center justify-center transition-all focus:outline-none"
+                className={`text-small cursor-pointer transition-opacity ${ isActive ?'text-black underline font-bold' : 'text-black/40 hover:text-black'
+                }`}
                 aria-label={`Go to slide ${i + 1}`}
               >
-                <span
-                  className={`block rounded-full transition-all duration-300 ${
-                    isActive
-                      ? 'w-2.5 h-2.5 bg-black ring-2 ring-black/20 ring-offset-2 ring-offset-white'
-                      : 'w-1.5 h-1.5 bg-black/25 group-hover:bg-black/60 group-hover:scale-125'
-                  }`}
-                />
+                0{i + 1}
               </button>
             );
           })}
@@ -258,18 +247,18 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
 
       {/* Manual Slide Navigation Arrows (Only if multiple slides) */}
       {slides.length > 1 && (
-        <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-3 sm:px-6 md:px-10 pointer-events-none">
+        <div className="absolute inset-y-0 left-0 right-0 z-20 flex items-center justify-between px-4 sm:px-8 pointer-events-none">
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               prevSlide();
             }}
-            className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
+            className="pointer-events-auto text-black/50 hover:text-black cursor-pointer text-small"
             aria-label="Previous slide"
             title="Previous slide"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
+            ←
           </button>
           <button
             type="button"
@@ -277,26 +266,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               e.stopPropagation();
               nextSlide();
             }}
-            className="pointer-events-auto p-2 text-black/50 hover:text-black transition-all duration-300 cursor-pointer flex items-center justify-center hover:scale-110 active:scale-95"
+            className="pointer-events-auto text-black/50 hover:text-black cursor-pointer text-small"
             aria-label="Next slide"
             title="Next slide"
           >
-            <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 stroke-[1.2]" />
+            →
           </button>
         </div>
       )}
 
-      {/* 1px animated vertical scroll cue at bottom centre */}
+      {/* Text scroll cue at bottom centre */}
       <div
         onClick={onScrollCueClick}
         role="button"
         tabIndex={0}
         aria-label="Scroll to explore"
-        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center cursor-pointer group z-20"
+        className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 cursor-pointer z-20 text-small text-black/60 hover:text-black"
       >
-        <div className="w-[1px] h-9 sm:h-12 bg-black/25 overflow-hidden relative">
-          <div className="w-full h-1/2 bg-black absolute top-0 left-0 animate-scrollCue" />
-        </div>
+        Scroll ↓
       </div>
 
       <style>{`

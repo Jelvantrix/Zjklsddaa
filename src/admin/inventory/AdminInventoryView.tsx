@@ -120,17 +120,17 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
   return (
     <div className="space-y-6">
       {/* Title Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-black/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4">
         <div>
-          <h1 className="font-editorial text-3xl font-normal">Real-Time Inventory</h1>
-          <p className="text-xs font-mono text-black/50 mt-0.5">
+          <h1 className="font-serif text-display font-normal">Real-Time Inventory</h1>
+          <p className="text-small text-black/50 mt-0.5">
             Size-level SKU tracking, atomic inventory audit logs, and low-stock replenishment thresholds.
           </p>
         </div>
 
         <button
           onClick={handleExportCSV}
-          className="text-xs font-mono uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-semibold"
+          className="text-small uppercase tracking-wider text-black hover:opacity-60 underline underline-offset-4 cursor-pointer flex items-center gap-1.5 font-semibold"
         >
           <Download className="w-3.5 h-3.5" />
           <span>Export Inventory CSV</span>
@@ -138,23 +138,23 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
       </div>
 
       {/* Summary Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border border-black/[0.08] bg-white p-4 font-mono text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 text-small">
         <div>
-          <span className="text-[10.5px] uppercase text-black/50 block mb-0.5">Total Garments in Stock</span>
-          <span className="text-xl font-semibold text-black">{totalStockCount} units</span>
+          <span className="text-small uppercase text-black/50 block mb-0.5">Total Garments in Stock</span>
+          <span className="text-title font-semibold text-black">{totalStockCount} units</span>
         </div>
         <div>
-          <span className="text-[10.5px] uppercase text-black/50 block mb-0.5">Low Stock SKUs (&lt; 4 units)</span>
-          <span className="text-xl font-semibold text-black underline">{lowStockCount} SKUs</span>
+          <span className="text-small uppercase text-black/50 block mb-0.5">Low Stock SKUs (&lt; 4 units)</span>
+          <span className="text-title font-semibold text-black underline">{lowStockCount} SKUs</span>
         </div>
         <div>
-          <span className="text-[10.5px] uppercase text-black/50 block mb-0.5">Depleted SKUs (0 units)</span>
-          <span className="text-xl font-semibold text-black/40">{outOfStockCount} SKUs</span>
+          <span className="text-small uppercase text-black/50 block mb-0.5">Depleted SKUs (0 units)</span>
+          <span className="text-title font-semibold text-black/40">{outOfStockCount} SKUs</span>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 border-b border-black/[0.08] text-xs font-mono">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 text-small">
         <div className="relative sm:col-span-2">
           <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-black/40" />
           <input
@@ -162,7 +162,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search SKU, product plate Nº or garment name..."
-            className="w-full pl-8 pr-3 py-1.5 border-b border-black/20 focus:border-black bg-transparent focus:outline-none"
+            className="w-full pl-8 pr-3 py-1.5 bg-transparent"
           />
         </div>
 
@@ -170,7 +170,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
           <select
             value={stockFilter}
             onChange={(e) => setStockFilter(e.target.value as any)}
-            className="w-full px-2.5 py-1.5 border-b border-black/20 focus:border-black bg-transparent focus:outline-none cursor-pointer"
+            className="w-full px-2.5 py-1.5 bg-transparent cursor-pointer"
           >
             <option value="all">All stock statuses ({allVariants.length})</option>
             <option value="low">Low Stock Alert (&lt; 4)</option>
@@ -180,10 +180,10 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
       </div>
 
       {/* Inventory Table */}
-      <div className="border border-black/[0.08] bg-white overflow-x-auto shadow-xs">
-        <table className="w-full text-left border-collapse text-xs font-mono">
+      <div className="bg-white overflow-x-auto">
+        <table className="w-full text-left text-small">
           <thead>
-            <tr className="border-b border-black/[0.08] bg-black/[0.02] text-[10px] uppercase tracking-wider text-black/60 select-none">
+            <tr className="text-small uppercase tracking-wider text-black/60 select-none">
               <th className="p-3 w-16">Nº</th>
               <th className="p-3">Product Name</th>
               <th className="p-3 w-28">Category</th>
@@ -194,19 +194,18 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
               <th className="p-3 w-32 text-right">Quick Edit</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-black/[0.06]">
+          <tbody className="">
             {filteredVariants.map((item) => (
-              <tr key={item.sku} className="hover:bg-black/[0.015] transition-colors">
+              <tr key={item.sku} className="transition-colors">
                 <td className="p-3 font-semibold">{item.productNr}</td>
-                <td className="p-3 font-sans font-medium text-black">{item.productName}</td>
+                <td className="p-3 font-medium text-black">{item.productName}</td>
                 <td className="p-3 capitalize text-black/60">{item.category}</td>
                 <td className="p-3 font-bold">{item.size}</td>
                 <td className="p-3 text-black/60">{item.sku}</td>
                 <td className="p-3 font-semibold">{item.price} €</td>
                 <td className="p-3">
                   <span
-                    className={`font-semibold ${
-                      item.stock === 0 ? 'text-black/30 line-through' : item.stock < 4 ? 'underline font-bold' : ''
+                    className={`font-semibold ${ item.stock === 0 ?'text-black/30 line-through' : item.stock < 4 ? 'underline font-bold' : ''
                     }`}
                   >
                     {item.stock} units
@@ -219,7 +218,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
                         handleAdjustStock(item.productId, item.sku, -1, item.stock, item.variantsList)
                       }
                       disabled={updatingSku === item.sku || item.stock <= 0}
-                      className="text-xs uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer font-mono"
+                      className="text-small uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer"
                     >
                       -1
                     </button>
@@ -228,7 +227,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
                         handleAdjustStock(item.productId, item.sku, 1, item.stock, item.variantsList)
                       }
                       disabled={updatingSku === item.sku}
-                      className="text-xs uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer font-mono"
+                      className="text-small uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer"
                     >
                       +1
                     </button>
@@ -237,7 +236,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ products
                         handleAdjustStock(item.productId, item.sku, 5, item.stock, item.variantsList)
                       }
                       disabled={updatingSku === item.sku}
-                      className="text-xs uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer font-mono font-semibold"
+                      className="text-small uppercase hover:opacity-60 disabled:opacity-20 underline underline-offset-2 cursor-pointer font-semibold"
                     >
                       +5
                     </button>

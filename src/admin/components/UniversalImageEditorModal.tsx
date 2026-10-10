@@ -379,131 +379,112 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
   const isTooSmallForHero = (activePlacement === 'heroDesktop' || activePlacement === 'all') && naturalWidth > 0 && naturalWidth < 1920;
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-black/70 backdrop-blur-xs select-none">
-      <div className="bg-white border border-black/20 w-full max-w-6xl max-h-[95vh] flex flex-col shadow-2xl font-sans overflow-hidden">
-        {/* Top Header */}
-        <div className="p-4 sm:px-6 border-b border-black/10 flex items-center justify-between shrink-0 bg-white">
-          <div className="flex items-center gap-3">
-            <Compass className="w-4 h-4 text-black" />
-            <div>
-              <h2 className="text-xs uppercase tracking-[0.2em] font-medium text-black">
-                {title}
-              </h2>
-              <p className="text-[10px] text-black/50 font-mono">
-                Non-destructive framing, focal point, and placement calibration
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Undo / Redo */}
-            <div className="flex items-center border border-black/15">
-              <button
-                type="button"
-                onClick={handleUndo}
-                disabled={historyIdx <= 0}
-                className="p-1.5 text-black hover:bg-neutral-100 disabled:opacity-20 cursor-pointer"
-                title="Undo (Ctrl+Z)"
-              >
-                <Undo2 className="w-3.5 h-3.5" />
-              </button>
-              <div className="w-[1px] h-3.5 bg-black/10" />
-              <button
-                type="button"
-                onClick={handleRedo}
-                disabled={historyIdx >= history.length - 1}
-                className="p-1.5 text-black hover:bg-neutral-100 disabled:opacity-20 cursor-pointer"
-                title="Redo"
-              >
-                <Redo2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleReset}
-              className="px-2.5 py-1 text-[10px] uppercase font-mono tracking-wider border border-black/20 hover:border-black cursor-pointer"
-            >
-              Reset
-            </button>
-
-            <button
-              type="button"
-              onClick={handleSave}
-              className="px-4 py-1.5 text-[10.5px] uppercase font-mono tracking-widest bg-black text-white hover:bg-neutral-800 flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Check className="w-3.5 h-3.5" />
-              <span>Apply Framing</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onClose}
-              className="p-1.5 text-black/50 hover:text-black cursor-pointer"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+    <div className="fixed inset-0 z-[120] bg-white text-black p-6 flex flex-col overflow-y-auto select-none">
+      {/* Top Header */}
+      <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 pb-6 shrink-0">
+        <div>
+          <span className="text-small text-black/40 block mb-1">Image Framing</span>
+          <h2 className="text-title">{title}</h2>
         </div>
 
-        {/* Warning banner if image is too small */}
-        {isTooSmallForHero && (
-          <div className="bg-neutral-100 border-b border-black/10 px-6 py-2 flex items-center gap-2 text-[11px] text-neutral-800 font-mono">
-            <AlertTriangle className="w-3.5 h-3.5 text-black shrink-0" />
-            <span>
-              Notice: Source image width ({naturalWidth}px) is below recommended 1920px for high-density desktop hero displays.
-            </span>
-          </div>
-        )}
+        <div className="flex flex-wrap items-center gap-6 text-small">
+          <button
+            type="button"
+            onClick={handleUndo}
+            disabled={historyIdx <= 0}
+            className="hover:underline cursor-pointer disabled:opacity-20"
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={handleRedo}
+            disabled={historyIdx >= history.length - 1}
+            className="hover:underline cursor-pointer disabled:opacity-20"
+          >
+            Redo
+          </button>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="hover:underline cursor-pointer text-black/60"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCopy}
+            disabled={isExporting}
+            className="hover:underline cursor-pointer text-black/60 disabled:opacity-40"
+          >
+            {isExporting ? 'Exporting...' : 'Export Copy'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="hover:underline cursor-pointer font-bold"
+          >
+            Apply Framing →
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="hover:underline cursor-pointer text-black/50"
+          >
+            Close
+          </button>
+        </div>
+      </div>
 
-        {/* Placement tabs & "Same for all" */}
-        <div className="px-6 py-2.5 border-b border-black/10 flex flex-wrap items-center justify-between gap-3 bg-neutral-50/60 shrink-0 text-xs font-mono">
-          <div className="flex items-center gap-1 overflow-x-auto">
-            <span className="text-[10px] uppercase tracking-wider text-black/40 mr-2">Placement:</span>
-            {[
-              { id: 'all', label: 'Default / Universal' },
-              { id: 'card', label: 'Product Card' },
-              { id: 'archive', label: 'Archive Plate' },
-              { id: 'productPage', label: 'Product Detail' },
-              { id: 'heroDesktop', label: 'Hero (Desktop)' },
-              { id: 'heroMobile', label: 'Hero (Mobile)' },
-              { id: 'og', label: 'Open Graph' },
-            ].map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setActivePlacement(p.id as PlacementKey)}
-                className={`px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors cursor-pointer ${
-                  activePlacement === p.id
-                    ? 'bg-black text-white'
-                    : 'bg-white text-black/70 hover:text-black border border-black/10'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+      {/* Warning banner if image is too small */}
+      {isTooSmallForHero && (
+        <div className="pb-4 text-small text-black/60">
+          Source width ({naturalWidth}px) is below recommended 1920px for desktop hero.
+        </div>
+      )}
 
-          <label className="flex items-center gap-2 text-[11px] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={sameForAll}
-              onChange={(e) => setSameForAll(e.target.checked)}
-              className="w-3.5 h-3.5 accent-black rounded-none cursor-pointer"
-            />
-            <span className="text-black/70 uppercase tracking-wider text-[10px]">Same for all placements</span>
-          </label>
+      {/* Placement tabs & "Same for all" */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pb-6 text-small">
+        <div className="flex flex-wrap items-center gap-4">
+          <span className="text-black/40">Placement:</span>
+          {[
+            { id: 'all', label: 'Universal' },
+            { id: 'card', label: 'Card' },
+            { id: 'archive', label: 'Archive' },
+            { id: 'productPage', label: 'Product Detail' },
+            { id: 'heroDesktop', label: 'Hero Desktop' },
+            { id: 'heroMobile', label: 'Hero Mobile' },
+            { id: 'og', label: 'Open Graph' },
+          ].map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setActivePlacement(p.id as PlacementKey)}
+              className={`cursor-pointer ${ activePlacement === p.id ?'underline font-bold text-black' : 'text-black/50 hover:text-black'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
 
-        {/* Main Workspace (Editor + Live Placements) */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto divide-y lg:divide-y-0 lg:divide-x divide-black/10 min-h-0">
-          {/* LEFT: Interactive Framing Canvas & Crosshair (7 cols) */}
-          <div className="lg:col-span-7 p-4 sm:p-6 flex flex-col items-center justify-center bg-neutral-100/50">
-            <div className="w-full max-w-lg flex flex-col items-center">
-              <div className="flex items-center justify-between w-full mb-2 text-[10px] font-mono text-black/50">
-                <span>CLICK OR DRAG CROSSHAIR TO CALIBRATE FOCAL POINT</span>
-                <span>{currentCrop.focalX}% X · {currentCrop.focalY}% Y</span>
-              </div>
+        <button
+          type="button"
+          onClick={() => setSameForAll(!sameForAll)}
+          className="cursor-pointer text-black/70"
+        >
+          Same for all: <span className="underline">{sameForAll ? 'On' : 'Off'}</span>
+        </button>
+      </div>
+
+      {/* Main Workspace (Editor + Live Placements) */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-12 min-h-0">
+        <div className="lg:col-span-7 flex flex-col items-center">
+          <div className="w-full max-w-lg flex flex-col items-center space-y-4">
+            <div className="flex items-center justify-between w-full text-small text-black/40">
+              <span>Calibrate focal point</span>
+              <span>{currentCrop.focalX}% X · {currentCrop.focalY}% Y</span>
+            </div>
 
               {/* Main Interactive Stage */}
               <div
@@ -514,8 +495,7 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
                 onTouchStart={onTouchStart}
                 onTouchMove={onTouchMove}
                 onTouchEnd={onTouchEnd}
-                className={`relative w-full max-h-[50vh] bg-white border border-black/20 overflow-hidden cursor-crosshair shadow-sm select-none touch-none ${
-                  aspectClasses[currentCrop.aspectRatio || '3:4'] || 'aspect-[3/4]'
+                className={`relative w-full max-h-[50vh] bg-white overflow-hidden cursor-crosshair select-none touch-none ${ aspectClasses[currentCrop.aspectRatio ||'3:4'] || 'aspect-[3/4]'
                 }`}
               >
                 <img
@@ -528,143 +508,91 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
                   }}
                 />
 
-                {/* Thirds Rule Grid Overlay */}
-                <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 border border-black/10">
-                  <div className="border-r border-b border-black/10" />
-                  <div className="border-r border-b border-black/10" />
-                  <div className="border-b border-black/10" />
-                  <div className="border-r border-b border-black/10" />
-                  <div className="border-r border-b border-black/10" />
-                  <div className="border-b border-black/10" />
-                  <div className="border-r border-black/10" />
-                  <div className="border-r border-black/10" />
-                  <div />
-                </div>
-
-                {/* Crosshair Target */}
+                {/* Minimal Text Crosshair Marker */}
                 <div
-                  className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all duration-75"
+                  className="absolute pointer-events-none -translate-x-1/2 -translate-y-1/2 text-small text-black font-bold"
                   style={{
                     left: `${currentCrop.focalX}%`,
                     top: `${currentCrop.focalY}%`,
                   }}
                 >
-                  <div className="w-7 h-7 rounded-full border-2 border-white shadow-[0_0_8px_rgba(0,0,0,0.8)] flex items-center justify-center">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white shadow-xs" />
-                  </div>
-                  <div className="absolute w-10 h-[1px] bg-white/70" />
-                  <div className="absolute h-10 w-[1px] bg-white/70" />
+                  +
                 </div>
               </div>
 
               {/* Controls Strip Below Image */}
-              <div className="w-full mt-4 space-y-3 font-mono text-xs">
-                {/* Zoom & Straighten Sliders */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <div className="flex justify-between text-[10px] uppercase text-black/60 mb-1">
-                      <span>Zoom ({currentCrop.zoom || 1}x)</span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => updateCrop({ zoom: Math.max(1, Number(((currentCrop.zoom || 1) - 0.1).toFixed(2))) })}
-                          className="px-1 border border-black/15 hover:border-black cursor-pointer"
-                        >
-                          -
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateCrop({ zoom: Math.min(4, Number(((currentCrop.zoom || 1) + 0.1).toFixed(2))) })}
-                          className="px-1 border border-black/15 hover:border-black cursor-pointer"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    <input
-                      type="range"
-                      min="1.0"
-                      max="4.0"
-                      step="0.05"
-                      value={currentCrop.zoom || 1}
-                      onChange={(e) => updateCrop({ zoom: parseFloat(e.target.value) })}
-                      className="w-full accent-black cursor-pointer"
-                    />
+              <div className="w-full space-y-4 pt-2">
+                <div className="flex flex-wrap items-center justify-between gap-6 text-small">
+                  {/* Zoom Stepper */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-black/50">Zoom</span>
+                    <button
+                      type="button"
+                      onClick={() => updateCrop({ zoom: Math.max(1, Number(((currentCrop.zoom || 1) - 0.1).toFixed(2))) })}
+                      className="text-body cursor-pointer hover:underline"
+                    >
+                      −
+                    </button>
+                    <span className="text-body font-normal">{currentCrop.zoom || 1}</span>
+                    <button
+                      type="button"
+                      onClick={() => updateCrop({ zoom: Math.min(4, Number(((currentCrop.zoom || 1) + 0.1).toFixed(2))) })}
+                      className="text-body cursor-pointer hover:underline"
+                    >
+                      +
+                    </button>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between text-[10px] uppercase text-black/60 mb-1">
-                      <span>Rotation ({currentCrop.rotation || 0}°)</span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => updateCrop({ rotation: ((currentCrop.rotation || 0) - 90) % 360 })}
-                          className="px-1 border border-black/15 hover:border-black cursor-pointer"
-                          title="Rotate -90°"
-                        >
-                          -90°
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateCrop({ rotation: ((currentCrop.rotation || 0) + 90) % 360 })}
-                          className="px-1 border border-black/15 hover:border-black cursor-pointer"
-                          title="Rotate +90°"
-                        >
-                          +90°
-                        </button>
-                      </div>
-                    </div>
-                    <input
-                      type="range"
-                      min="-45"
-                      max="45"
-                      step="1"
-                      value={currentCrop.rotation || 0}
-                      onChange={(e) => updateCrop({ rotation: parseInt(e.target.value, 10) })}
-                      className="w-full accent-black cursor-pointer"
-                    />
+                  {/* Rotation Stepper */}
+                  <div className="flex items-center gap-3">
+                    <span className="text-black/50">Rotate</span>
+                    <button
+                      type="button"
+                      onClick={() => updateCrop({ rotation: (currentCrop.rotation || 0) - 15 })}
+                      className="text-body cursor-pointer hover:underline"
+                    >
+                      −
+                    </button>
+                    <span className="text-body font-normal">{currentCrop.rotation || 0}°</span>
+                    <button
+                      type="button"
+                      onClick={() => updateCrop({ rotation: (currentCrop.rotation || 0) + 15 })}
+                      className="text-body cursor-pointer hover:underline"
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
 
-                {/* Flip & Aspect Ratio Buttons */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-black/10">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] text-black/50 uppercase mr-1">Flip:</span>
+                {/* Flip & Aspect Ratio Text Choices */}
+                <div className="flex flex-wrap items-center justify-between gap-6 text-small pt-2">
+                  <div className="flex items-center gap-4">
+                    <span className="text-black/50">Flip:</span>
                     <button
                       type="button"
                       onClick={() => updateCrop({ flipH: !currentCrop.flipH })}
-                      className={`p-1.5 border text-[10px] flex items-center gap-1 cursor-pointer ${
-                        currentCrop.flipH ? 'bg-black text-white border-black' : 'border-black/20 hover:border-black bg-white'
-                      }`}
-                      title="Flip Horizontal"
+                      className="cursor-pointer hover:underline"
                     >
-                      <FlipHorizontal className="w-3.5 h-3.5" />
-                      <span>H</span>
+                      H {currentCrop.flipH ? <span className="underline font-bold">On</span> : <span>Off</span>}
                     </button>
                     <button
                       type="button"
                       onClick={() => updateCrop({ flipV: !currentCrop.flipV })}
-                      className={`p-1.5 border text-[10px] flex items-center gap-1 cursor-pointer ${
-                        currentCrop.flipV ? 'bg-black text-white border-black' : 'border-black/20 hover:border-black bg-white'
-                      }`}
-                      title="Flip Vertical"
+                      className="cursor-pointer hover:underline"
                     >
-                      <FlipVertical className="w-3.5 h-3.5" />
-                      <span>V</span>
+                      V {currentCrop.flipV ? <span className="underline font-bold">On</span> : <span>Off</span>}
                     </button>
                   </div>
 
-                  <div className="flex items-center gap-1">
-                    <span className="text-[10px] text-black/50 uppercase mr-1">Ratio:</span>
-                    {['3:4', '4:5', '1:1', '16:9', '9:16'].map((ratio) => (
+                  <div className="flex items-center gap-3">
+                    <span className="text-black/50">Ratio:</span>
+                    {["3:4", "4:5", "1:1", "16:9", "9:16"].map((ratio) => (
                       <button
                         key={ratio}
                         type="button"
                         onClick={() => updateCrop({ aspectRatio: ratio })}
-                        className={`px-2 py-1 text-[10px] border cursor-pointer ${
-                          currentCrop.aspectRatio === ratio
-                            ? 'bg-black text-white border-black'
-                            : 'border-black/15 bg-white text-black/70 hover:border-black'
+                        className={`cursor-pointer ${ currentCrop.aspectRatio === ratio ?"underline font-bold text-black"
+                            : "text-black/40 hover:text-black"
                         }`}
                       >
                         {ratio}
@@ -677,115 +605,81 @@ export const UniversalImageEditorModal: React.FC<UniversalImageEditorProps> = ({
           </div>
 
           {/* RIGHT: Live Previews Across Real Storefront Placements (5 cols) */}
-          <div className="lg:col-span-5 p-4 sm:p-6 flex flex-col bg-white overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xs uppercase tracking-wider font-medium text-black">
-                  Live Storefront Placements
-                </h3>
-                <p className="text-[10px] text-black/50 font-mono">
-                  Updates continuously as you calibrate
-                </p>
+        <div className="lg:col-span-5 space-y-8 overflow-y-auto">
+          <div>
+            <h3 className="text-title font-normal mb-1">Live Placements</h3>
+            <span className="text-small text-black/40 block">Updates live as you calibrate</span>
+          </div>
+
+          <div className="space-y-6">
+            <PlacementPreview
+              label="Product Card"
+              meta="3:4"
+              ratioClass="aspect-[3/4]"
+              boxClass="w-36"
+              crop={cropFor("card")}
+              imageUrl={imageUrl}
+            />
+
+            <PlacementPreview
+              label="Archive Plate"
+              meta="4:5"
+              ratioClass="aspect-[4/5]"
+              boxClass="w-40"
+              crop={cropFor("archive")}
+              imageUrl={imageUrl}
+            />
+
+            <PlacementPreview
+              label="Product Detail"
+              meta="1:1"
+              ratioClass="aspect-square"
+              boxClass="w-36"
+              crop={cropFor("productPage")}
+              imageUrl={imageUrl}
+            />
+
+            {/* Home Hero */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-small text-black/40">
+                <span>Hero Desktop & Mobile</span>
+                <span>16:9 / 9:16</span>
               </div>
-
-              {/* Export Edited WebP */}
-              <button
-                type="button"
-                onClick={handleExportCopy}
-                disabled={isExporting}
-                className="px-2.5 py-1 text-[10px] font-mono uppercase tracking-wider border border-black/20 hover:border-black flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                title="Renders crop to a new WebP asset"
-              >
-                <Download className="w-3 h-3" />
-                <span>{isExporting ? 'Exporting...' : 'Export Copy'}</span>
-              </button>
-            </div>
-
-            {exportNotice && (
-              <div className="mb-4 p-2 text-[10px] font-mono bg-neutral-50 border border-black/10 text-black">
-                {exportNotice}
-              </div>
-            )}
-
-            <div className="space-y-6">
-              <PlacementPreview
-                label="Product Card (Grid & Catalog)"
-                meta="3:4"
-                ratioClass="aspect-[3/4]"
-                boxClass="w-36"
-                crop={cropFor('card')}
-                imageUrl={imageUrl}
-              />
-
-              <PlacementPreview
-                label="Listing / Archive Plate — crop A"
-                meta="4:5"
-                ratioClass="aspect-[4/5]"
-                boxClass="w-40"
-                crop={cropFor('archive')}
-                imageUrl={imageUrl}
-              />
-
-              <PlacementPreview
-                label="Listing / Archive Plate — crop B"
-                meta="3:4"
-                ratioClass="aspect-[3/4]"
-                boxClass="w-40"
-                crop={cropFor('archive')}
-                imageUrl={imageUrl}
-              />
-
-              <PlacementPreview
-                label="Product Page Gallery"
-                meta="1:1"
-                ratioClass="aspect-square"
-                boxClass="w-36"
-                crop={cropFor('productPage')}
-                imageUrl={imageUrl}
-              />
-
-              {/* Home Hero — desktop & mobile */}
-              <div className="border border-black/10 p-3">
-                <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
-                  <span>Home Hero Section</span>
-                  <span>Desktop & Mobile</span>
-                </div>
-                <div className="grid grid-cols-2 gap-3 items-end">
-                  <div>
-                    <div className="text-[9px] font-mono text-black/40 mb-1">DESKTOP (16:9)</div>
-                    <div className="w-full aspect-[16/9] bg-neutral-100 overflow-hidden border border-black/10">
-                      <img
-                        src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
-                        alt="Hero desktop preview"
-                        className="w-full h-full object-cover"
-                        style={styleFor(cropFor('heroDesktop'))}
-                      />
-                    </div>
+              <div className="grid grid-cols-2 gap-4 items-end">
+                <div>
+                  <span className="text-small text-black/40 block mb-1">Desktop</span>
+                  <div className="w-full aspect-[16/9] overflow-hidden bg-white">
+                    <img
+                      src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
+                      alt="Hero desktop preview"
+                      className="w-full h-full object-cover"
+                      style={styleFor(cropFor("heroDesktop"))}
+                    />
                   </div>
+                </div>
 
-                  <div>
-                    <div className="text-[9px] font-mono text-black/40 mb-1">MOBILE (9:16)</div>
-                    <div className="w-20 aspect-[9/16] bg-neutral-100 overflow-hidden border border-black/10">
-                      <img
-                        src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
-                        alt="Hero mobile preview"
-                        className="w-full h-full object-cover"
-                        style={styleFor(cropFor('heroMobile'))}
-                      />
-                    </div>
+                <div>
+                  <span className="text-small text-black/40 block mb-1">Mobile</span>
+                  <div className="w-20 aspect-[9/16] overflow-hidden bg-white">
+                    <img
+                      src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
+                      alt="Hero mobile preview"
+                      className="w-full h-full object-cover"
+                      style={styleFor(cropFor("heroMobile"))}
+                    />
                   </div>
                 </div>
               </div>
-
-              <PlacementPreview
-                label="Social Share / Open Graph"
-                meta="1.91:1"
-                ratioClass="aspect-[1.91/1]"
-                boxClass="w-56"
-                crop={cropFor('og')}
-                imageUrl={imageUrl}
-              />
             </div>
+
+            <PlacementPreview
+              label="Open Graph"
+              meta="1.91:1"
+              ratioClass="aspect-[1.91/1]"
+              boxClass="w-56"
+              crop={cropFor("og")}
+              imageUrl={imageUrl}
+            />
           </div>
         </div>
       </div>
@@ -802,21 +696,19 @@ const PlacementPreview: React.FC<{
   crop: ImagePlacementCrop;
   imageUrl: string;
 }> = ({ label, meta, ratioClass, boxClass, crop, imageUrl }) => (
-  <div className="border border-black/10 p-3">
-    <div className="flex justify-between text-[10px] font-mono text-black/50 mb-2 uppercase">
+  <div className="space-y-1">
+    <div className="flex justify-between text-small text-black/40">
       <span>{label}</span>
       <span>{meta}</span>
     </div>
-    <div
-      className={`${boxClass} ${ratioClass} bg-neutral-100 overflow-hidden border border-black/10`}
-    >
+    <div className={`${boxClass} ${ratioClass} overflow-hidden bg-white`}>
       <img
         src={imageUrl || NEUTRAL_PLACEHOLDER_IMG}
         alt={`${label} preview`}
         className="w-full h-full object-cover"
         style={{
           objectPosition: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,
-          transform: `${crop.flipH ? 'scaleX(-1) ' : ''}${crop.flipV ? 'scaleY(-1) ' : ''}scale(${
+          transform: `${crop.flipH ? "scaleX(-1) " : ""}${crop.flipV ? "scaleY(-1) " : ""}scale(${
             crop.zoom || 1
           }) rotate(${crop.rotation || 0}deg)`,
           transformOrigin: `${crop.focalX ?? 50}% ${crop.focalY ?? 50}%`,

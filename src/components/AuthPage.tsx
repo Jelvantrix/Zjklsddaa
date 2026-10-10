@@ -215,19 +215,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
     user?.email?.toLowerCase().trim() === DESIGNATED_ADMIN_EMAIL.toLowerCase() || isAdmin || isOwner;
 
   return (
-    <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white flex flex-col font-sans">
+    <div className="min-h-screen bg-white text-black selection:text-white flex flex-col">
       {/* Top Return Navigation: Pure minimal white background, black text */}
-      <header className="w-full bg-white px-5 sm:px-10 lg:px-16 h-16 sm:h-20 flex items-center justify-between border-b border-black/5 shrink-0 z-20">
+      <header className="w-full bg-white px-5 sm:px-10 lg:px-16 h-16 sm:h-20 flex items-center justify-between shrink-0 z-20">
         <button
           type="button"
           onClick={onNavigateHome}
-          className="group flex items-center gap-2.5 text-xs font-mono uppercase tracking-[0.25em] text-black/60 hover:text-black transition-colors cursor-pointer"
+          className="group flex items-center gap-2.5 text-small uppercase tracking-[0.25em] text-black/60 hover:text-black transition-colors cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
           <span>Return to Storefront</span>
         </button>
 
-        <span className="text-[10px] font-mono uppercase tracking-[0.3em] text-black/35">
+        <span className="text-small uppercase tracking-[0.3em] text-black/35">
           Patron Access
         </span>
       </header>
@@ -241,60 +241,60 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               {/* Header */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-[10px] tracking-[0.3em] uppercase text-black/40">
+                  <span className="text-small tracking-[0.3em] uppercase text-black/40">
                     Authenticated Session
                   </span>
-                  <span className="inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wider text-black">
-                    <span className="w-1.5 h-1.5 rounded-full bg-black animate-pulse" />
+                  <span className="inline-flex items-center gap-1.5 text-small uppercase tracking-wider text-black">
+                    <span className="w-1.5 h-1.5 animate-pulse" />
                     Active
                   </span>
                 </div>
-                <h1 className="font-editorial text-3xl sm:text-5xl font-normal text-black tracking-tight">
+                <h1 className="font-serif text-display sm:text-display font-normal text-black tracking-tight">
                   Patron Dashboard
                 </h1>
-                <p className="text-xs font-mono text-black/60 break-all">
+                <p className="text-small text-black/60 break-all">
                   {user.email}
                 </p>
               </div>
 
               {/* VIP Executive Access: Only visible when signed in as huxaifa0fficial@gmail.com */}
               {isUserDesignatedAdmin && (
-                <div className="bg-black text-white p-6 sm:p-8 space-y-4">
+                <div className="text-white p-6 sm:p-8 space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
                       <ShieldCheck className="w-5 h-5 text-white" />
-                      <span className="font-mono text-xs uppercase tracking-[0.25em] font-semibold text-white">
+                      <span className="text-small uppercase tracking-[0.25em] font-semibold text-white">
                         Executive Console Ready
                       </span>
                     </div>
-                    <span className="text-[9.5px] font-mono text-white/50 tracking-widest uppercase">
+                    <span className="text-small text-white/50 tracking-widest uppercase">
                       Owner Authorization
                     </span>
                   </div>
 
-                  <p className="text-xs font-sans text-white/70 leading-relaxed font-light">
+                  <p className="text-small text-white/70 leading-relaxed font-light">
                     Master administrator authorization recognized. Access catalog engineering, inventory stock, orders, and studio telemetry.
                   </p>
 
                   <button
                     type="button"
                     onClick={onNavigateAdmin}
-                    className="w-full py-4 bg-white text-black hover:bg-neutral-200 transition-colors text-xs font-mono uppercase tracking-[0.25em] font-semibold flex items-center justify-center gap-2 cursor-pointer group"
+                    className="w-full py-4 bg-white text-black transition-colors text-small uppercase tracking-[0.25em] font-semibold flex items-center justify-center gap-2 cursor-pointer group"
                   >
                     <span>ENTER ATELIER MANAGEMENT TERMINAL</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </button>
 
                   {/* Direct Terminal URL */}
-                  <div className="pt-2 text-[11px] font-mono text-white/60 space-y-1.5">
+                  <div className="pt-2 text-small text-white/60 space-y-1.5">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] uppercase tracking-wider text-white/40">
+                      <span className="text-small uppercase tracking-wider text-white/40">
                         Direct Terminal Path:
                       </span>
                       <button
                         type="button"
                         onClick={handleCopyAdminPath}
-                        className="flex items-center gap-1 text-[10px] uppercase text-white/80 hover:text-white underline cursor-pointer"
+                        className="flex items-center gap-1 text-small uppercase text-white/80 hover:text-white underline cursor-pointer"
                       >
                         {copiedPath ? (
                           <>
@@ -309,7 +309,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         )}
                       </button>
                     </div>
-                    <div className="font-mono text-[10.5px] break-all select-all text-white/90">
+                    <div className="text-small break-all select-all text-white/90">
                       {ADMIN_SECRET_PATH}
                     </div>
                   </div>
@@ -317,20 +317,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               )}
 
               {/* Patron Metrics: Pure Borderless Typographic Grid */}
-              <div className="grid grid-cols-2 gap-4 sm:gap-6 text-xs font-mono py-2">
+              <div className="grid grid-cols-2 gap-4 sm:gap-6 text-small py-2">
                 <div className="space-y-1">
-                  <span className="text-[9.5px] uppercase tracking-widest text-black/40 block">
+                  <span className="text-small uppercase tracking-widest text-black/40 block">
                     Patron Status
                   </span>
-                  <span className="font-sans text-sm font-medium text-black">
+                  <span className="text-small font-medium text-black">
                     {isUserDesignatedAdmin ? 'Executive Administrator' : 'Verified Patron'}
                   </span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[9.5px] uppercase tracking-widest text-black/40 block">
+                  <span className="text-small uppercase tracking-widest text-black/40 block">
                     Session Clearance
                   </span>
-                  <span className="font-mono text-xs text-black/80">
+                  <span className="text-small text-black/80">
                     Encrypted Token
                   </span>
                 </div>
@@ -338,10 +338,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   onClick={onOpenWishlist}
                   className="space-y-1 cursor-pointer group"
                 >
-                  <span className="text-[9.5px] uppercase tracking-widest text-black/40 block group-hover:text-black transition-colors">
+                  <span className="text-small uppercase tracking-widest text-black/40 block group-hover:text-black transition-colors">
                     Archival Wishlist
                   </span>
-                  <span className="font-sans text-sm font-medium text-black flex items-center gap-2">
+                  <span className="text-small font-medium text-black flex items-center gap-2">
                     <span>{wishlistCount} Pieces</span>
                     <Heart className="w-3.5 h-3.5 text-black/50 group-hover:text-black transition-colors" />
                   </span>
@@ -350,10 +350,10 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   onClick={onOpenCart}
                   className="space-y-1 cursor-pointer group"
                 >
-                  <span className="text-[9.5px] uppercase tracking-widest text-black/40 block group-hover:text-black transition-colors">
+                  <span className="text-small uppercase tracking-widest text-black/40 block group-hover:text-black transition-colors">
                     Shopping Bag
                   </span>
-                  <span className="font-sans text-sm font-medium text-black flex items-center gap-2">
+                  <span className="text-small font-medium text-black flex items-center gap-2">
                     <span>{cartCount} Items</span>
                     <ShoppingBag className="w-3.5 h-3.5 text-black/50 group-hover:text-black transition-colors" />
                   </span>
@@ -361,8 +361,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               </div>
 
               {/* Change Password Panel: Pure Underline Inputs */}
-              <div className="space-y-4 pt-4 border-t border-black/10">
-                <h3 className="font-mono text-xs uppercase tracking-[0.25em] font-medium text-black flex items-center gap-2">
+              <div className="space-y-4 pt-4">
+                <h3 className="text-small uppercase tracking-[0.25em] font-medium text-black flex items-center gap-2">
                   <Key className="w-3.5 h-3.5" />
                   <span>Update Credentials</span>
                 </h3>
@@ -372,18 +372,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     placeholder="New password (minimum 6 characters)"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-2.5 px-0 text-xs font-mono placeholder:text-black/30 outline-none transition-colors rounded-none"
+                    className="w-full bg-transparent py-2.5 px-0 text-small placeholder:text-black/30 transition-colors"
                   />
                   {changePassError && (
-                    <p className="text-xs text-black font-mono font-medium underline">{changePassError}</p>
+                    <p className="text-small text-black font-medium underline">{changePassError}</p>
                   )}
                   {changePassSuccess && (
-                    <p className="text-xs text-black font-mono font-medium">{changePassSuccess}</p>
+                    <p className="text-small text-black font-medium">{changePassSuccess}</p>
                   )}
                   <button
                     type="submit"
                     disabled={changePassLoading}
-                    className="w-full py-3.5 bg-black text-white hover:bg-neutral-800 transition-colors text-xs font-mono uppercase tracking-[0.2em] cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 text-white transition-colors text-small uppercase tracking-[0.2em] cursor-pointer disabled:opacity-50"
                   >
                     {changePassLoading ? 'Updating...' : 'Update Password'}
                   </button>
@@ -391,18 +391,18 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               </div>
 
               {/* Return / Sign Out Actions */}
-              <div className="pt-4 flex items-center justify-between border-t border-black/10">
+              <div className="pt-4 flex items-center justify-between">
                 <button
                   type="button"
                   onClick={onNavigateHome}
-                  className="text-xs font-mono uppercase tracking-[0.2em] text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
+                  className="text-small uppercase tracking-[0.2em] text-black/60 hover:text-black underline underline-offset-4 cursor-pointer"
                 >
                   Return to Storefront
                 </button>
                 <button
                   type="button"
                   onClick={() => signOut()}
-                  className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] text-black/60 hover:text-black transition-colors cursor-pointer"
+                  className="flex items-center gap-2 text-small uppercase tracking-[0.2em] text-black/60 hover:text-black transition-colors cursor-pointer"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   <span>Sign Out</span>
@@ -413,12 +413,11 @@ export const AuthPage: React.FC<AuthPageProps> = ({
             /* If user is NOT authenticated: Show Sign In / Sign Up / Forgot Password */
             <div className="space-y-8 animate-fadeIn">
               {/* Borderless Mode Switcher Tabs */}
-              <div className="flex items-center gap-4 sm:gap-6 font-mono text-xs">
+              <div className="flex items-center gap-4 sm:gap-6 text-small">
                 <button
                   type="button"
                   onClick={() => handleModeSwitch('signin')}
-                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${
-                    mode === 'signin'
+                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${ mode ==='signin'
                       ? 'text-black font-semibold underline underline-offset-8'
                       : 'text-black/40 hover:text-black'
                   }`}
@@ -429,8 +428,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleModeSwitch('signup')}
-                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${
-                    mode === 'signup'
+                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${ mode ==='signup'
                       ? 'text-black font-semibold underline underline-offset-8'
                       : 'text-black/40 hover:text-black'
                   }`}
@@ -441,8 +439,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                 <button
                   type="button"
                   onClick={() => handleModeSwitch('forgot')}
-                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${
-                    mode === 'forgot'
+                  className={`uppercase tracking-[0.25em] transition-colors cursor-pointer py-1 ${ mode ==='forgot'
                       ? 'text-black font-semibold underline underline-offset-8'
                       : 'text-black/40 hover:text-black'
                   }`}
@@ -453,12 +450,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
               {/* Heading & Subtitle */}
               <div className="space-y-2">
-                <h1 className="font-editorial text-3xl sm:text-5xl font-normal text-black leading-tight tracking-tight">
+                <h1 className="font-serif text-display sm:text-display font-normal text-black leading-tight tracking-tight">
                   {mode === 'signin' && 'Atelier Access'}
                   {mode === 'signup' && 'Patron Account'}
                   {mode === 'forgot' && 'Access Recovery'}
                 </h1>
-                <p className="font-sans text-xs sm:text-sm text-black/60 leading-relaxed font-light">
+                <p className="text-small sm:text-small text-black/60 leading-relaxed font-light">
                   {mode === 'signin' &&
                     'Sign in with your email to view order allocations, reserve pieces, and access your patron profile.'}
                   {mode === 'signup' &&
@@ -470,14 +467,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
               {/* Status Alerts */}
               {errorMessage && (
-                <div className="py-2 text-black text-xs font-mono flex items-start gap-2 border-l-2 border-black pl-3 animate-fadeIn">
+                <div className="py-2 text-black text-small flex items-start gap-2 pl-3 animate-fadeIn">
                   <AlertCircle className="w-4 h-4 shrink-0 text-black mt-0.5" />
                   <span className="leading-relaxed">{errorMessage}</span>
                 </div>
               )}
 
               {successMessage && (
-                <div className="py-2 text-black text-xs font-mono flex items-start gap-2 border-l-2 border-black pl-3 animate-fadeIn">
+                <div className="py-2 text-black text-small flex items-start gap-2 pl-3 animate-fadeIn">
                   <CheckCircle2 className="w-4 h-4 shrink-0 text-black mt-0.5" />
                   <span className="leading-relaxed">{successMessage}</span>
                 </div>
@@ -487,7 +484,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               {mode === 'signin' && (
                 <form onSubmit={handleSignIn} className="space-y-6 pt-2">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Email Address
                     </label>
                     <input
@@ -496,19 +493,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="patron@example.com"
-                      className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                      className="w-full bg-transparent py-3 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                      <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                         Password
                       </label>
                       <button
                         type="button"
                         onClick={() => handleModeSwitch('forgot')}
-                        className="text-[10px] font-mono text-black/40 hover:text-black uppercase tracking-wider underline cursor-pointer"
+                        className="text-small text-black/40 hover:text-black uppercase tracking-wider underline cursor-pointer"
                       >
                         Forgot?
                       </button>
@@ -520,7 +517,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 pr-8 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                        className="w-full bg-transparent py-3 pr-8 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                       />
                       <button
                         type="button"
@@ -534,12 +531,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </div>
 
                   <div className="flex items-center justify-between pt-1">
-                    <label className="flex items-center gap-2 cursor-pointer text-xs font-mono text-black/60">
+                    <label className="flex items-center gap-2 cursor-pointer text-small text-black/60">
                       <input
                         type="checkbox"
                         checked={rememberMe}
                         onChange={(e) => setRememberMe(e.target.checked)}
-                        className="w-3.5 h-3.5 accent-black rounded-none cursor-pointer"
+                        className="w-3.5 h-3.5 accent-black cursor-pointer"
                       />
                       <span>Remember credentials</span>
                     </label>
@@ -548,7 +545,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-black text-white hover:bg-neutral-800 transition-colors text-xs font-mono uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                    className="w-full py-4 text-white transition-colors text-small uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                   >
                     {loading ? (
                       <>
@@ -568,7 +565,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               {mode === 'signup' && (
                 <form onSubmit={handleSignUp} className="space-y-6 pt-2">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Full Name / Patron Alias
                     </label>
                     <input
@@ -577,12 +574,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Full name"
-                      className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                      className="w-full bg-transparent py-3 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Email Address
                     </label>
                     <input
@@ -591,12 +588,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="patron@example.com"
-                      className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                      className="w-full bg-transparent py-3 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Password (Min. 6 Characters)
                     </label>
                     <div className="relative">
@@ -606,7 +603,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••••••"
-                        className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 pr-8 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                        className="w-full bg-transparent py-3 pr-8 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                       />
                       <button
                         type="button"
@@ -619,7 +616,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Confirm Password
                     </label>
                     <input
@@ -628,14 +625,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                      className="w-full bg-transparent py-3 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-black text-white hover:bg-neutral-800 transition-colors text-xs font-mono uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                    className="w-full py-4 text-white transition-colors text-small uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                   >
                     {loading ? (
                       <>
@@ -655,7 +652,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               {mode === 'forgot' && (
                 <form onSubmit={handleResetPassword} className="space-y-6 pt-2">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-mono uppercase tracking-[0.25em] text-black/50">
+                    <label className="block text-small uppercase tracking-[0.25em] text-black/50">
                       Registered Email Address
                     </label>
                     <input
@@ -664,14 +661,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="patron@example.com"
-                      className="w-full bg-transparent border-0 border-b border-black/20 focus:border-black py-3 px-0 text-sm font-sans text-black placeholder:text-black/30 outline-none transition-colors rounded-none"
+                      className="w-full bg-transparent py-3 px-0 text-small text-black placeholder:text-black/30 transition-colors"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-4 bg-black text-white hover:bg-neutral-800 transition-colors text-xs font-mono uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
+                    className="w-full py-4 text-white transition-colors text-small uppercase tracking-[0.25em] font-medium flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 mt-2"
                   >
                     {loading ? (
                       <>
@@ -690,7 +687,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
                     <button
                       type="button"
                       onClick={() => handleModeSwitch('signin')}
-                      className="text-xs font-mono text-black/50 hover:text-black uppercase tracking-[0.15em] underline cursor-pointer"
+                      className="text-small text-black/50 hover:text-black uppercase tracking-[0.15em] underline cursor-pointer"
                     >
                       ← Return to Sign In
                     </button>
@@ -699,25 +696,25 @@ export const AuthPage: React.FC<AuthPageProps> = ({
               )}
 
               {/* Minimal Patron Privileges Note: Pure white and black typography */}
-              <div className="pt-6 border-t border-black/10 space-y-3">
-                <span className="font-mono text-[9.5px] uppercase tracking-[0.25em] text-black/40 block">
+              <div className="pt-6 space-y-3">
+                <span className="text-small uppercase tracking-[0.25em] text-black/40 block">
                   Discerning Patron Benefits
                 </span>
-                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-sans text-black/70 font-light">
+                <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-small text-black/70 font-light">
                   <li className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-black/60 shrink-0" />
+                    <span className="w-1 h-1 shrink-0" />
                     <span>Seasonal archival allocations</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-black/60 shrink-0" />
+                    <span className="w-1 h-1 shrink-0" />
                     <span>Live restock notifications</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-black/60 shrink-0" />
+                    <span className="w-1 h-1 shrink-0" />
                     <span>Private curated wishlist</span>
                   </li>
                   <li className="flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-black/60 shrink-0" />
+                    <span className="w-1 h-1 shrink-0" />
                     <span>Permanent garment care records</span>
                   </li>
                 </ul>
@@ -725,7 +722,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({
 
               {/* Subtle Micro-Footnote */}
               <div className="pt-4 text-center">
-                <p className="text-[10px] font-mono text-black/35 uppercase tracking-widest">
+                <p className="text-small text-black/35 uppercase tracking-widest">
                   Zejesh Atelier · Helsinki · Porto
                 </p>
               </div>

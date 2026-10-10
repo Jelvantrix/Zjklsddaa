@@ -158,9 +158,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       }}
     >
       {/* Checkout Minimal Top Header */}
-      <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 border-b border-black/10 flex items-center justify-between">
+      <div className="max-w-5xl w-full mx-auto px-4 sm:px-6 py-4 sm:py-6 flex items-center justify-between">
         <BrandLogo size="sm" />
-        <div className="flex items-center gap-2 sm:gap-4 md:gap-6 text-[11px] sm:text-xs font-mono">
+        <div className="flex items-center gap-2 sm:gap-4 md:gap-6 text-small sm:text-small">
           <span className={step === 1 ? 'font-medium underline underline-offset-4' : 'opacity-40'}>
             1. Delivery
           </span>
@@ -191,17 +191,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {step === 1 && (
             <form onSubmit={handleProceedToPayment} className="space-y-6 sm:space-y-8 animate-fadeIn">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal mb-1">
+                <h3 className="font-serif text-title sm:text-display font-normal mb-1">
                   Customer & Delivery Information
                 </h3>
-                <p className="text-xs font-sans text-black/60">
+                <p className="text-small text-black/60">
                   Provide your delivery coordinates for real-time dispatch tracking.
                 </p>
               </div>
 
               <div className="space-y-3.5 sm:space-y-4">
                 <div>
-                  <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                     Email Address
                   </label>
                   <input
@@ -209,13 +209,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                    className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                   <div>
-                    <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                       First Name
                     </label>
                     <input
@@ -223,11 +223,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                      className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                       Last Name
                     </label>
                     <input
@@ -235,13 +235,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                      className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                     Street Address
                   </label>
                   <input
@@ -249,13 +249,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={street}
                     onChange={(e) => setStreet(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                    className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
                   <div>
-                    <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                       Postal Code
                     </label>
                     <input
@@ -263,11 +263,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={postalCode}
                       onChange={(e) => setPostalCode(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                      className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                    <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                       City
                     </label>
                     <input
@@ -275,13 +275,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       required
                       value={city}
                       onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                      className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[10.5px] sm:text-[11px] font-mono uppercase tracking-wider text-black/60 mb-1">
+                  <label className="block text-small sm:text-small uppercase tracking-wider text-black/60 mb-1">
                     Phone (for parcel notifications)
                   </label>
                   <input
@@ -289,18 +289,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 text-base sm:text-xs font-mono border border-black/20 focus:border-black focus:outline-none bg-transparent"
+                    className="w-full px-3.5 py-2.5 text-body sm:text-small bg-transparent"
                   />
                 </div>
               </div>
 
               {/* Shipping Method Radio options */}
-              <div className="pt-4 sm:pt-6 border-t border-black/10">
-                <h4 className="font-editorial text-2xl font-normal mb-3 sm:mb-4">
+              <div className="pt-4 sm:pt-6">
+                <h4 className="font-serif text-title font-normal mb-3 sm:mb-4">
                   Shipping Method
                 </h4>
                 <div className="space-y-2.5 sm:space-y-3">
-                  <label className={`flex items-start justify-between p-3 sm:p-3.5 border cursor-pointer transition-colors ${shippingMethod === 'express' ? 'border-black bg-black/5' : 'border-black/20 hover:border-black/40'}`}>
+                  <label className={`flex items-start justify-between p-3 sm:p-3.5 cursor-pointer transition-colors ${shippingMethod ==='express' ? '' : ''}`}>
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <input
                         type="radio"
@@ -310,18 +310,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         className="accent-black mt-0.5 cursor-pointer"
                       />
                       <div>
-                        <span className="font-sans text-xs font-medium block">
+                        <span className="text-small font-medium block">
                           Nordic Tracked Express (1–2 Business Days)
                         </span>
-                        <span className="text-[10.5px] sm:text-[11px] text-black/60 font-mono">
+                        <span className="text-small sm:text-small text-black/60">
                           Direct service point or automated parcel locker
                         </span>
                       </div>
                     </div>
-                    <span className="font-mono text-xs">{subtotal >= 100 ? '€0.00' : '€4.90'}</span>
+                    <span className="text-small">{subtotal >= 100 ? '€0.00' : '€4.90'}</span>
                   </label>
 
-                  <label className={`flex items-start justify-between p-3 sm:p-3.5 border cursor-pointer transition-colors ${shippingMethod === 'standard' ? 'border-black bg-black/5' : 'border-black/20 hover:border-black/40'}`}>
+                  <label className={`flex items-start justify-between p-3 sm:p-3.5 cursor-pointer transition-colors ${shippingMethod ==='standard' ? '' : ''}`}>
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <input
                         type="radio"
@@ -331,18 +331,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         className="accent-black mt-0.5 cursor-pointer"
                       />
                       <div>
-                        <span className="font-sans text-xs font-medium block">
+                        <span className="text-small font-medium block">
                           Carbon-Neutral Postal Service (2–4 Days)
                         </span>
-                        <span className="text-[10.5px] sm:text-[11px] text-black/60 font-mono">
+                        <span className="text-small sm:text-small text-black/60">
                           Eco-certified delivery across Europe
                         </span>
                       </div>
                     </div>
-                    <span className="font-mono text-xs">{subtotal >= 100 ? '€0.00' : '€4.90'}</span>
+                    <span className="text-small">{subtotal >= 100 ? '€0.00' : '€4.90'}</span>
                   </label>
 
-                  <label className={`flex items-start justify-between p-3 sm:p-3.5 border cursor-pointer transition-colors ${shippingMethod === 'whiteglove' ? 'border-black bg-black/5' : 'border-black/20 hover:border-black/40'}`}>
+                  <label className={`flex items-start justify-between p-3 sm:p-3.5 cursor-pointer transition-colors ${shippingMethod ==='whiteglove' ? '' : ''}`}>
                     <div className="flex items-center gap-2.5 sm:gap-3">
                       <input
                         type="radio"
@@ -352,22 +352,22 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         className="accent-black mt-0.5 cursor-pointer"
                       />
                       <div>
-                        <span className="font-sans text-xs font-medium block">
+                        <span className="text-small font-medium block">
                           White Glove Home Delivery
                         </span>
-                        <span className="text-[10.5px] sm:text-[11px] text-black/60 font-mono">
+                        <span className="text-small sm:text-small text-black/60">
                           Scheduled courier directly to your door
                         </span>
                       </div>
                     </div>
-                    <span className="font-mono text-xs">€12.00</span>
+                    <span className="text-small">€12.00</span>
                   </label>
                 </div>
               </div>
 
               <button
                 type="submit"
-                className="w-full py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 sm:py-4 btn-primary text-small uppercase tracking-[0.2em] font-medium flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Continue to Payment</span>
                 <ArrowRight className="w-4 h-4" />
@@ -379,17 +379,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {step === 2 && (
             <div className="space-y-6 sm:space-y-8 animate-fadeIn">
               <div>
-                <h3 className="font-editorial text-2xl sm:text-3xl font-normal mb-1">
+                <h3 className="font-serif text-title sm:text-display font-normal mb-1">
                   Payment Method
                 </h3>
-                <p className="text-xs font-sans text-black/60">
+                <p className="text-small text-black/60">
                   All transactions are encrypted with 256-bit TLS security.
                 </p>
               </div>
 
               <div className="space-y-2.5 sm:space-y-3">
                 {/* 1. Credit & Debit Cards */}
-                <div className={`p-3.5 sm:p-4 border transition-colors ${paymentMethod === 'card' ? 'border-black bg-black/5' : 'border-black/20'}`}>
+                <div className={`p-3.5 sm:p-4 transition-colors ${paymentMethod ==='card' ? '' : ''}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="radio"
@@ -398,12 +398,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onChange={() => setPaymentMethod('card')}
                       className="accent-black cursor-pointer"
                     />
-                    <span className="text-xs font-sans font-medium">Credit or Debit Card (Visa, Mastercard, Amex)</span>
+                    <span className="text-small font-medium">Credit or Debit Card (Visa, Mastercard, Amex)</span>
                   </label>
                 </div>
 
                 {/* 2. Apple Pay */}
-                <div className={`p-3.5 sm:p-4 border transition-colors ${paymentMethod === 'applepay' ? 'border-black bg-black/5' : 'border-black/20'}`}>
+                <div className={`p-3.5 sm:p-4 transition-colors ${paymentMethod ==='applepay' ? '' : ''}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="radio"
@@ -412,12 +412,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onChange={() => setPaymentMethod('applepay')}
                       className="accent-black cursor-pointer"
                     />
-                    <span className="text-xs font-sans font-medium">Apple Pay / Google Pay</span>
+                    <span className="text-small font-medium">Apple Pay / Google Pay</span>
                   </label>
                 </div>
 
                 {/* 3. Klarna */}
-                <div className={`p-3.5 sm:p-4 border transition-colors ${paymentMethod === 'klarna' ? 'border-black bg-black/5' : 'border-black/20'}`}>
+                <div className={`p-3.5 sm:p-4 transition-colors ${paymentMethod ==='klarna' ? '' : ''}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="radio"
@@ -426,12 +426,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onChange={() => setPaymentMethod('klarna')}
                       className="accent-black cursor-pointer"
                     />
-                    <span className="text-xs font-sans font-medium">Klarna (Pay in 30 Days or 3 Instalments)</span>
+                    <span className="text-small font-medium">Klarna (Pay in 30 Days or 3 Instalments)</span>
                   </label>
                 </div>
 
                 {/* 4. Bank Transfer / SEPA */}
-                <div className={`p-3.5 sm:p-4 border transition-colors ${paymentMethod === 'bank' ? 'border-black bg-black/5' : 'border-black/20'}`}>
+                <div className={`p-3.5 sm:p-4 transition-colors ${paymentMethod ==='bank' ? '' : ''}`}>
                   <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="radio"
@@ -440,7 +440,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onChange={() => setPaymentMethod('bank')}
                       className="accent-black cursor-pointer"
                     />
-                    <span className="text-xs font-sans font-medium">European Online Banking (SEPA Transfer)</span>
+                    <span className="text-small font-medium">European Online Banking (SEPA Transfer)</span>
                   </label>
                 </div>
               </div>
@@ -449,7 +449,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setStep(1)}
-                  className="px-4 sm:px-6 py-3.5 sm:py-4 btn-secondary text-xs uppercase tracking-[0.16em] cursor-pointer"
+                  className="px-4 sm:px-6 py-3.5 sm:py-4 btn-secondary text-small uppercase tracking-[0.16em] cursor-pointer"
                 >
                   Back
                 </button>
@@ -457,19 +457,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   type="button"
                   onClick={handleConfirmOrder}
                   disabled={isSubmittingOrder}
-                  className="flex-1 py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 py-3.5 sm:py-4 btn-primary text-small uppercase tracking-[0.2em] font-medium cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   <span>{isSubmittingOrder ? 'Processing Acquisition...' : `Confirm & Place Order (${formatPrice(total)})`}</span>
                 </button>
               </div>
 
               {orderError && (
-                <div role="alert" className="p-3 sm:p-4 border border-rose-300 bg-rose-50 text-rose-900 text-xs font-mono leading-relaxed">
+                <div role="alert" className="p-3 sm:p-4 text-rose-900 text-small leading-relaxed">
                   {orderError}
                 </div>
               )}
 
-              <div className="pt-2 sm:pt-4 flex items-center justify-center gap-2 text-xs font-mono text-black/50 text-center">
+              <div className="pt-2 sm:pt-4 flex items-center justify-center gap-2 text-small text-black/50 text-center">
                 <ShieldCheck className="w-4 h-4 shrink-0" />
                 <span>SSL Encrypted 256-Bit Channel · 14-Day Complimentary Returns</span>
               </div>
@@ -479,15 +479,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {/* STEP 3: CONFIRMATION RECEIPT */}
           {step === 3 && (
             <div className="space-y-5 sm:space-y-6 animate-fadeIn py-4 sm:py-6">
-              <div className="w-12 h-12 border border-black flex items-center justify-center mb-4 sm:mb-6">
+              <div className="w-12 h-12 flex items-center justify-center mb-4 sm:mb-6">
                 <Check className="w-6 h-6 stroke-[1.5]" />
               </div>
 
-              <h3 className="font-editorial text-3xl sm:text-4xl md:text-5xl font-normal">
+              <h3 className="font-serif text-display sm:text-display md:text-display font-normal">
                 Order Confirmed
               </h3>
 
-              <div className="p-4 sm:p-5 border border-black/15 bg-black/5 font-mono text-xs space-y-1">
+              <div className="p-4 sm:p-5 text-small space-y-1">
                 <p><strong>Order Reference:</strong> {createdOrderNumber || 'Not available'}</p>
                 <p><strong>Recipient:</strong> {firstName} {lastName}</p>
                 <p><strong>Delivery Address:</strong> {street}, {postalCode} {city}</p>
@@ -495,7 +495,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <p><strong>Total Charged:</strong> {formatPrice(total)} (incl. 24% VAT)</p>
               </div>
 
-              <p className="text-xs sm:text-sm font-sans text-black/70 leading-relaxed">
+              <p className="text-small sm:text-small text-black/70 leading-relaxed">
                 Thank you for your acquisition. A formal dossier and tracking code will be dispatched to {email}.
               </p>
 
@@ -503,7 +503,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-8 py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
+                  className="px-8 py-3.5 sm:py-4 btn-primary text-small uppercase tracking-[0.2em] font-medium cursor-pointer"
                 >
                   Return to Archive
                 </button>
@@ -513,17 +513,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </div>
 
         {/* RIGHT COLUMN: ORDER SUMMARY */}
-        <div className="md:col-span-5 bg-black/5 p-5 sm:p-8 border border-black/10 h-fit space-y-4 sm:space-y-6">
-          <h4 className="font-editorial text-xl sm:text-2xl font-normal border-b border-black/10 pb-2 sm:pb-3">
+        <div className="md:col-span-5 p-5 sm:p-8 h-fit space-y-4 sm:space-y-6">
+          <h4 className="font-serif text-title sm:text-title font-normal pb-2 sm:pb-3">
             Order Summary
           </h4>
 
-          <div className="space-y-3 max-h-60 sm:max-h-72 overflow-y-auto divide-y divide-black/10">
+          <div className="space-y-3 max-h-60 sm:max-h-72 overflow-y-auto">
             {items.map((item) => (
-              <div key={`${item.product.id}-${item.size}`} className="pt-2.5 sm:pt-3 flex justify-between gap-3 text-xs font-mono">
+              <div key={`${item.product.id}-${item.size}`} className="pt-2.5 sm:pt-3 flex justify-between gap-3 text-small">
                 <div>
                   <span className="font-medium">{item.product.name.en || item.product.name.fi}</span>
-                  <div className="text-[10.5px] sm:text-[11px] text-black/50">
+                  <div className="text-small sm:text-small text-black/50">
                     Size {item.size} · Qty {item.quantity}
                   </div>
                 </div>
@@ -532,7 +532,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             ))}
           </div>
 
-          <div className="border-t border-black/10 pt-3 sm:pt-4 space-y-1.5 sm:space-y-2 text-xs font-mono">
+          <div className="pt-3 sm:pt-4 space-y-1.5 sm:space-y-2 text-small">
             <div className="flex justify-between">
               <span className="text-black/60">Subtotal</span>
               <span>{formatPrice(subtotal)}</span>
@@ -541,17 +541,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               <span className="text-black/60">Shipping</span>
               <span>{formatPrice(shippingCost)}</span>
             </div>
-            <div className="flex justify-between text-sm sm:text-base font-medium pt-2 border-t border-black/10">
+            <div className="flex justify-between text-small sm:text-body font-medium pt-2">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>
-            <p className="text-[10px] text-black/50 text-right">
+            <p className="text-small text-black/50 text-right">
               incl. 24% VAT ({formatPrice((total * 0.24) / 1.24)})
             </p>
           </div>
 
-          <div className="pt-3 sm:pt-4 border-t border-black/10">
-            <span className="text-[10px] font-mono tracking-wider uppercase text-black/50 block mb-2">
+          <div className="pt-3 sm:pt-4">
+            <span className="text-small tracking-wider uppercase text-black/50 block mb-2">
               ACCEPTED PAYMENT METHODS:
             </span>
             <PaymentIcons />

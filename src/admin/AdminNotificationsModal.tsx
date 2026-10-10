@@ -32,13 +32,13 @@ export const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = (
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-end p-4 sm:p-6">
-      <div onClick={onClose} className="fixed inset-0 bg-black/40 backdrop-blur-xs" />
+      <div onClick={onClose} className="fixed inset-0 backdrop-blur-xs" />
 
-      <div className="relative w-full max-w-sm bg-white border border-black/10 shadow-2xl z-10 animate-fadeIn flex flex-col max-h-[85vh] font-mono text-xs">
-        <div className="p-4 border-b border-black/[0.08] flex items-center justify-between">
+      <div className="relative w-full max-w-sm bg-white z-10 animate-fadeIn flex flex-col max-h-[85vh] text-small">
+        <div className="p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-semibold uppercase tracking-wider text-xs">Studio Notifications</span>
-            <span className="text-[10px] text-black/50 font-mono">
+            <span className="font-semibold uppercase tracking-wider text-small">Studio Notifications</span>
+            <span className="text-small text-black/50">
               ({lowStock.length + newOrders.length + insights.length})
             </span>
           </div>
@@ -47,7 +47,7 @@ export const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = (
           </button>
         </div>
 
-        <div className="p-4 overflow-y-auto space-y-4 divide-y divide-black/[0.06]">
+        <div className="p-4 overflow-y-auto space-y-4">
           {/* Low Stock Warnings */}
           {lowStock.length > 0 && (
             <div className="space-y-2">
@@ -61,18 +61,18 @@ export const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = (
                     onNavigateView('inventory');
                     onClose();
                   }}
-                  className="text-[10px] uppercase text-black hover:opacity-60 underline underline-offset-2"
+                  className="text-small uppercase text-black hover:opacity-60 underline underline-offset-2"
                 >
                   View All
                 </button>
               </div>
               {lowStock.slice(0, 3).map((p) => (
-                <div key={p.id} className="p-2 border border-black/[0.08] bg-black/[0.01]">
-                  <div className="flex justify-between font-mono">
+                <div key={p.id} className="p-2">
+                  <div className="flex justify-between">
                     <span className="font-semibold text-black">{p.nr}</span>
                     <span className="text-black/70">{p.stock} units remaining</span>
                   </div>
-                  <div className="text-[11px] text-black/60 truncate">{p.name.en || p.name.fi}</div>
+                  <div className="text-small text-black/60 truncate">{p.name.en || p.name.fi}</div>
                 </div>
               ))}
             </div>
@@ -91,18 +91,18 @@ export const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = (
                     onNavigateView('orders');
                     onClose();
                   }}
-                  className="text-[10px] uppercase text-black hover:opacity-60 underline underline-offset-2"
+                  className="text-small uppercase text-black hover:opacity-60 underline underline-offset-2"
                 >
                   View All
                 </button>
               </div>
               {newOrders.map((o) => (
-                <div key={o.id} className="p-2 border border-black/[0.08]">
-                  <div className="flex justify-between font-mono">
+                <div key={o.id} className="p-2">
+                  <div className="flex justify-between">
                     <span className="font-semibold text-black">{o.number}</span>
                     <span className="font-bold">{o.totals.total} €</span>
                   </div>
-                  <div className="text-[11px] text-black/60 truncate">{o.customer.name}</div>
+                  <div className="text-small text-black/60 truncate">{o.customer.name}</div>
                 </div>
               ))}
             </div>
@@ -121,17 +121,17 @@ export const AdminNotificationsModal: React.FC<AdminNotificationsModalProps> = (
                     onNavigateView('advisor');
                     onClose();
                   }}
-                  className="text-[10px] uppercase text-black hover:opacity-60 underline underline-offset-2"
+                  className="text-small uppercase text-black hover:opacity-60 underline underline-offset-2"
                 >
                   Explore
                 </button>
               </div>
               {insights.slice(0, 2).map((ins) => (
-                <div key={ins.id} className="p-2 border border-black/[0.08] bg-black/[0.01]">
-                  <div className="font-mono text-[10px] uppercase font-semibold text-black/70">
+                <div key={ins.id} className="p-2">
+                  <div className="text-small uppercase font-semibold text-black/70">
                     [{ins.priority} Priority]
                   </div>
-                  <div className="text-[11px] font-semibold text-black mt-0.5 line-clamp-1">{ins.title}</div>
+                  <div className="text-small font-semibold text-black mt-0.5 line-clamp-1">{ins.title}</div>
                 </div>
               ))}
             </div>

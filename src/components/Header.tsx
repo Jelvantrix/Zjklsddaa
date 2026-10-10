@@ -173,12 +173,11 @@ export const Header: React.FC<HeaderProps> = ({
     <>
       <header
         onMouseLeave={() => setHoveredNav(null)}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-          isHidden ? '-translate-y-full' : 'translate-y-0'
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${ isHidden ?'-translate-y-full' : 'translate-y-0'
         } ${
           isOverHeroAtTop
-            ? 'bg-transparent text-black border-transparent shadow-none'
-            : 'bg-white/70 backdrop-blur-md text-black border-b border-black/[0.06] shadow-[0_1px_20px_rgba(0,0,0,0.03)]'
+            ? 'bg-transparent text-black'
+            : 'backdrop-blur-md text-black'
         }`}
         style={{
           paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -215,7 +214,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               type="button"
               onClick={onNavigateHome}
-              className="cursor-pointer min-h-[44px] min-w-[44px] px-2 group focus-visible:outline-none inline-flex items-center justify-center py-1"
+              className="cursor-pointer min-h-[44px] min-w-[44px] px-2 group inline-flex items-center justify-center py-1"
               aria-label="Back to home"
             >
               <BrandLogo size="md" invert={false} />
@@ -232,10 +231,10 @@ export const Header: React.FC<HeaderProps> = ({
               aria-label={t.nav.wishlist}
               title={t.nav.wishlist}
             >
-              <Heart className={`w-4 h-4 stroke-[1.5] ${wishlistCount > 0 ? 'fill-current' : ''}`} />
+              <Heart className={`w-4 h-4 stroke-[1.5] ${wishlistCount > 0 ?'fill-current' : ''}`} />
               {wishlistCount > 0 && (
-                <span className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full bg-black text-white text-[8px] font-mono font-medium flex items-center justify-center leading-none">
-                  {wishlistCount}
+                <span className="text-small ml-1">
+                  ({wishlistCount})
                 </span>
               )}
             </button>
@@ -250,7 +249,9 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <User className="w-4 h-4 stroke-[1.5]" />
               {user && (
-                <span className={`absolute bottom-2 right-1.5 w-1.5 h-1.5 rounded-full ${isAdmin ? 'bg-black border border-white animate-pulse' : 'bg-emerald-600'}`} />
+                <span className="text-small ml-1">
+                  ·
+                </span>
               )}
             </button>
 
@@ -264,25 +265,19 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <ShoppingBag className="w-4 h-4 stroke-[1.5]" />
               {cartCount > 0 && (
-                <span className="absolute top-1.5 right-1 w-3.5 h-3.5 rounded-full bg-black text-white text-[8px] font-mono font-medium flex items-center justify-center leading-none">
-                  {cartCount}
+                <span className="text-small ml-1">
+                  ({cartCount})
                 </span>
               )}
             </button>
           </div>
         </div>
 
-        {/* ROW 2: DESKTOP CATEGORY NAVIGATION STRIP (NO BORDER BETWEEN LOGO AND CATEGORIES) */}
-        <div
-          className={`hidden lg:block transition-colors duration-300 ${
-            isOverHeroAtTop
-              ? 'bg-transparent'
-              : 'bg-white/70 backdrop-blur-md'
-          }`}
-        >
+        {/* ROW 2: DESKTOP CATEGORY NAVIGATION STRIP */}
+        <div className="hidden lg:block bg-white">
           <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 h-11 flex items-center justify-center">
             <nav
-              className="flex items-center justify-center gap-3.5 xl:gap-8 2xl:gap-12"
+              className="flex items-center justify-center gap-6 xl:gap-8"
               aria-label="Main navigation"
             >
               {dynamicNavItems.map((item) => {
@@ -310,19 +305,10 @@ export const Header: React.FC<HeaderProps> = ({
                         onSelectCategory(item.categoryId);
                       }
                     }}
-                    className={`relative py-2.5 px-2 xl:px-3 text-[11px] xl:text-[12.5px] uppercase tracking-[0.16em] xl:tracking-[0.24em] font-sans font-medium transition-colors duration-200 cursor-pointer whitespace-nowrap group/link ${
-                      isActive ? 'text-black' : 'text-black/75 hover:text-black'
+                    className={`py-2 px-2 text-small transition-opacity cursor-pointer whitespace-nowrap ${ isActive ?'text-black underline' : 'text-black/70 hover:text-black hover:underline'
                     }`}
                   >
                     <span>{item.label}</span>
-                    {/* Animated Hairline Underline on Hover & Active State */}
-                    <span
-                      className={`absolute bottom-0.5 left-2 xl:left-3 right-2 xl:right-3 h-[1px] bg-black transition-all duration-300 origin-center ${
-                        isActive
-                          ? 'scale-x-100 opacity-100'
-                          : 'scale-x-0 opacity-0 group-hover/link:scale-x-100 group-hover/link:opacity-100'
-                      }`}
-                    />
                   </button>
                 );
               })}
@@ -335,20 +321,20 @@ export const Header: React.FC<HeaderProps> = ({
           <div
             onMouseEnter={() => setHoveredNav(hoveredNav)}
             onMouseLeave={() => setHoveredNav(null)}
-            className="absolute top-full left-0 w-full bg-white text-black border-b border-black/[0.06] shadow-[0_24px_64px_-16px_rgba(0,0,0,0.14)] transition-all duration-400 animate-fadeIn hidden lg:block"
+            className="absolute top-full left-0 w-full bg-white text-black transition-all hidden lg:block"
           >
             <div className="max-w-[1720px] mx-auto px-10 py-10 grid grid-cols-12 gap-10">
               {/* Subcategories list */}
               <div className="col-span-4 flex flex-col space-y-3">
-                <span className="text-[11px] tracking-[0.2em] uppercase font-mono text-black/40 mb-2">
-                  SUB-SELECTIONS
+                <span className="text-small text-black/40 mb-2">
+                  Selections
                 </span>
                 <button
                   onClick={() => {
                     onSelectCategory(hoveredNav);
                     setHoveredNav(null);
                   }}
-                  className="text-left font-editorial text-2xl font-normal hover:translate-x-1.5 transition-transform"
+                  className="text-left text-title hover:underline cursor-pointer"
                 >
                   All Pieces
                 </button>
@@ -359,7 +345,7 @@ export const Header: React.FC<HeaderProps> = ({
                       onSelectCategory(hoveredNav, sub.name);
                       setHoveredNav(null);
                     }}
-                    className="text-left text-sm font-sans text-black/70 hover:text-black transition-colors"
+                    className="text-left text-body text-black/70 hover:text-black hover:underline cursor-pointer"
                   >
                     {sub.name}
                   </button>
@@ -372,22 +358,22 @@ export const Header: React.FC<HeaderProps> = ({
                   onSelectCategory(hoveredNav);
                   setHoveredNav(null);
                 }}
-                className="col-span-4 group cursor-pointer"
+                className="col-span-4 cursor-pointer"
               >
                 <FashionImage
                   src={tileImage1}
-                  alt="Winter Campaign 1"
+                  alt="Campaign"
                   position="center 20%"
                   scale={1.05}
                   aspectRatio="4/5"
-                  className="border border-black/5"
-                  imageClassName="group-hover:scale-105 transition-transform duration-700"
+                  className=""
+                  imageClassName=""
                 />
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-[0.14em] font-sans font-medium group-hover:underline underline-offset-4">
-                    Winter Campaign 2026
+                  <span className="text-small hover:underline">
+                    Campaign
                   </span>
-                  <span className="text-[11px] font-mono text-black/40">
+                  <span className="text-small text-black/40">
                     Explore →
                   </span>
                 </div>
@@ -399,23 +385,23 @@ export const Header: React.FC<HeaderProps> = ({
                   onSelectCategory(hoveredNav);
                   setHoveredNav(null);
                 }}
-                className="col-span-4 group cursor-pointer"
+                className="col-span-4 cursor-pointer"
               >
                 <FashionImage
                   src={tileImage2}
-                  alt="Archive Series"
+                  alt="Series"
                   position="center 65%"
                   scale={1.2}
                   flipped={true}
                   aspectRatio="4/5"
-                  className="border border-black/5"
-                  imageClassName="group-hover:scale-105 transition-transform duration-700"
+                  className=""
+                  imageClassName=""
                 />
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs uppercase tracking-[0.14em] font-sans font-medium group-hover:underline underline-offset-4">
-                    Archive Plate Series
+                  <span className="text-small hover:underline">
+                    Series
                   </span>
-                  <span className="text-[11px] font-mono text-black/40">
+                  <span className="text-small text-black/40">
                     Explore →
                   </span>
                 </div>

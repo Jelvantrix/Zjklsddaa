@@ -177,7 +177,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       role="dialog"
       aria-modal="true"
       aria-label="Navigation Menu"
-      className="fixed inset-0 z-[95] bg-[#FFFFFF] text-[#000000] flex flex-col justify-between overflow-y-auto animate-fadeIn select-none"
+      className="fixed inset-0 z-[95] text-[#000000] flex flex-col justify-between overflow-y-auto animate-fadeIn select-none"
       style={{
         height: '100dvh',
         minHeight: '100dvh',
@@ -188,12 +188,12 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       }}
     >
       {/* Top Header inside Mobile Menu */}
-      <div className="w-full pb-5 border-b border-black/10 flex items-center justify-between shrink-0">
+      <div className="w-full pb-5 flex items-center justify-between shrink-0">
         {activeCategory ? (
           <button
             type="button"
             onClick={() => setActiveCategory(null)}
-            className="min-h-[44px] min-w-[44px] -ml-2 px-2 flex items-center gap-2 text-xs font-mono tracking-wider uppercase text-black hover:opacity-60 transition-opacity cursor-pointer"
+            className="min-h-[44px] min-w-[44px] -ml-2 px-2 flex items-center gap-2 text-small tracking-wider uppercase text-black hover:opacity-60 transition-opacity cursor-pointer"
             aria-label="Back to main categories"
           >
             <ArrowLeft className="w-4 h-4 stroke-[1.5]" />
@@ -230,7 +230,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
             {dynamicItems.map((item) => (
               <div
                 key={item.key}
-                className="flex items-center justify-between border-b border-black/[0.08] py-2 sm:py-3 transition-colors"
+                className="flex items-center justify-between py-2 sm:py-3 transition-colors"
               >
                 <button
                   type="button"
@@ -254,7 +254,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       onClose();
                     }
                   }}
-                  className="font-editorial text-2xl xs:text-3xl sm:text-4xl text-left tracking-wide font-normal hover:translate-x-1.5 transition-transform duration-200 cursor-pointer flex-1 min-h-[44px] flex items-center pr-3"
+                  className="font-serif text-title xs:text-display sm:text-display text-left tracking-wide font-normal hover:translate-x-1.5 transition-transform duration-200 cursor-pointer flex-1 min-h-[44px] flex items-center pr-3"
                 >
                   {item.label}
                 </button>
@@ -271,14 +271,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               </div>
             ))}
 
-            <div className="pt-6 border-t border-black/10 flex flex-col gap-2">
+            <div className="pt-6 flex flex-col gap-2">
               <button
                 type="button"
                 onClick={() => {
                   if (onNavigateAccount) onNavigateAccount();
                   onClose();
                 }}
-                className="min-h-[44px] flex items-center justify-between text-xs font-mono uppercase tracking-[0.22em] text-black hover:opacity-60 transition-opacity cursor-pointer"
+                className="min-h-[44px] flex items-center justify-between text-small uppercase tracking-[0.22em] text-black hover:opacity-60 transition-opacity cursor-pointer"
               >
                 <span>Patron Account & Portal</span>
                 <ChevronRight className="w-4 h-4 text-black/40" />
@@ -289,7 +289,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   onNavigateSitemap();
                   onClose();
                 }}
-                className="min-h-[44px] flex items-center text-xs font-mono uppercase tracking-[0.22em] text-black/60 underline underline-offset-4 cursor-pointer hover:opacity-60 transition-opacity"
+                className="min-h-[44px] flex items-center text-small uppercase tracking-[0.22em] text-black/60 underline underline-offset-4 cursor-pointer hover:opacity-60 transition-opacity"
               >
                 {t.sitemap || 'Site Directory (50+ Pages)'}
               </button>
@@ -297,11 +297,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
           </nav>
         ) : (
           <div className="flex flex-col space-y-3 animate-slideIn">
-            <div className="pb-2 border-b border-black/10 mb-2">
-              <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-black/40 block mb-1">
+            <div className="pb-2 mb-2">
+              <span className="text-small tracking-[0.25em] uppercase text-black/40 block mb-1">
                 DEPARTMENT
               </span>
-              <h3 className="font-editorial text-3xl font-normal uppercase tracking-wide">
+              <h3 className="font-serif text-display font-normal uppercase tracking-wide">
                 {activeParentItem?.label || activeCategory.toUpperCase()}
               </h3>
             </div>
@@ -312,7 +312,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                 onSelectCategory(activeCategory);
                 onClose();
               }}
-              className="text-left text-xs font-mono uppercase tracking-[0.2em] min-h-[48px] flex items-center py-2.5 border-b border-black/10 hover:opacity-60 cursor-pointer font-medium"
+              className="text-left text-small uppercase tracking-[0.2em] min-h-[48px] flex items-center py-2.5 hover:opacity-60 cursor-pointer font-medium"
             >
               View All {activeParentItem?.label || ''} →
             </button>
@@ -325,7 +325,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                   onSelectCategory(activeCategory, sub.name);
                   onClose();
                 }}
-                className="text-left text-sm font-sans text-black/80 hover:text-black min-h-[48px] flex items-center py-2 tracking-wide border-b border-black/[0.05] cursor-pointer hover:translate-x-1 transition-transform"
+                className="text-left text-small text-black/80 hover:text-black min-h-[48px] flex items-center py-2 tracking-wide cursor-pointer hover:translate-x-1 transition-transform"
               >
                 {sub.name}
               </button>
@@ -335,11 +335,11 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
       </div>
 
       {/* Bottom Atelier Info */}
-      <div className="pt-4 border-t border-black/10 flex items-center justify-between bg-white text-xs font-mono shrink-0">
-        <span className="text-[10px] text-black/60 tracking-widest uppercase">
+      <div className="pt-4 flex items-center justify-between bg-white text-small shrink-0">
+        <span className="text-small text-black/60 tracking-widest uppercase">
           ZEJESH ATELIER
         </span>
-        <span className="text-[10px] text-black/40 tracking-wider">
+        <span className="text-small text-black/40 tracking-wider">
           HELSINKI · PORTO
         </span>
       </div>

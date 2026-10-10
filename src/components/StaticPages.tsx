@@ -75,23 +75,23 @@ export const StaticPages: React.FC<StaticPageProps> = ({
     return (
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <div className="max-w-4xl mx-auto">
-          <div className="pb-6 sm:pb-8 border-b border-black/10 mb-8 sm:mb-12">
-            <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+          <div className="pb-6 sm:pb-8 mb-8 sm:mb-12">
+            <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
               ARCHIVE DIRECTORY
             </span>
-            <h1 className="font-editorial text-3xl sm:text-5xl font-normal">
+            <h1 className="font-serif text-display sm:text-display font-normal">
               Site Directory
             </h1>
-            <p className="text-xs sm:text-sm font-sans text-black/60 mt-2 sm:mt-3 leading-relaxed">
+            <p className="text-small sm:text-small text-black/60 mt-2 sm:mt-3 leading-relaxed">
               Our digital archive houses {products.length} product dossier pages, category hubs, seasonal archives,
               essays, and house charters.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 font-mono text-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 text-small">
             {/* Products */}
             <div>
-              <h3 className="font-editorial text-xl font-normal mb-3 sm:mb-4 border-b border-black/20 pb-2">
+              <h3 className="font-serif text-title font-normal mb-3 sm:mb-4 pb-2">
                 01. Product Dossiers ({products.length} Plates)
               </h3>
               <ul className="space-y-2">
@@ -117,7 +117,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
             {/* Categories & Collections (16+ pages) */}
             <div className="space-y-6 sm:space-y-8">
               <div>
-                <h3 className="font-editorial text-xl font-normal mb-3 sm:mb-4 border-b border-black/20 pb-2">
+                <h3 className="font-serif text-title font-normal mb-3 sm:mb-4 pb-2">
                   02. Categories & Collections
                 </h3>
                 <ul className="space-y-2 text-black/70">
@@ -161,7 +161,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
 
               {/* Journal & Stories (4 pages) */}
               <div>
-                <h3 className="font-editorial text-xl font-normal mb-3 sm:mb-4 border-b border-black/20 pb-2">
+                <h3 className="font-serif text-title font-normal mb-3 sm:mb-4 pb-2">
                   03. Journal & Monographs
                 </h3>
                 <ul className="space-y-2 text-black/70">
@@ -182,7 +182,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
 
               {/* About, Service & Legal (11 pages) */}
               <div>
-                <h3 className="font-editorial text-xl font-normal mb-3 sm:mb-4 border-b border-black/20 pb-2">
+                <h3 className="font-serif text-title font-normal mb-3 sm:mb-4 pb-2">
                   04. Atelier, Customer Service & Legal
                 </h3>
                 <ul className="space-y-2 text-black/70">
@@ -212,21 +212,21 @@ export const StaticPages: React.FC<StaticPageProps> = ({
     return (
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
         <div className="max-w-4xl mx-auto text-center mb-10 sm:mb-16">
-          <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+          <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
             WINTER CAMPAIGN 2026
           </span>
-          <h1 className="font-editorial text-4xl sm:text-5xl md:text-6xl font-normal mb-3 sm:mb-4">
+          <h1 className="font-serif text-display sm:text-display md:text-display font-normal mb-3 sm:mb-4">
             Winter Light and Silence
           </h1>
-          <p className="text-xs sm:text-sm font-sans text-black/60 max-w-lg mx-auto leading-relaxed">
+          <p className="text-small sm:text-small text-black/60 max-w-lg mx-auto leading-relaxed">
             Pure studio campaign on white backdrop. Sculptural silhouettes and the authentic weight of unblended virgin wool.
           </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-10">
           {products.length === 0 ? (
-            <div className="col-span-2 py-16 text-center border border-dashed border-black/15 bg-neutral-50/50">
-              <p className="text-xs uppercase font-mono tracking-widest text-black/40">No campaign garments live yet</p>
+            <div className="col-span-2 py-16 text-center">
+              <p className="text-small uppercase tracking-widest text-black/40">No campaign garments live yet</p>
             </div>
           ) : (
             products.slice(0, 8).map((product) => (
@@ -235,7 +235,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                 onClick={() => onSelectProduct(product)}
                 className="group cursor-pointer"
               >
-                <div className="aspect-[3/4] border border-black/10 overflow-hidden bg-white mb-3 sm:mb-4">
+                <div className="aspect-[3/4] overflow-hidden bg-white mb-3 sm:mb-4">
                   <FashionImage
                     product={product}
                     src={product.hoverImage || product.image}
@@ -246,7 +246,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                     imageClassName="group-hover:scale-105 transition-transform duration-700"
                   />
                 </div>
-                <div className="flex items-baseline justify-between font-mono text-xs">
+                <div className="flex items-baseline justify-between text-small">
                   <div>
                     <span className="text-black/40 mr-2">{product.plateNumber || product.nr}</span>
                     <span className="font-medium text-black group-hover:underline">{product.name.en || product.name[language]}</span>
@@ -265,32 +265,30 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (pageType === 'gift-cards') {
     return (
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
-        <div className="max-w-xl mx-auto border border-black p-6 sm:p-12">
-          <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <div className="max-w-xl mx-auto p-6 sm:p-12">
+          <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
             ARCHIVE GIFT CARD
           </span>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-normal mb-3 sm:mb-4">
+          <h1 className="font-serif text-display sm:text-display font-normal mb-3 sm:mb-4">
             Digital Gift Card
           </h1>
-          <p className="text-xs font-sans text-black/70 mb-6 sm:mb-8 leading-relaxed">
+          <p className="text-small text-black/70 mb-6 sm:mb-8 leading-relaxed">
             Gift enduring Nordic craftsmanship. Delivered digitally with an exclusive accession gift certificate code.
           </p>
 
           {!giftSubmitted ? (
             <div className="space-y-4 sm:space-y-6">
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-2">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-2">
                   Select Amount:
                 </label>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6 font-mono text-xs">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 text-small">
                   {[100, 150, 250, 500].map((amt) => (
                     <button
                       type="button"
                       key={amt}
                       onClick={() => setGiftAmount(amt)}
-                      className={`py-1 cursor-pointer transition-colors ${
-                        giftAmount === amt
-                          ? 'text-black font-semibold border-b border-black'
+                      className={`py-1 cursor-pointer transition-colors ${ giftAmount === amt ?'text-black font-semibold'
                           : 'text-black/50 hover:text-black'
                       }`}
                     >
@@ -301,7 +299,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-mono uppercase tracking-wider text-black/60 mb-1">
+                <label className="block text-small uppercase tracking-wider text-black/60 mb-1">
                   Recipient Email:
                 </label>
                 <input
@@ -310,14 +308,14 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                   value={giftRecipient}
                   onChange={(e) => setGiftRecipient(e.target.value)}
                   placeholder="recipient@example.com"
-                  className="w-full px-3 py-2 text-xs font-mono border border-black/20 focus:border-black focus:outline-none"
+                  className="w-full px-3 py-2 text-small"
                 />
               </div>
 
               <button
                 type="button"
                 onClick={() => giftRecipient && setGiftSubmitted(true)}
-                className="w-full py-3.5 sm:py-4 btn-primary text-xs uppercase tracking-[0.2em] font-medium cursor-pointer"
+                className="w-full py-3.5 sm:py-4 btn-primary text-small uppercase tracking-[0.2em] font-medium cursor-pointer"
               >
                 Order Gift Card (€{giftAmount}.00)
               </button>
@@ -325,7 +323,7 @@ export const StaticPages: React.FC<StaticPageProps> = ({
           ) : (
             <div className="text-center py-6 space-y-3">
               <Check className="w-8 h-8 mx-auto" />
-              <p className="text-xs font-mono">
+              <p className="text-small">
                 Gift card (€{giftAmount}.00) dispatched to {giftRecipient}.
               </p>
             </div>
@@ -339,14 +337,14 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'tracking') {
     return (
       <div className="max-w-[1720px] mx-auto px-4 sm:px-6 md:px-10 py-16 sm:py-24 min-h-screen pt-20">
-        <div className="max-w-xl mx-auto border border-black p-6 sm:p-12">
-          <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <div className="max-w-xl mx-auto p-6 sm:p-12">
+          <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
             SHIPMENT TRACKING
           </span>
-          <h1 className="font-editorial text-3xl sm:text-4xl font-normal mb-3 sm:mb-4">
+          <h1 className="font-serif text-display sm:text-display font-normal mb-3 sm:mb-4">
             Track Your Shipment
           </h1>
-          <p className="text-xs font-sans text-black/70 mb-6 sm:mb-8 leading-relaxed">
+          <p className="text-small text-black/70 mb-6 sm:mb-8 leading-relaxed">
             Enter your parcel tracking reference provided in your dispatch notification.
           </p>
 
@@ -358,16 +356,16 @@ export const StaticPages: React.FC<StaticPageProps> = ({
                 value={trackingCode}
                 onChange={(e) => setTrackingCode(e.target.value)}
                 placeholder="TRACKING REFERENCE..."
-                className="w-full px-4 py-3 text-xs font-mono border border-black/20 focus:border-black focus:outline-none uppercase"
+                className="w-full px-4 py-3 text-small uppercase"
               />
             </div>
-            <button type="submit" disabled={isTracking} className="w-full py-3.5 btn-primary text-xs uppercase tracking-[0.18em] cursor-pointer disabled:opacity-60">
+            <button type="submit" disabled={isTracking} className="w-full py-3.5 btn-primary text-small uppercase tracking-[0.18em] cursor-pointer disabled:opacity-60">
               {isTracking ? 'Searching...' : 'Search Status'}
             </button>
           </form>
 
           {trackingResult && (
-            <div className="mt-6 sm:mt-8 p-4 border-l-2 border-black bg-black/5 font-mono text-xs leading-relaxed">
+            <div className="mt-6 sm:mt-8 p-4 text-small leading-relaxed">
               {trackingResult}
             </div>
           )}
@@ -380,18 +378,18 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'philosophy') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           HOUSE PHILOSOPHY
         </span>
-        <h1 className="font-editorial text-4xl sm:text-5xl font-normal mb-6 sm:mb-8">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
           Philosophy and Sisu
         </h1>
-        <div className="space-y-4 sm:space-y-6 text-xs sm:text-base font-sans text-black/80 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6 text-small sm:text-body text-black/80 leading-relaxed">
           <p>
             Zejesh was established in opposition to seasonal surplus and synthetic elasticity. We believe genuine luxury derives not from excessive decoration, but from disciplined proportions, the innate stance of natural weaves, and uncompromised comfort without petrochemical shortcuts.
           </p>
-          <div className="p-4 sm:p-6 border-l-2 border-black bg-black/5 my-4 sm:my-6">
-            <p className="font-editorial text-lg sm:text-xl italic text-black">
+          <div className="p-4 sm:p-6 my-4 sm:my-6">
+            <p className="font-serif text-title sm:text-title italic text-black">
               "Quietude, space, and honesty of material. Every cut has a deliberate purpose for being."
             </p>
           </div>
@@ -407,22 +405,22 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'materials') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           CRAFT & INTEGRITY
         </span>
-        <h1 className="font-editorial text-4xl sm:text-5xl font-normal mb-6 sm:mb-8">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
           Honesty of Material
         </h1>
-        <div className="space-y-4 sm:space-y-6 text-xs sm:text-base font-sans text-black/80 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6 text-small sm:text-body text-black/80 leading-relaxed">
           <p>
             We employ strictly 100% mono-materials: certified northern merino, dense Italian virgin wool, heavy Portuguese organic cotton, and heritage European flax. We never compromise wool with polyester or polyamide.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 my-4 sm:my-6 font-mono text-xs">
-            <div className="p-4 border border-black/10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 my-4 sm:my-6 text-small">
+            <div className="p-4">
               <span className="font-medium block mb-1">Virgin Wool</span>
               <span className="text-black/60">Biella & Yorkshire · 680–750g/m²</span>
             </div>
-            <div className="p-4 border border-black/10">
+            <div className="p-4">
               <span className="font-medium block mb-1">Merino Wool 19.5µm</span>
               <span className="text-black/60">Spun in Finland · Non-itch</span>
             </div>
@@ -436,13 +434,13 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'sustainability') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-20">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           CIRCULAR CHARTER
         </span>
-        <h1 className="font-editorial text-4xl sm:text-5xl font-normal mb-6 sm:mb-8">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
           Circularity & Lifetime Repair
         </h1>
-        <div className="space-y-4 sm:space-y-6 text-xs sm:text-base font-sans text-black/80 leading-relaxed">
+        <div className="space-y-4 sm:space-y-6 text-small sm:text-body text-black/80 leading-relaxed">
           <p>
             We operate strictly in limited batch releases with zero surplus. Furthermore, all Zejesh archive coats and knitwear include complimentary restorative lifetime stitching in our Helsinki atelier.
           </p>
@@ -455,13 +453,13 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'workshops') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           PRODUCTION
         </span>
-        <h1 className="font-editorial text-4xl sm:text-5xl font-normal mb-6 sm:mb-8">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
           Ateliers: Helsinki & Porto
         </h1>
-        <p className="text-xs sm:text-base font-sans text-black/80 leading-relaxed">
+        <p className="text-small sm:text-body text-black/80 leading-relaxed">
           Pattern drafting and artisanal finishing take place in our Punavuori studio in Helsinki. Tailored overcoats and heavy jerseys are executed with our heritage family workshop in Porto, Portugal.
         </p>
       </div>
@@ -472,13 +470,13 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'contact') {
     return (
       <div className="max-w-xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           CLIENT CONCIERGE
         </span>
-        <h1 className="font-editorial text-3xl sm:text-5xl font-normal mb-4 sm:mb-6">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-4 sm:mb-6">
           Contact House
         </h1>
-        <div className="border border-black p-5 sm:p-6 space-y-3 font-mono text-xs">
+        <div className="p-5 sm:p-6 space-y-3 text-small">
           <p><strong>Email:</strong> concierge@zejesh.com</p>
           <p><strong>Direct Line:</strong> +358 (0)9 4245 8920</p>
           <p><strong>Hours:</strong> Mon–Fri 10:00 – 18:00 (EET)</p>
@@ -492,19 +490,19 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   if (slug === 'shipping-returns') {
     return (
       <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
-        <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+        <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
           DELIVERY CHARTER
         </span>
-        <h1 className="font-editorial text-4xl sm:text-5xl font-normal mb-6 sm:mb-8">
+        <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
           Shipping and Returns
         </h1>
-        <div className="space-y-4 sm:space-y-6 text-xs sm:text-sm font-sans text-black/80 leading-relaxed">
-          <div className="p-4 border border-black/10">
-            <h4 className="font-mono font-medium mb-1 uppercase">Complimentary Shipping Over €100</h4>
+        <div className="space-y-4 sm:space-y-6 text-small sm:text-small text-black/80 leading-relaxed">
+          <div className="p-4">
+            <h4 className="font-medium mb-1 uppercase">Complimentary Shipping Over €100</h4>
             <p className="text-black/70">Tracked expedited delivery dispatched within 1–3 business days.</p>
           </div>
-          <div className="p-4 border border-black/10">
-            <h4 className="font-mono font-medium mb-1 uppercase">14-Day Complimentary Returns</h4>
+          <div className="p-4">
+            <h4 className="font-medium mb-1 uppercase">14-Day Complimentary Returns</h4>
             <p className="text-black/70">All pieces may be returned within 14 days of receipt in original condition. Pre-printed prepaid returns documentation included.</p>
           </div>
         </div>
@@ -515,13 +513,13 @@ export const StaticPages: React.FC<StaticPageProps> = ({
   // Render TERMS, PRIVACY, COOKIES
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-24 min-h-screen pt-28 sm:pt-36 lg:pt-44">
-      <span className="font-mono text-xs tracking-[0.24em] uppercase text-black/40 block mb-2">
+      <span className="text-small tracking-[0.24em] uppercase text-black/40 block mb-2">
         LEGAL & GOVERNANCE
       </span>
-      <h1 className="font-editorial text-3xl sm:text-5xl font-normal mb-6 sm:mb-8">
+      <h1 className="font-serif text-display sm:text-display font-normal mb-6 sm:mb-8">
         {slug === 'terms' ? 'Terms & Conditions of Sale' : slug === 'privacy' ? 'Privacy Policy (GDPR)' : 'Cookie Preferences'}
       </h1>
-      <div className="space-y-4 text-xs sm:text-sm font-sans text-black/80 leading-relaxed font-mono">
+      <div className="space-y-4 text-small sm:text-small text-black/80 leading-relaxed">
         <p>Zejesh Clothes Oy · Business ID: FI32918239 · Helsinki, Finland</p>
         <p>All prices include standard VAT (24%). European consumers retain statutory 14-day cancellation and return rights.</p>
         <p>We process personal data solely for fulfillment of your order and secure account authentication. We never sell or transfer personal records to third-party marketing entities.</p>

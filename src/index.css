@@ -1,57 +1,199 @@
 @import "tailwindcss";
 
 @theme {
-  --font-serif: "Italiana", "Cinzel", "Cormorant Garamond", Georgia, serif;
-  --font-editorial: "Italiana", "Cinzel", "Cormorant Garamond", Georgia, serif;
-  --font-display: "Syne", "Plus Jakarta Sans", sans-serif;
-  --font-sans: "Plus Jakarta Sans", "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-serif: "Italiana", Georgia, serif;
+  --font-editorial: "Italiana", Georgia, serif;
+  --font-sans: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-grotesk: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Italiana", Georgia, serif;
 }
 
 :root {
   color-scheme: light;
-  --shadow-lift: 0 1px 2px rgba(0,0,0,0.03), 0 8px 24px -8px rgba(0,0,0,0.12);
-  --shadow-float: 0 2px 4px rgba(0,0,0,0.04), 0 12px 40px -12px rgba(0,0,0,0.16);
-  --shadow-deep: 0 4px 8px rgba(0,0,0,0.05), 0 24px 64px -16px rgba(0,0,0,0.20);
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+  --font-serif: "Italiana", Georgia, serif;
+  --font-grotesk: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  /* The exactly 4 defined text styles */
+  --text-display-size: clamp(2.25rem, 5vw, 4.5rem);
+  --text-display-lh: 1.05;
+
+  --text-title-size: clamp(1.5rem, 2.4vw, 2.25rem);
+  --text-title-lh: 1.15;
+
+  --text-body-size: 1rem;
+  --text-body-lh: 1.6;
+
+  --text-small-size: 0.8125rem;
+  --text-small-lh: 1.4;
+  --text-small-tracking: 0.12em;
 }
 
-body {
-  font-family: var(--font-sans);
-  background-color: #FFFFFF;
-  color: #000000;
-  overflow-x: hidden;
+/* ============================================================================
+   STRICT BRAND TEXT-ONLY GLOBAL CSS RESET
+   No borders, no outlines, no box-shadows, no rounded corners, no bg fills
+   ============================================================================ */
+
+*, *::before, *::after {
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+html, body, #root {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-body-size) !important;
+  line-height: var(--text-body-lh) !important;
+  margin: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle film grain overlay for premium texture */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.018;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  mix-blend-mode: multiply;
+/* All background fills removed except page surface and modals */
+*:not(img):not(video):not(canvas) {
+  background-color: transparent;
 }
 
-/* Custom scrollbar for minimalist aesthetic */
-::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+html, body, #root, [data-surface="page"], [data-surface="modal"] {
+  background-color: #FFFFFF !important;
 }
-::-webkit-scrollbar-track {
-  background: #FFFFFF;
+
+/* Elements default to body font-size and family */
+h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, table, th, td, li, ul, ol, header, footer, section, article, nav, aside {
+  font-family: var(--font-grotesk);
+  font-size: var(--text-body-size);
 }
-::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 99px;
+
+/* ============================================================================
+   THE FOUR SCALE UTILITIES
+   ============================================================================ */
+
+.text-display, h1.text-display {
+  font-family: var(--font-serif) !important;
+  font-size: var(--text-display-size) !important;
+  line-height: var(--text-display-lh) !important;
+  font-weight: 400 !important;
 }
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+
+.text-title, h2.text-title, h3.text-title {
+  font-family: var(--font-serif) !important;
+  font-size: var(--text-title-size) !important;
+  line-height: var(--text-title-lh) !important;
+  font-weight: 400 !important;
+}
+
+.text-body, p.text-body {
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-body-size) !important;
+  line-height: var(--text-body-lh) !important;
+  font-weight: 400 !important;
+}
+
+.text-small, span.text-small, label.text-small, th.text-small, a.text-small, button.text-small {
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-small-size) !important;
+  line-height: var(--text-small-lh) !important;
+  letter-spacing: var(--text-small-tracking) !important;
+  text-transform: uppercase !important;
+  font-weight: 400 !important;
+}
+
+/* Map font families and eliminate font-mono and foreign fonts */
+.font-serif, .font-editorial {
+  font-family: var(--font-serif) !important;
+}
+.font-sans, .font-mono, .font-grotesk {
+  font-family: var(--font-grotesk) !important;
+}
+
+/* Ensure any legacy typography tokens map strictly to the 4 approved sizes */
+.text-xs, .text-sm, .text-\[8px\], .text-\[9px\], .text-\[9\.5px\], .text-\[10px\], .text-\[10\.5px\], .text-\[11px\], .text-\[12px\], .text-\[12\.5px\], .text-\[13px\] {
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-small-size) !important;
+  line-height: var(--text-small-lh) !important;
+  letter-spacing: var(--text-small-tracking) !important;
+  text-transform: uppercase !important;
+}
+
+.text-base, .text-\[16px\] {
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-body-size) !important;
+  line-height: var(--text-body-lh) !important;
+}
+
+.text-lg, .text-xl, .text-2xl, .text-\[20px\], .text-\[24px\] {
+  font-family: var(--font-serif) !important;
+  font-size: var(--text-title-size) !important;
+  line-height: var(--text-title-lh) !important;
+}
+
+.text-3xl, .text-4xl, .text-5xl, .text-6xl, .text-7xl, .text-\[32px\], .text-\[40px\], .text-\[48px\] {
+  font-family: var(--font-serif) !important;
+  font-size: var(--text-display-size) !important;
+  line-height: var(--text-display-lh) !important;
+}
+
+/* ============================================================================
+   CONTROL STYLES (BUTTONS, INPUTS, SELECTORS)
+   ============================================================================ */
+
+button, .btn-primary, .btn-secondary {
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: #000000 !important;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+}
+
+button:hover, .btn-primary:hover, .btn-secondary:hover {
+  opacity: 0.6;
+}
+
+input, textarea, select {
+  background: transparent !important;
+  border: 0 !important;
+  outline: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  color: #000000 !important;
+  padding: 0.25rem 0 !important;
+  font-family: var(--font-grotesk) !important;
+  font-size: var(--text-body-size) !important;
+}
+
+input:focus, textarea:focus, select:focus {
+  text-decoration: underline !important;
+  outline: none !important;
+}
+
+/* Table styling: aligned text columns separated by whitespace only */
+table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  border: 0 !important;
+  width: 100%;
+}
+th, td {
+  border: 0 !important;
+  padding: 0.75rem 1rem !important;
+}
+
+/* Modals & Drawers: full white surface with text only, no panel border or shadow */
+dialog, [role="dialog"], .modal-surface {
+  background-color: #FFFFFF !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
 }
 
 /* Hide scrollbar utility */
@@ -61,217 +203,4 @@ body::before {
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
-}
-
-/* Smooth zoom transition */
-.image-zoom-transition {
-  transition: transform 900ms var(--ease-out-expo);
-}
-
-/* Next-Level Quiet Nordic Luxury: All buttons are pure typography (no boxes, no borders) */
-.btn-primary {
-  background-color: transparent;
-  color: #000000;
-  border: none;
-  padding: 0.5rem 0;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 300ms var(--ease-out-expo), transform 300ms var(--ease-out-expo);
-  box-shadow: none;
-}
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 1px;
-  background-color: currentColor;
-  transform: scaleX(1);
-  transform-origin: left;
-  transition: transform 400ms var(--ease-out-expo), opacity 300ms ease;
-}
-.btn-primary:hover {
-  opacity: 0.55;
-  background-color: transparent;
-  box-shadow: none;
-  transform: translateX(2px);
-}
-.btn-primary:hover::after {
-  transform: scaleX(0.75);
-}
-
-.btn-secondary {
-  background-color: transparent;
-  color: #000000;
-  border: none;
-  padding: 0.5rem 0;
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  font-family: var(--font-sans);
-  font-size: 0.75rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 400;
-  opacity: 0.5;
-  cursor: pointer;
-  transition: opacity 300ms var(--ease-out-expo), color 300ms ease;
-  box-shadow: none;
-}
-.btn-secondary:hover {
-  opacity: 1;
-  background-color: transparent;
-  color: #000000;
-}
-
-/* Custom focus ring */
-:focus-visible {
-  outline: 2px solid #000000;
-  outline-offset: 2px;
-}
-
-/* ===== SCROLL REVEAL ANIMATION ===== */
-.reveal {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: opacity 900ms var(--ease-out-expo), transform 900ms var(--ease-out-expo);
-  will-change: opacity, transform;
-}
-.reveal.is-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* Staggered children reveals */
-.reveal-stagger > * {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 800ms var(--ease-out-expo), transform 800ms var(--ease-out-expo);
-}
-.reveal-stagger.is-visible > * {
-  opacity: 1;
-  transform: translateY(0);
-}
-.reveal-stagger.is-visible > *:nth-child(1) { transition-delay: 80ms; }
-.reveal-stagger.is-visible > *:nth-child(2) { transition-delay: 160ms; }
-.reveal-stagger.is-visible > *:nth-child(3) { transition-delay: 240ms; }
-.reveal-stagger.is-visible > *:nth-child(4) { transition-delay: 320ms; }
-.reveal-stagger.is-visible > *:nth-child(5) { transition-delay: 400ms; }
-.reveal-stagger.is-visible > *:nth-child(6) { transition-delay: 480ms; }
-
-/* ===== KEYFRAME ANIMATIONS ===== */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fadeIn {
-  animation: fadeIn 500ms var(--ease-out-expo) both;
-}
-
-@keyframes slideIn {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
-}
-.animate-slideIn {
-  animation: slideIn 400ms var(--ease-out-expo) both;
-}
-
-@keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-.animate-marquee {
-  animation: marquee 30s linear infinite;
-}
-
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.8s infinite;
-}
-
-/* ===== PREMIUM CARD / TILE ===== */
-.card-lift {
-  transition: transform 500ms var(--ease-out-expo), box-shadow 500ms var(--ease-out-expo);
-}
-.card-lift:hover {
-  transform: translateY(-6px);
-  box-shadow: var(--shadow-float);
-}
-
-/* Image hover refinement */
-.img-zoom {
-  transition: transform 800ms var(--ease-out-expo);
-}
-.img-zoom:hover {
-  transform: scale(1.04);
-}
-
-/* Glass surface */
-.glass {
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-}
-
-/* Gradient overlay for image tiles */
-.gradient-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.08) 100%);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 600ms var(--ease-out-expo);
-}
-.gradient-overlay:hover::after {
-  opacity: 1;
-}
-
-/* Editorial divider with gradient */
-.divider-gradient {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0,0,0,0.12), transparent);
-}
-
-/* Text balance utility */
-.text-balance {
-  text-wrap: balance;
-}
-
-/* Animated underline on hover */
-.link-underline {
-  position: relative;
-}
-.link-underline::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  bottom: -2px;
-  width: 100%;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 400ms var(--ease-out-expo);
-}
-.link-underline:hover::after {
-  transform: scaleX(1);
-  transform-origin: left;
 }

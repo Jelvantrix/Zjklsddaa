@@ -60,10 +60,8 @@ export const CustomCursor: React.FC = () => {
       }}
     >
       <div
-        className={`rounded-full border border-black transition-all duration-300 ease-out ${
-          isHoveringInteractive
-            ? 'w-10 h-10 bg-black/10 backdrop-blur-[1px] scale-110'
-            : 'w-2 h-2 bg-black scale-100'
+        className={`transition-all duration-300 ease-out ${ isHoveringInteractive ?'w-10 h-10 bg-black/10 backdrop-blur-[1px] scale-110'
+            : 'w-2 h-2 scale-100'
         }`}
       />
     </div>
