@@ -31,11 +31,11 @@ export const AdminSystemHealthView: React.FC = () => {
   // Firestore read/write estimates
   const [readsToday, setReadsToday] = useState<number>(() => {
     const saved = localStorage.getItem('zejesh_metrics_reads_today');
-    return saved ? parseInt(saved, 10) : 124;
+    return saved ? parseInt(saved, 10) : 0;
   });
   const [writesToday, setWritesToday] = useState<number>(() => {
     const saved = localStorage.getItem('zejesh_metrics_writes_today');
-    return saved ? parseInt(saved, 10) : 38;
+    return saved ? parseInt(saved, 10) : 0;
   });
 
   // Consent Metrics
@@ -180,7 +180,7 @@ export const AdminSystemHealthView: React.FC = () => {
     setTestResult({ status: 'idle' });
 
     const startTime = performance.now();
-    const testId = `test-health-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const testId = `test-health-${Date.now()}-${crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
     const payload = {
       id: testId,
       type: 'system_health_verification',

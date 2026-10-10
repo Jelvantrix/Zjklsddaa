@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Product, Language } from '../types';
-import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
+import { Product, Language, translations, formatPrice } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { X, Search } from 'lucide-react';
 
@@ -17,6 +17,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
   language,
   onSelectProduct,
 }) => {
+  const { products } = useStorefrontData();
   const [query, setQuery] = useState('');
   const t = translations[language];
 
@@ -27,21 +28,21 @@ export const SearchModal: React.FC<SearchModalProps> = ({
     'Linen',
     'Leather',
     'Tailored Trousers',
-    'Winter 2026',
+    'Winter',
   ];
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase().trim();
-    return ARCHIVE_PRODUCTS.filter(
+    return (products || []).filter(
       (p) =>
-        (p.name.en || p.name.fi).toLowerCase().includes(q) ||
-        p.plateNumber.toLowerCase().includes(q) ||
-        (p.material.en || p.material.fi).toLowerCase().includes(q) ||
-        p.category.toLowerCase().includes(q) ||
-        p.subcategory.toLowerCase().includes(q)
+        ((p.name?.en || p.name?.fi || '').toLowerCase().includes(q)) ||
+        ((p.plateNumber || p.nr || '').toLowerCase().includes(q)) ||
+        ((p.material?.en || p.material?.fi || '').toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.subcategory && p.subcategory.toLowerCase().includes(q))
     );
-  }, [query]);
+  }, [query, products]);
 
   if (!isOpen) return null;
 
@@ -60,22 +61,22 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             className="w-full text-lg sm:text-2xl font-editorial font-light tracking-wide outline-none placeholder:text-black/30 bg-transparent"
           />
         </div>
+
         <button
-          type="button"
           onClick={onClose}
-          className="p-2 -mr-2 text-black/60 hover:text-black transition-colors cursor-pointer"
+          className="p-1.5 sm:p-2 text-black/60 hover:text-black transition-colors cursor-pointer"
           aria-label={t.nav.close}
         >
-          <X className="w-6 h-6 stroke-[1.5]" />
+          <X className="w-5 h-5 sm:w-6 sm:h-6" />
         </button>
       </div>
 
-      {/* Content Area */}
-      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-10 flex-1">
-        {!query.trim() ? (
+      {/* Results / Suggestions Container */}
+      <div className="max-w-7xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12 flex-1">
+        {query.trim() === '' ? (
           <div>
             <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-3 sm:mb-4 font-mono">
-              SUGGESTED SEARCHES
+              SUGGESTED INQUIRIES
             </p>
             <div className="flex flex-wrap gap-4 sm:gap-6 mb-8 sm:mb-12">
               {suggestedQueries.map((item) => (
@@ -90,11 +91,60 @@ export const SearchModal: React.FC<SearchModalProps> = ({
               ))}
             </div>
 
-            <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-4 sm:mb-6 font-mono">
-              ARCHIVE HIGHLIGHTS
+            {products.length > 0 && (
+              <>
+                <p className="text-[10.5px] sm:text-[11px] tracking-[0.18em] uppercase text-black/40 mb-4 sm:mb-6 font-mono">
+                  ARCHIVE HIGHLIGHTS
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+                  {products.slice(0, 4).map((product) => (
+                    <div
+                      key={product.id}
+                      onClick={() => {
+                        onSelectProduct(product);
+                        onClose();
+                      }}
+                      className="group cursor-pointer"
+                    >
+                      <FashionImage
+                        product={product}
+                        src={product.image}
+                        alt={product.name.en || product.name.fi}
+                        aspectRatio="3/4"
+                        placement="card"
+                        className="mb-2 sm:mb-3 border border-black/5"
+                      />
+                      <span className="text-[9.5px] sm:text-[10px] font-mono text-black/40 block">
+                        {product.plateNumber || product.nr}
+                      </span>
+                      <h4 className="text-xs font-sans font-medium text-black group-hover:underline underline-offset-4 truncate">
+                        {product.name.en || product.name.fi}
+                      </h4>
+                      <span className="text-[11px] font-mono text-black/60 block mt-0.5">
+                        {formatPrice(product.price)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        ) : results.length === 0 ? (
+          <div className="py-20 text-center">
+            <p className="text-xs font-mono uppercase tracking-widest text-black/50 mb-2">
+              No matching archive pieces found
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-              {ARCHIVE_PRODUCTS.slice(0, 4).map((product) => (
+            <p className="text-xs font-sans text-black/40">
+              Try a broader term, material, or category inquiry.
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="text-[11px] font-mono tracking-wider text-black/50 uppercase mb-6">
+              Found {results.length} piece{results.length === 1 ? '' : 's'}
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+              {results.map((product) => (
                 <div
                   key={product.id}
                   onClick={() => {
@@ -107,81 +157,22 @@ export const SearchModal: React.FC<SearchModalProps> = ({
                     product={product}
                     src={product.image}
                     alt={product.name.en || product.name.fi}
-                    position={product.cropVariation.packshot.position}
-                    scale={product.cropVariation.packshot.scale}
                     aspectRatio="3/4"
-                    className="mb-2 sm:mb-3 border border-black/5"
+                    placement="card"
+                    className="mb-3 border border-black/5"
                   />
-                  <span className="text-[9.5px] sm:text-[10px] font-mono text-black/40 block">
-                    {product.plateNumber}
+                  <span className="text-[10px] font-mono text-black/40 block">
+                    {product.plateNumber || product.nr}
                   </span>
                   <h4 className="text-xs font-sans font-medium text-black group-hover:underline underline-offset-4 truncate">
                     {product.name.en || product.name.fi}
                   </h4>
-                  <p className="text-xs font-mono text-black/60">
+                  <span className="text-xs font-mono text-black/60 block mt-0.5">
                     {formatPrice(product.price)}
-                  </p>
+                  </span>
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          <div>
-            <div className="flex items-center justify-between mb-6 sm:mb-8 pb-3 border-b border-black/10">
-              <span className="text-xs font-mono text-black/60">
-                {results.length} results for "{query}"
-              </span>
-              <button
-                type="button"
-                onClick={() => setQuery('')}
-                className="text-xs underline text-black/50 hover:text-black cursor-pointer"
-              >
-                Clear search
-              </button>
-            </div>
-
-            {results.length === 0 ? (
-              <div className="py-16 sm:py-20 text-center">
-                <p className="text-lg font-serif text-black/70 mb-2">
-                  No results found
-                </p>
-                <p className="text-xs text-black/40">
-                  Try another keyword or explore the entire archive.
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-                {results.map((product) => (
-                  <div
-                    key={product.id}
-                    onClick={() => {
-                      onSelectProduct(product);
-                      onClose();
-                    }}
-                    className="group cursor-pointer"
-                  >
-                    <FashionImage
-                      product={product}
-                      src={product.image}
-                      alt={product.name[language]}
-                      position={product.cropVariation.packshot.position}
-                      scale={product.cropVariation.packshot.scale}
-                      aspectRatio="3/4"
-                      className="mb-2 sm:mb-3 border border-black/5"
-                    />
-                    <span className="text-[9.5px] sm:text-[10px] font-mono text-black/40 block">
-                      {product.plateNumber}
-                    </span>
-                    <h4 className="text-xs font-sans font-medium text-black group-hover:underline underline-offset-4 truncate">
-                      {product.name[language]}
-                    </h4>
-                    <p className="text-xs font-mono text-black/60">
-                      {formatPrice(product.price)}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
       </div>

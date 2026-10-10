@@ -317,7 +317,7 @@ export async function saveCoachTask(
   task: Omit<CoachTask, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
 ): Promise<{ success: boolean; id?: string; error?: string }> {
   try {
-    const taskId = task.id || `task-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    const taskId = task.id || `task-${Date.now()}-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)}`;
     const fullTask: CoachTask = {
       ...task,
       id: taskId,

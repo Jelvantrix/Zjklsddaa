@@ -97,7 +97,8 @@ class TrackingEngine {
     // Anonymous visitor ID (32 hex characters, random)
     let vid = localStorage.getItem(VISITOR_ID_KEY);
     if (!vid) {
-      vid = 'v_' + Math.random().toString(36).substring(2, 10) + Math.random().toString(36).substring(2, 10);
+      const u = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().replace(/-/g, '') : Date.now().toString(36);
+      vid = 'v_' + u;
       try {
         localStorage.setItem(VISITOR_ID_KEY, vid);
       } catch {}
@@ -107,7 +108,8 @@ class TrackingEngine {
     // Anonymous session ID
     let sid = sessionStorage.getItem(SESSION_ID_KEY);
     if (!sid) {
-      sid = 's_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+      const u = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36);
+      sid = 's_' + Date.now().toString(36) + '_' + u;
       try {
         sessionStorage.setItem(SESSION_ID_KEY, sid);
       } catch {}

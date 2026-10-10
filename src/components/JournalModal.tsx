@@ -1,6 +1,6 @@
 import React from 'react';
-import { JournalArticle, Language } from '../types';
-import { JOURNAL_ARTICLES, translations } from '../data/mockData';
+import { JournalArticle, Language, translations } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { X, ArrowLeft } from 'lucide-react';
 
@@ -15,12 +15,13 @@ export const JournalModal: React.FC<JournalModalProps> = ({
   onClose,
   language,
 }) => {
+  const { content } = useStorefrontData();
   const t = translations[language];
 
   if (!articleId) return null;
 
-  const article =
-    JOURNAL_ARTICLES.find((a) => a.id === articleId) || JOURNAL_ARTICLES[0];
+  const article = (content.journalPosts || []).find((a) => a.id === articleId);
+  if (!article) return null;
 
   return (
     <div className="fixed inset-0 z-[92] bg-white flex flex-col overflow-y-auto animate-fadeIn select-none">

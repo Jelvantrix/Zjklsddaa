@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { CartItem, Language } from '../types';
-import { translations, formatPrice } from '../data/mockData';
+import { CartItem, Language, translations, formatPrice } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { X, Check, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -37,14 +36,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   // Steps: 1 = Toimitus, 2 = Maksu, 3 = Vahvistus
   const [step, setStep] = useState<1 | 2 | 3>(1);
 
-  // Form states
-  const [email, setEmail] = useState('client@atelier.com');
-  const [firstName, setFirstName] = useState('Erik');
-  const [lastName, setLastName] = useState('Lindqvist');
-  const [street, setStreet] = useState('Pohjoisesplanadi 31');
-  const [postalCode, setPostalCode] = useState('00100');
-  const [city, setCity] = useState('Helsinki');
-  const [phone, setPhone] = useState('+358 40 123 4567');
+  // Form states - starting clean without seeded values
+  const [email, setEmail] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [street, setStreet] = useState('');
+  const [postalCode, setPostalCode] = useState('');
+  const [city, setCity] = useState('');
+  const [phone, setPhone] = useState('');
 
   const [shippingMethod, setShippingMethod] = useState<'express' | 'standard' | 'whiteglove'>('express');
   const [paymentMethod, setPaymentMethod] = useState<'bank' | 'mobilepay' | 'klarna' | 'card' | 'applepay'>('card');

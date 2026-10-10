@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Product, Language } from '../types';
-import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
+import { Product, Language, translations, formatPrice } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { SizeGuideModal } from './SizeGuideModal';
 import {
@@ -31,6 +31,7 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
   onToggleWishlist,
   isWishlisted,
 }) => {
+  const { products } = useStorefrontData();
   const t = translations[language];
 
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0] || 'M');
@@ -67,12 +68,12 @@ export const ProductDetail: React.FC<ProductDetailProps> = ({
     { pos: product?.cropVariation?.detail4?.position || 'center 60%', scale: product?.cropVariation?.detail4?.scale || 1.5, label: '06 · Hand-Finished Seams' },
   ];
 
-  // Recommendations
-  const completeTheLook = ARCHIVE_PRODUCTS.filter(
+  // Recommendations from real products
+  const completeTheLook = (products || []).filter(
     (p) => p.id !== product.id && p.category !== product.category
   ).slice(0, 3);
 
-  const othersViewed = ARCHIVE_PRODUCTS.filter(
+  const othersViewed = (products || []).filter(
     (p) => p.id !== product.id && p.category === product.category
   ).slice(0, 4);
 

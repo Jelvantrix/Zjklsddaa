@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Language, StoreSettings } from '../types';
-import { translations } from '../data/mockData';
+import { Language, StoreSettings, translations } from '../types';
 import { BrandLogo } from './BrandLogo';
 import { PaymentIcons } from './PaymentIcons';
 import { ArrowRight, Check } from 'lucide-react';
@@ -21,7 +20,7 @@ export const Footer: React.FC<FooterProps> = ({
   onNavigatePage,
   settings,
 }) => {
-  const t = translations[language].footer;
+  const t = (translations[language] as any)?.footer || (translations.en as any)?.footer || {};
   const [newsletterEmail, setNewsletterEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
 

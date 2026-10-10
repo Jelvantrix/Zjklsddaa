@@ -1,6 +1,6 @@
 import React from 'react';
-import { Product, Language } from '../types';
-import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
+import { Product, Language, translations, formatPrice } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { X, Heart, Trash2 } from 'lucide-react';
 
@@ -23,11 +23,12 @@ export const WishlistDrawer: React.FC<WishlistDrawerProps> = ({
   onQuickAdd,
   language,
 }) => {
+  const { products } = useStorefrontData();
   const t = translations[language];
 
   if (!isOpen) return null;
 
-  const wishlistedProducts = ARCHIVE_PRODUCTS.filter((p) =>
+  const wishlistedProducts = (products || []).filter((p) =>
     wishlistIds.includes(p.id)
   );
 

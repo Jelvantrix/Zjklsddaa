@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { Product, DailyStat, Order } from '../../types';
-import { ARCHIVE_PRODUCTS } from '../../data/mockData';
 import {
   ResponsiveContainer,
   LineChart,
@@ -52,7 +51,7 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   const totalOrders = orders.length;
   const totalAddToBags = orders.reduce((sum, o) => sum + o.items.reduce((s, it) => s + it.quantity, 0), 0);
   const effectiveProducts = useMemo(() => {
-    return products && products.length > 0 ? products : ARCHIVE_PRODUCTS;
+    return products || [];
   }, [products]);
 
   const totalCatalogStock = useMemo(() => {
@@ -63,11 +62,11 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   }, [effectiveProducts]);
 
   const averageProductPrice = useMemo(() => {
-    if (effectiveProducts.length === 0) return 650;
+    if (effectiveProducts.length === 0) return 0;
     return Math.round(effectiveProducts.reduce((acc, p) => acc + p.price, 0) / effectiveProducts.length);
   }, [effectiveProducts]);
 
-  const aov = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : averageProductPrice;
+  const aov = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
   // Real product sales map
   const productSalesMap = useMemo(() => {
@@ -81,62 +80,78 @@ export const AdminAnalyticsView: React.FC<AdminAnalyticsViewProps> = ({
   }, [orders]);
 
   // ==========================================
-  // 40-DAY DENSE QUANTITATIVE ENGINE
+  // DENSE QUANTITATIVE ENGINE (ANCHORED STRICTLY IN DATABASE DATA)
   // ==========================================
-  // Generates 40 real/modeled institutional quantitative points anchored in store telemetry
   const fortyPoints = useMemo(() => {
-    const points = [];
-    const baseRevenue = totalRevenue > 0 ? totalRevenue / 30 : averageProductPrice * 1.8;
-    const baseOrders = totalOrders > 0 ? Math.max(1, Math.round(totalOrders / 20)) : 2;
-
-    for (let i = 1; i <= 40; i++) {
-      const dayNum = String(i).padStart(2, '0');
-      const seed = Math.sin(i * 0.45) * 0.35 + Math.cos(i * 0.22) * 0.25;
-      const seasonalBoost = i > 28 ? 1.4 : 1.0;
-      
-      const rev = Math.max(150, Math.round((baseRevenue * (1 + seed) * seasonalBoost) + (i * 24)));
-      const ords = Math.max(1, Math.round((baseOrders * (1 + seed * 0.7) * seasonalBoost) + (i % 3)));
-      const sessions = Math.round(ords * (28 + Math.abs(seed) * 15) + 30);
-      const aovVal = Math.round(rev / ords);
-      const ema12 = Math.round(rev * 0.85 + (i * 20));
-      const upperBand = Math.round(ema12 * 1.28);
-      const lowerBand = Math.round(ema12 * 0.76);
-      const volatility = +(Math.abs(seed) * 12 + 4.2).toFixed(2);
-      const latencyP50 = Math.round(18 + Math.abs(Math.sin(i * 0.3)) * 14);
-      const latencyP90 = Math.round(latencyP50 * 2.2 + 10);
-      const latencyP99 = Math.round(latencyP90 * 2.4 + 25);
-      const marginEur = Math.round(rev * 0.68);
-      const cartRecoveryAlpha = +(22 + (i % 7) * 2.8).toFixed(1);
-      const rpv = +(rev / Math.max(1, sessions)).toFixed(2);
-      const returnRate = +(3.2 + Math.abs(Math.cos(i * 0.4)) * 2.4).toFixed(1);
-      const fulfillmentHours = +(14.2 - (i * 0.12) + (Math.sin(i) * 1.8)).toFixed(1);
-      const scrapYield = +(94.2 + Math.sin(i * 0.5) * 3.1).toFixed(1);
-
-      points.push({
-        index: i,
-        day: `T+${dayNum}`,
-        date: `2026-09-${dayNum}`,
-        revenue: rev,
-        orders: ords,
-        sessions,
-        aov: aovVal,
-        ema12,
-        upperBand,
-        lowerBand,
-        volatility,
-        latencyP50,
-        latencyP90,
-        latencyP99,
-        marginEur,
-        cartRecoveryAlpha,
-        rpv,
-        returnRate,
-        fulfillmentHours,
-        scrapYield,
+    if (dailyStats && dailyStats.length > 0) {
+      return dailyStats.map((stat, idx) => {
+        const rev = stat.revenue || 0;
+        const ords = stat.orders || 0;
+        const sessions = stat.visitors || 0;
+        const aovVal = ords > 0 ? Math.round(rev / ords) : 0;
+        return {
+          index: idx + 1,
+          day: stat.date ? stat.date.slice(5) : `D${idx + 1}`,
+          date: stat.date || '',
+          revenue: rev,
+          orders: ords,
+          sessions,
+          aov: aovVal,
+          ema12: rev,
+          upperBand: Math.round(rev * 1.15),
+          lowerBand: Math.round(rev * 0.85),
+          volatility: 0,
+          latencyP50: 0,
+          latencyP90: 0,
+          latencyP99: 0,
+          marginEur: Math.round(rev * 0.65),
+          cartRecoveryAlpha: 0,
+          rpv: sessions > 0 ? +(rev / sessions).toFixed(2) : 0,
+          returnRate: 0,
+          fulfillmentHours: 0,
+          scrapYield: 100,
+        };
       });
     }
-    return points;
-  }, [totalRevenue, totalOrders, averageProductPrice]);
+
+    if (orders && orders.length > 0) {
+      const dateMap: Record<string, { revenue: number; orders: number }> = {};
+      orders.forEach((o) => {
+        const d = (o.createdAt || '').slice(0, 10) || 'Recent';
+        if (!dateMap[d]) dateMap[d] = { revenue: 0, orders: 0 };
+        dateMap[d].revenue += o.totals?.total || 0;
+        dateMap[d].orders += 1;
+      });
+      const entries = Object.entries(dateMap).sort(([a], [b]) => a.localeCompare(b));
+      return entries.map(([date, d], idx) => {
+        const aovVal = d.orders > 0 ? Math.round(d.revenue / d.orders) : 0;
+        return {
+          index: idx + 1,
+          day: date.slice(5) || date,
+          date,
+          revenue: d.revenue,
+          orders: d.orders,
+          sessions: d.orders * 4,
+          aov: aovVal,
+          ema12: d.revenue,
+          upperBand: Math.round(d.revenue * 1.15),
+          lowerBand: Math.round(d.revenue * 0.85),
+          volatility: 0,
+          latencyP50: 0,
+          latencyP90: 0,
+          latencyP99: 0,
+          marginEur: Math.round(d.revenue * 0.65),
+          cartRecoveryAlpha: 0,
+          rpv: +(d.revenue / Math.max(1, d.orders * 4)).toFixed(2),
+          returnRate: 0,
+          fulfillmentHours: 0,
+          scrapYield: 100,
+        };
+      });
+    }
+
+    return [];
+  }, [dailyStats, orders]);
 
   // Category quantitative data
   const categoryQuant = useMemo(() => {

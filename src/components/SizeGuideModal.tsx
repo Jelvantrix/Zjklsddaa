@@ -1,6 +1,5 @@
 import React from 'react';
-import { Language } from '../types';
-import { translations } from '../data/mockData';
+import { Language, translations } from '../types';
 import { X } from 'lucide-react';
 
 interface SizeGuideModalProps {

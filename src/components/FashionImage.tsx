@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
-import { PLACEHOLDER_IMG } from '../data/mockData';
-import { Product } from '../types';
+import { Product, ImageFramingParams, NEUTRAL_PLACEHOLDER_IMG } from '../types';
 
-interface FashionImageProps {
+export interface FashionImageProps {
   src?: string;
   product?: Product;
+  framing?: ImageFramingParams;
+  placement?: 'card' | 'archive' | 'productPage' | 'heroDesktop' | 'heroMobile' | 'og';
   isHover?: boolean;
   alt: string;
-  aspectRatio?: '3/4' | '4/5' | '1/1' | '16/9' | 'auto';
+  aspectRatio?: '3/4' | '4/5' | '1/1' | '16/9' | '9/16' | 'auto';
   position?: string;
   scale?: number;
   rotation?: number;
@@ -23,6 +24,8 @@ interface FashionImageProps {
 export const FashionImage: React.FC<FashionImageProps> = ({
   src,
   product,
+  framing,
+  placement = 'card',
   isHover = false,
   alt,
   aspectRatio = '3/4',
@@ -40,68 +43,93 @@ export const FashionImage: React.FC<FashionImageProps> = ({
   const [hasError, setHasError] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
 
+  // 1. Resolve source image URL
   const resolvedSrc =
     src ||
     (isHover ? product?.hoverImage || product?.image : product?.image) ||
     product?.images?.[0]?.url ||
-    PLACEHOLDER_IMG;
+    NEUTRAL_PLACEHOLDER_IMG;
 
-  // Resolve best frame positioning from product metadata if not explicitly overridden
+  // 2. Resolve framing parameters (with per-placement override support)
+  const productFraming = (product as any)?.framing as ImageFramingParams | undefined;
+  const activeFraming = framing || productFraming;
+  const placementOverride = activeFraming?.overrides?.[placement];
+
+  const focalX = placementOverride?.focalX ?? activeFraming?.focalX ?? (isHover ? undefined : (product as any)?.focalX);
+  const focalY = placementOverride?.focalY ?? activeFraming?.focalY ?? (isHover ? undefined : (product as any)?.focalY);
+  const zoom = placementOverride?.zoom ?? activeFraming?.zoom ?? scale ?? ((product as any)?.imageScale || 1.0);
+  const rot = placementOverride?.rotation ?? activeFraming?.rotation ?? rotation ?? ((isHover ? (product as any)?.hoverImageRotation : (product as any)?.imageRotation) || 0);
+  const flipH = placementOverride?.flipH ?? activeFraming?.flipH ?? flipped ?? false;
+  const flipV = placementOverride?.flipV ?? activeFraming?.flipV ?? false;
+
   const resolvedPosition =
     position ||
+    (focalX !== undefined && focalY !== undefined ? `${focalX}% ${focalY}%` : undefined) ||
     (isHover ? product?.hoverImagePosition : product?.imagePosition) ||
     product?.cropVariation?.onModel?.position ||
-    'center 30%';
+    '50% 50%';
 
-  const resolvedScale =
-    scale !== undefined
-      ? scale
-      : ((product as any)?.imageScale || product?.cropVariation?.onModel?.scale || 1);
-
-  const resolvedRotation =
-    rotation !== undefined
-      ? rotation
-      : ((isHover ? (product as any)?.hoverImageRotation : (product as any)?.imageRotation) || (product as any)?.rotation || 0);
-
-  const resolvedFlipped =
-    flipped !== undefined
-      ? flipped
-      : (product?.cropVariation?.onModel?.flipped ?? false);
-
-  const aspectClasses = {
+  const aspectClasses: Record<string, string> = {
     '3/4': 'aspect-[3/4]',
     '4/5': 'aspect-[4/5]',
     '1/1': 'aspect-square',
     '16/9': 'aspect-[16/9]',
+    '9/16': 'aspect-[9/16]',
     'auto': '',
   };
 
-  // High-fashion minimalist vector fallback if external asset fails to load
-  const fallbackSVG = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1066" viewBox="0 0 800 1066" fill="%23FFFFFF"><rect width="800" height="1066" fill="%23FFFFFF"/><path d="M400,200 C370,200 350,225 350,260 C350,295 370,320 400,320 C430,320 450,295 450,260 C450,225 430,200 400,200 Z M330,340 L470,340 L530,520 L480,535 L450,420 L460,880 L420,880 L410,640 L390,640 L380,880 L340,880 L350,420 L320,535 L270,520 Z" fill="%23000000" opacity="0.88"/><text x="400" y="960" font-family="sans-serif" font-size="12" letter-spacing="0.3em" fill="%23000000" opacity="0.4" text-anchor="middle">ZEJESH ARCHIVE</text></svg>`;
+  const transformStyle = [
+    flipH ? 'scaleX(-1)' : '',
+    flipV ? 'scaleY(-1)' : '',
+    `scale(${zoom})`,
+    rot ? `rotate(${rot}deg)` : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const isVideo = /\.(mp4|webm|mov|ogg)(\?.*)?$/i.test(resolvedSrc);
 
   return (
     <div
       onClick={onClick}
-      className={`relative overflow-hidden bg-[#FFFFFF] ${aspectClasses[aspectRatio]} ${className}`}
+      className={`relative overflow-hidden bg-[#f4f4f4] ${aspectClasses[aspectRatio] || ''} ${className}`}
     >
-      <img
-        src={hasError ? fallbackSVG : resolvedSrc}
-        alt={alt}
-        loading={priority ? 'eager' : 'lazy'}
-        decoding="async"
-        referrerPolicy="no-referrer"
-        onLoad={() => setIsLoaded(true)}
-        onError={() => setHasError(true)}
-        style={{
-          objectPosition: resolvedPosition,
-          transform: `${resolvedFlipped ? 'scaleX(-1)' : ''} scale(${resolvedScale}) rotate(${resolvedRotation}deg)`,
-        }}
-        className={`w-full h-full object-cover transition-transform duration-700 ease-out ${
-          enableMultiply ? 'mix-blend-multiply' : ''
-        } ${onHoverZoom ? 'group-hover:scale-[1.05]' : ''} ${
-          isLoaded ? 'opacity-100' : 'opacity-80'
-        } ${imageClassName}`}
-      />
+      {isVideo ? (
+        <video
+          src={resolvedSrc}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            objectPosition: resolvedPosition,
+            transform: transformStyle || undefined,
+            transformOrigin: resolvedPosition,
+          }}
+          className={`w-full h-full object-cover ${imageClassName}`}
+        />
+      ) : (
+        <img
+          src={hasError ? NEUTRAL_PLACEHOLDER_IMG : resolvedSrc}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          decoding="async"
+          {...(priority ? { fetchPriority: 'high' } : {})}
+          referrerPolicy="no-referrer"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setHasError(true)}
+          style={{
+            objectPosition: resolvedPosition,
+            transform: transformStyle || undefined,
+            transformOrigin: resolvedPosition,
+          }}
+          className={`w-full h-full object-cover transition-transform duration-500 ease-out ${
+            enableMultiply ? 'mix-blend-multiply' : ''
+          } ${onHoverZoom ? 'group-hover:scale-[1.03]' : ''} ${
+            isLoaded ? 'opacity-100' : 'opacity-80'
+          } ${imageClassName}`}
+        />
+      )}
     </div>
   );
 };

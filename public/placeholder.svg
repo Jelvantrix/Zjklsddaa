@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" width="100%" height="100%">
+  <rect width="600" height="800" fill="#F4F4F4"/>
+  <rect x="230" y="340" width="140" height="100" rx="4" fill="none" stroke="#D1D1D1" stroke-width="2"/>
+  <circle cx="300" cy="390" r="24" fill="none" stroke="#D1D1D1" stroke-width="2"/>
+  <circle cx="345" cy="360" r="4" fill="#D1D1D1"/>
+  <text x="300" y="475" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="500" letter-spacing="0.2em" fill="#999999" text-anchor="middle">NO IMAGE AVAILABLE</text>
+</svg>

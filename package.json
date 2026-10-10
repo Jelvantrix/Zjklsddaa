@@ -9,6 +9,7 @@
     "start": "cross-env NODE_ENV=production tsx server.ts",
     "preview": "cross-env NODE_ENV=production vite preview",
     "clean": "rm -rf dist server.js",
+    "check:no-seed": "node scripts/check-no-seed.mjs",
     "lint": "tsc --noEmit"
   },
   "dependencies": {

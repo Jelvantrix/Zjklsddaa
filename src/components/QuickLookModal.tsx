@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { Product, Language } from '../types';
-import { ARCHIVE_PRODUCTS, translations, formatPrice } from '../data/mockData';
+import { Product, Language, translations, formatPrice } from '../types';
+import { useStorefrontData } from '../context/StorefrontDataContext';
 import { FashionImage } from './FashionImage';
 import { X, ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
@@ -19,20 +19,23 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
   onQuickAdd,
   language,
 }) => {
+  const { products } = useStorefrontData();
   const t = translations[language];
 
   if (!product) return null;
 
-  const currentIndex = ARCHIVE_PRODUCTS.findIndex((p) => p.id === product.id);
+  const currentIndex = products.findIndex((p) => p.id === product.id);
 
   const goToNextPlate = () => {
-    const nextIndex = (currentIndex + 1) % ARCHIVE_PRODUCTS.length;
-    onSelectProduct(ARCHIVE_PRODUCTS[nextIndex]);
+    if (products.length === 0) return;
+    const nextIndex = (currentIndex + 1) % products.length;
+    onSelectProduct(products[nextIndex]);
   };
 
   const goToPrevPlate = () => {
-    const prevIndex = (currentIndex - 1 + ARCHIVE_PRODUCTS.length) % ARCHIVE_PRODUCTS.length;
-    onSelectProduct(ARCHIVE_PRODUCTS[prevIndex]);
+    if (products.length === 0) return;
+    const prevIndex = (currentIndex - 1 + products.length) % products.length;
+    onSelectProduct(products[prevIndex]);
   };
 
   return (
@@ -41,11 +44,11 @@ export const QuickLookModal: React.FC<QuickLookModalProps> = ({
       <div className="max-w-[1720px] w-full mx-auto px-4 sm:px-6 md:px-10 py-4 sm:py-6 border-b border-black/10 flex items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="font-mono text-xs tracking-[0.2em] uppercase text-black/50">
-            {product.plateNumber}
+            {product.plateNumber || product.nr}
           </span>
           <span className="text-black/20 font-mono">/</span>
           <span className="font-mono text-xs text-black/50">
-            {currentIndex + 1} OF {ARCHIVE_PRODUCTS.length}
+            {currentIndex >= 0 ? currentIndex + 1 : 1} OF {Math.max(1, products.length)}
           </span>
         </div>
 
